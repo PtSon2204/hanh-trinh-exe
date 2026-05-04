@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TheALMAProject.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+63927c33fc8b9a927a3f32481ba8bc4839d0f187")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+69ef9824be86269e1623792e9cbf820f5db5926b")]
 [assembly: System.Reflection.AssemblyProductAttribute("TheALMAProject.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TheALMAProject.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

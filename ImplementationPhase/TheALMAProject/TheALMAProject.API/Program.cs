@@ -1,12 +1,15 @@
 ﻿using TheALMAProject.Infrastructure;
-using TheALMAProject.API.Extensions;
 using TheALMAProject.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
+using TheALMAProject.API.Extensions;
+using TheALMAProject.API.Middleware;
 
 namespace TheALMAProject.API
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +17,10 @@ namespace TheALMAProject.API
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+            //Đki db
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+           options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             //Đăng kí repository
             builder.Services.AddInfrastructure();
@@ -27,11 +34,11 @@ namespace TheALMAProject.API
             var app = builder.Build();
 
             //SeedData
-            //using (var scope = app.Services.CreateScope())
-            //{
-            //    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            //    DbInitializer.Seed(context);
-            //}
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                await DbInitializer.InitializeAsync(context);
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -39,6 +46,9 @@ namespace TheALMAProject.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+
+            //Đăng kí middleware exception
+            app.UseMiddleware<ExceptionMiddleware>();
 
             app.UseHttpsRedirection();
 
