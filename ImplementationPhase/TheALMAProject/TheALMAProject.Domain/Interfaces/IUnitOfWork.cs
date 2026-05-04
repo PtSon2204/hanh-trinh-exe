@@ -8,8 +8,7 @@ namespace TheALMAProject.Domain.Interfaces
 {
     public interface IUnitOfWork
     {
-        //Ví dụ:
-       // IStudentRepository StudentsRepo { get; }
+        IUserRepository UserRepo { get; }
         Task<int> SaveChangesAsync();
     }
 }

@@ -3,32 +3,28 @@
   "WorkspaceRootPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C6BC7963-7C93-40E2-B980-7E533F11B40B}|TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.infrastructure\\data\\unitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C6BC7963-7C93-40E2-B980-7E533F11B40B}|TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj|solutionrelative:thealmaproject.infrastructure\\data\\unitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\extensions\\serviceextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\extensions\\serviceextensions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\middleware\\exceptionmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\middleware\\exceptionmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.domain\\common\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|solutionrelative:thealmaproject.domain\\common\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\validator\\uservalidators\\createuserdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\validator\\uservalidators\\createuserdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.domain\\common\\paginationparams.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|solutionrelative:thealmaproject.domain\\common\\paginationparams.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\extensions\\serviceextentions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\extensions\\serviceextentions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.domain\\common\\pagedresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|solutionrelative:thealmaproject.domain\\common\\pagedresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.domain\\interfaces\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|solutionrelative:thealmaproject.domain\\interfaces\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\validator\\uservalidators\\updateuserdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\validator\\uservalidators\\updateuserdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -38,103 +34,95 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 7,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "UserService.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\UserService.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.Application\\Services\\UserService.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\UserService.cs",
+              "RelativeToolTip": "TheALMAProject.Application\\Services\\UserService.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAAAkwE8AAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-04T05:09:46.49Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ExceptionMiddleware.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Middleware\\ExceptionMiddleware.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.API\\Middleware\\ExceptionMiddleware.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Middleware\\ExceptionMiddleware.cs",
+              "RelativeToolTip": "TheALMAProject.API\\Middleware\\ExceptionMiddleware.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-04T05:09:38.946Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 5,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Program.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.API\\Program.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Program.cs",
-              "RelativeToolTip": "TheALMAProject.API\\Program.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAzwB0AAAASAAAAAAAAAA==",
+              "Title": "UpdateUserDtoValidator.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\UserValidators\\UpdateUserDtoValidator.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.Application\\Validator\\UserValidators\\UpdateUserDtoValidator.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\UserValidators\\UpdateUserDtoValidator.cs",
+              "RelativeToolTip": "TheALMAProject.Application\\Validator\\UserValidators\\UpdateUserDtoValidator.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACEAAABfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-08T12:54:54.795Z",
-              "IsPinned": true,
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "PaginationParams.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Common\\PaginationParams.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Domain\\Common\\PaginationParams.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Common\\PaginationParams.cs",
-              "RelativeToolTip": "TheALMAProject.Domain\\Common\\PaginationParams.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAcAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-08T12:59:56.431Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "PagedResult.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Common\\PagedResult.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Domain\\Common\\PagedResult.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Common\\PagedResult.cs",
-              "RelativeToolTip": "TheALMAProject.Domain\\Common\\PagedResult.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-08T12:59:33.499Z",
+              "WhenOpened": "2026-05-04T05:03:19.516Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "BaseEntity.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Common\\BaseEntity.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Domain\\Common\\BaseEntity.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Common\\BaseEntity.cs",
-              "RelativeToolTip": "TheALMAProject.Domain\\Common\\BaseEntity.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAvAAAAAAAAAA==",
+              "Title": "CreateUserDtoValidator.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\UserValidators\\CreateUserDtoValidator.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.Application\\Validator\\UserValidators\\CreateUserDtoValidator.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\UserValidators\\CreateUserDtoValidator.cs",
+              "RelativeToolTip": "TheALMAProject.Application\\Validator\\UserValidators\\CreateUserDtoValidator.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAABKAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-08T12:59:11.784Z",
+              "WhenOpened": "2026-05-04T05:03:07.223Z",
               "EditorCaption": ""
             },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ServiceExtentions.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
+              "RelativeToolTip": "TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-04T05:01:16.783Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "UserController.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\UserController.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.API\\Controllers\\UserController.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\UserController.cs",
+              "RelativeToolTip": "TheALMAProject.API\\Controllers\\UserController.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAAAYwCwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-04T04:26:19.448Z",
+              "EditorCaption": ""
+            }
+          ]
+        },
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": -1,
+          "Children": [
             {
               "$type": "Bookmark",
-              "Name": "ST:36:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "ServiceExtensions.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Extensions\\ServiceExtensions.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.API\\Extensions\\ServiceExtensions.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Extensions\\ServiceExtensions.cs",
-              "RelativeToolTip": "TheALMAProject.API\\Extensions\\ServiceExtensions.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAAwBgAAAAPAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-08T12:53:44.15Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "IUnitOfWork.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Interfaces\\IUnitOfWork.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Domain\\Interfaces\\IUnitOfWork.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Interfaces\\IUnitOfWork.cs",
-              "RelativeToolTip": "TheALMAProject.Domain\\Interfaces\\IUnitOfWork.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAQAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-08T12:50:54.195Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "UnitOfWork.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\Data\\UnitOfWork.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Infrastructure\\Data\\UnitOfWork.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\Data\\UnitOfWork.cs",
-              "RelativeToolTip": "TheALMAProject.Infrastructure\\Data\\UnitOfWork.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAA3AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-08T12:49:30.038Z",
-              "EditorCaption": ""
+              "Name": "ST:35:0:{e8034f19-ab72-4f06-83fd-f6832b41aa63}"
             }
           ]
         }

@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using TheALMAProject.Domain.Interfaces;
+using TheALMAProject.Infrastructure.Data;
+using TheALMAProject.Infrastructure.Repositories;
 
 namespace TheALMAProject.Infrastructure
 {
@@ -11,8 +14,8 @@ namespace TheALMAProject.Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
-            //services.AddScoped<IUnitOfWork, UnitOfWork>();
-            //services.AddScoped<IStudentRepository, StudentRepository>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IUserRepository, UserRepository>();
           
             return services;
         }
