@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -38,7 +38,13 @@ namespace TheALMAProject.Infrastructure.Repositories
 
         public async Task<User?> GetUserByEmail(string email)
         {
-            return await context.Users.Include(x => x.Role).FirstOrDefaultAsync(x => x.Email == email);
+            return await context.Users.FirstOrDefaultAsync(x => x.Email == email);
+        }
+
+        public async Task<User?> GetUserByOAuth(string provider, string oauthId)
+        {
+            return await context.Users
+                .FirstOrDefaultAsync(x => x.OAuthProvider == provider && x.OAuthId == oauthId);
         }
 
         public async Task<PagedResult<User>> GetUsers(UserQuery query)

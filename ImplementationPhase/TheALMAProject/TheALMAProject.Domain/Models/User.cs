@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TheALMAProject.Infrastructure.Models;
@@ -22,6 +22,14 @@ public partial class User
     public bool IsActive { get; set; }
 
     public DateTime? CreatedAt { get; set; }
+
+    // OAuth fields - dùng khi đăng nhập bằng Google/Facebook
+    public string? OAuthProvider { get; set; }  // "Google", "Facebook", hoặc null (đăng ký thường)
+    public string? OAuthId { get; set; }         // ID duy nhất từ Google/Facebook
+
+    // Refresh Token fields
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiry { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 
