@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using TheALMAProject.Infrastructure.Models;
@@ -263,6 +263,10 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Role)
                 .HasMaxLength(50)
                 .HasDefaultValue("Customer");
+            entity.Property(e => e.OAuthProvider).HasMaxLength(50);
+            entity.Property(e => e.OAuthId).HasMaxLength(255);
+            entity.Property(e => e.RefreshToken).HasMaxLength(500);
+            entity.Property(e => e.RefreshTokenExpiry).HasColumnType("datetime");
         });
 
         modelBuilder.Entity<UserDesign>(entity =>

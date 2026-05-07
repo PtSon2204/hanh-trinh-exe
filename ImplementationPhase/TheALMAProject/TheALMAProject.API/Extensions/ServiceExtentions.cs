@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Application.Mappings;
@@ -13,6 +13,7 @@ namespace TheALMAProject.API.Extensions
         {
             //Đăng kí serivce
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IAuthService, AuthService>();
 
             //Đăng kí fluentValidation
             services.AddFluentValidationAutoValidation();

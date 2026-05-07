@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Infrastructure.Data;
 using TheALMAProject.Infrastructure.Repositories;
+using TheALMAProject.Infrastructure.Services;
 
 namespace TheALMAProject.Infrastructure
 {
@@ -16,6 +17,8 @@ namespace TheALMAProject.Infrastructure
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IEmailService, EmailService>();
           
             return services;
         }

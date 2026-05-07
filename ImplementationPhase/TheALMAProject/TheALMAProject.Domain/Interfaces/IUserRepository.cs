@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +14,7 @@ namespace TheALMAProject.Domain.Interfaces
         Task<PagedResult<User>> GetUsers(UserQuery query);
         Task<User?> GetById(int id);
         Task<User?> GetUserByEmail(string email);
+        Task<User?> GetUserByOAuth(string provider, string oauthId);
         Task CreateUser(User user);
         void UpdateUser(User user);
         void DeleteUser(User user);
