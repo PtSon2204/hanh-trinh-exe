@@ -20,13 +20,19 @@ namespace TheALMAProject.Infrastructure.Data
 
         public IStoreProductRepository StoreProductRepo {  get; }
 
-        public UnitOfWork(ApplicationDbContext context)
+        public IOrderRepository OrderRepo {  get; }
+        public ICartRepository CartRepo { get; }
+
+        
+    public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
 
             UserRepo = new UserRepository(_context);
             BaseProductRepo = new BaseProductRepository(_context);
             StoreProductRepo = new StoreProductRepository(_context);
+            OrderRepo = new OrderRepository(_context);
+            CartRepo = new CartRepository(_context);
         }
         public async Task<int> SaveChangesAsync()
         {
