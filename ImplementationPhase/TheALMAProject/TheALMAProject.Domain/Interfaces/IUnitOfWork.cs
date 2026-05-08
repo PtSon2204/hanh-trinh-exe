@@ -9,6 +9,8 @@ namespace TheALMAProject.Domain.Interfaces
     public interface IUnitOfWork
     {
         IUserRepository UserRepo { get; }
+        IBaseProductRepository BaseProductRepo { get; }
+        IStoreProductRepository StoreProductRepo { get; }
         Task<int> SaveChangesAsync();
     }
 }

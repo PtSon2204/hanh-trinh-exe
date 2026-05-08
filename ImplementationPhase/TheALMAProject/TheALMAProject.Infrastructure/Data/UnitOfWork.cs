@@ -15,11 +15,18 @@ namespace TheALMAProject.Infrastructure.Data
         private readonly ApplicationDbContext _context;
 
         public IUserRepository UserRepo { get; }
+
+        public IBaseProductRepository BaseProductRepo { get; }
+
+        public IStoreProductRepository StoreProductRepo {  get; }
+
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
 
             UserRepo = new UserRepository(_context);
+            BaseProductRepo = new BaseProductRepository(_context);
+            StoreProductRepo = new StoreProductRepository(_context);
         }
         public async Task<int> SaveChangesAsync()
         {
