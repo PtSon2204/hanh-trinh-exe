@@ -17,6 +17,8 @@ namespace TheALMAProject.Infrastructure
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IBaseProductRepository, BaseProductRepository>();
+            services.AddScoped<IStoreProductRepository, StoreProductRepository>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IEmailService, EmailService>();
           
