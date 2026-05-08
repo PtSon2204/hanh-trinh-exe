@@ -20,6 +20,8 @@ namespace TheALMAProject.Infrastructure.Data
 
         public IStoreProductRepository StoreProductRepo {  get; }
 
+        public IIconRepository IconRepo { get; }
+
         public IOrderRepository OrderRepo {  get; }
         public ICartRepository CartRepo { get; }
 
@@ -31,6 +33,7 @@ namespace TheALMAProject.Infrastructure.Data
             UserRepo = new UserRepository(_context);
             BaseProductRepo = new BaseProductRepository(_context);
             StoreProductRepo = new StoreProductRepository(_context);
+            IconRepo = new IconRepository(_context);
             OrderRepo = new OrderRepository(_context);
             CartRepo = new CartRepository(_context);
         }
