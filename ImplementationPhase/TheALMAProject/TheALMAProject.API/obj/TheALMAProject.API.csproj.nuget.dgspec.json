@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\TheALMAProject.API.csproj": {}
+    "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\TheALMAProject.API.csproj": {}
   },
   "projects": {
-    "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\TheALMAProject.API.csproj": {
+    "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\TheALMAProject.API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\TheALMAProject.API.csproj",
+        "projectUniqueName": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\TheALMAProject.API.csproj",
         "projectName": "TheALMAProject.API",
-        "projectPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\TheALMAProject.API.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\obj\\",
+        "projectPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\TheALMAProject.API.csproj",
+        "packagesPath": "C:\\Users\\ptson\\.nuget\\packages\\",
+        "outputPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ptson\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,15 +26,14 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj": {
-                "projectPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj"
+              "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj": {
+                "projectPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj"
               }
             }
           }
@@ -49,7 +48,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -99,24 +98,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj": {
+    "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj",
+        "projectUniqueName": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj",
         "projectName": "TheALMAProject.Application",
-        "projectPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\obj\\",
+        "projectPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\TheALMAProject.Application.csproj",
+        "packagesPath": "C:\\Users\\ptson\\.nuget\\packages\\",
+        "outputPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ptson\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -125,18 +124,17 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj": {
-                "projectPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj"
+              "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj": {
+                "projectPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj"
               },
-              "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj": {
-                "projectPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj"
+              "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj": {
+                "projectPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj"
               }
             }
           }
@@ -151,7 +149,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -186,24 +184,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj": {
+    "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj",
+        "projectUniqueName": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj",
         "projectName": "TheALMAProject.Domain",
-        "projectPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\obj\\",
+        "projectPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj",
+        "packagesPath": "C:\\Users\\ptson\\.nuget\\packages\\",
+        "outputPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ptson\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -212,7 +210,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -231,7 +228,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -274,24 +271,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj": {
+    "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj",
+        "projectUniqueName": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj",
         "projectName": "TheALMAProject.Infrastructure",
-        "projectPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\obj\\",
+        "projectPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj",
+        "packagesPath": "C:\\Users\\ptson\\.nuget\\packages\\",
+        "outputPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\ptson\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -300,15 +297,14 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj": {
-                "projectPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj"
+              "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj": {
+                "projectPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\TheALMAProject.Domain.csproj"
               }
             }
           }
@@ -323,7 +319,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -368,7 +364,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
