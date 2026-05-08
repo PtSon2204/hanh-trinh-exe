@@ -15,6 +15,7 @@ namespace TheALMAProject.API.Extensions
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAdminBaseProductService, AdminBaseProductService>();
             services.AddScoped<IAdminStoreProductService, AdminStoreProductService>();
+            services.AddScoped<IAdminIconService, AdminIconService>();
             services.AddScoped<IAuthService, AuthService>();
 
             //Đăng kí fluentValidation
