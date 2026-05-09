@@ -13,6 +13,7 @@ namespace TheALMAProject.API.Extensions
         {
             //Đăng kí serivce
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IAdminUserService, AdminUserService>();
             services.AddScoped<IAdminBaseProductService, AdminBaseProductService>();
             services.AddScoped<IAdminStoreProductService, AdminStoreProductService>();
             services.AddScoped<IAdminIconService, AdminIconService>();

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Interfaces;
@@ -69,6 +64,53 @@ namespace TheALMAProject.Infrastructure.Repositories
             var totalRecords = await users.CountAsync();
             var data = await users
             .Skip((query.PageNumber - 1) * query.PageSize)
+                .Take(query.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<User>
+            {
+                Data = data,
+                PageNumber = query.PageNumber,
+                PageSize = query.PageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)query.PageSize)
+            };
+        }
+
+        public async Task<PagedResult<User>> GetAdminUsers(AdminUserQuery query)
+        {
+            var users = context.Users.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.Email))
+            {
+                users = users.Where(x => x.Email.Contains(query.Email));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.FullName))
+            {
+                users = users.Where(x => x.FullName.Contains(query.FullName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Phone))
+            {
+                users = users.Where(x => x.Phone != null && x.Phone.Contains(query.Phone));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.Role))
+            {
+                users = users.Where(x => x.Role == query.Role);
+            }
+
+            if (query.IsActive.HasValue)
+            {
+                users = users.Where(x => x.IsActive == query.IsActive.Value);
+            }
+
+            users = users.OrderBy(x => x.UserId);
+
+            var totalRecords = await users.CountAsync();
+            var data = await users
+                .Skip((query.PageNumber - 1) * query.PageSize)
                 .Take(query.PageSize)
                 .ToListAsync();
 

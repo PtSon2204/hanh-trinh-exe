@@ -24,7 +24,7 @@ namespace TheALMAProject.Application.Services
 
         public async Task<PagedResult<AdminUserListDto>> GetUsers(AdminUserQuery query)
         {
-            var result = await _unitOfWork.UserRepo.GetUsers(query);
+            var result = await _unitOfWork.UserRepo.GetAdminUsers(query);
 
             return new PagedResult<AdminUserListDto>
             {
