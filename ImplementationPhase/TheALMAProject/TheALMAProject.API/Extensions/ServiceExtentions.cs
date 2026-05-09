@@ -16,6 +16,8 @@ namespace TheALMAProject.API.Extensions
             services.AddScoped<IAdminBaseProductService, AdminBaseProductService>();
             services.AddScoped<IAdminStoreProductService, AdminStoreProductService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<ICartService, CartService>();
 
             //Đăng kí fluentValidation
             services.AddFluentValidationAutoValidation();
@@ -23,7 +25,8 @@ namespace TheALMAProject.API.Extensions
 
             //Đăng kí map entity -> dto
             services.AddAutoMapper(cfg => cfg.AddMaps(typeof(UserMapping).Assembly));
-            
+            services.AddAutoMapper(cfg => cfg.AddMaps(typeof(OrderMapping).Assembly));
+
             return services;
         }
     }
