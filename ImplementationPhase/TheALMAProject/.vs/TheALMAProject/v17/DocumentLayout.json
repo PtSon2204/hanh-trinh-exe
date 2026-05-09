@@ -3,68 +3,24 @@
   "WorkspaceRootPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{C6BC7963-7C93-40E2-B980-7E533F11B40B}|TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.infrastructure\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C6BC7963-7C93-40E2-B980-7E533F11B40B}|TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj|solutionrelative:thealmaproject.infrastructure\\data\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.domain\\interfaces\\iemailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|solutionrelative:thealmaproject.domain\\interfaces\\iemailservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\validator\\authvalidators\\logindtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\validator\\authvalidators\\logindtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\validator\\authvalidators\\changepassworddtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\validator\\authvalidators\\changepassworddtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\services\\userservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\services\\authservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\validator\\authvalidators\\resetpassworddtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\validator\\authvalidators\\resetpassworddtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\validator\\authvalidators\\registerdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\validator\\authvalidators\\registerdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\middleware\\exceptionmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\middleware\\exceptionmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\controllers\\cartcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\controllers\\cartcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\extensions\\serviceextentions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\extensions\\serviceextentions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\controllers\\authcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\services\\orderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\services\\orderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{C6BC7963-7C93-40E2-B980-7E533F11B40B}|TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.infrastructure\\migrations\\20260507130730_addoauthfields.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C6BC7963-7C93-40E2-B980-7E533F11B40B}|TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj|solutionrelative:thealmaproject.infrastructure\\migrations\\20260507130730_addoauthfields.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\validator\\uservalidators\\createuserdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\validator\\uservalidators\\createuserdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\controllers\\usercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\validator\\uservalidators\\updateuserdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\validator\\uservalidators\\updateuserdtovalidator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\interfaces\\iorderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\interfaces\\iorderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -74,202 +30,72 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "DbInitializer.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\Data\\DbInitializer.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Infrastructure\\Data\\DbInitializer.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\Data\\DbInitializer.cs",
-              "RelativeToolTip": "TheALMAProject.Infrastructure\\Data\\DbInitializer.cs",
-              "ViewState": "AgIAAIEAAAAAAAAAAAAswJMAAAAWAAAAAAAAAA==",
+              "DocumentIndex": 1,
+              "Title": "CartController.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\CartController.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.API\\Controllers\\CartController.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\CartController.cs",
+              "RelativeToolTip": "TheALMAProject.API\\Controllers\\CartController.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAxwBIAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T13:10:39.298Z",
+              "WhenOpened": "2026-05-09T14:03:51.594Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "OrderController.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\OrderController.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.API\\Controllers\\OrderController.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\OrderController.cs",
+              "RelativeToolTip": "TheALMAProject.API\\Controllers\\OrderController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-09T14:02:30.074Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "IEmailService.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Interfaces\\IEmailService.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Domain\\Interfaces\\IEmailService.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Interfaces\\IEmailService.cs",
-              "RelativeToolTip": "TheALMAProject.Domain\\Interfaces\\IEmailService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-07T14:19:45.741Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "AuthService.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\AuthService.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Services\\AuthService.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\AuthService.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Services\\AuthService.cs",
-              "ViewState": "AgIAAI8AAAAAAAAAAAAAAIABAAASAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-07T14:14:58.083Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
-              "Title": "ResetPasswordDtoValidator.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\AuthValidators\\ResetPasswordDtoValidator.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Validator\\AuthValidators\\ResetPasswordDtoValidator.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\AuthValidators\\ResetPasswordDtoValidator.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Validator\\AuthValidators\\ResetPasswordDtoValidator.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-07T14:14:52.873Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "RegisterDtoValidator.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\AuthValidators\\RegisterDtoValidator.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Validator\\AuthValidators\\RegisterDtoValidator.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\AuthValidators\\RegisterDtoValidator.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Validator\\AuthValidators\\RegisterDtoValidator.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-07T14:14:51.948Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "LoginDtoValidator.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\AuthValidators\\LoginDtoValidator.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Validator\\AuthValidators\\LoginDtoValidator.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\AuthValidators\\LoginDtoValidator.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Validator\\AuthValidators\\LoginDtoValidator.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-07T14:14:50.864Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "ChangePasswordDtoValidator.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\AuthValidators\\ChangePasswordDtoValidator.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Validator\\AuthValidators\\ChangePasswordDtoValidator.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\AuthValidators\\ChangePasswordDtoValidator.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Validator\\AuthValidators\\ChangePasswordDtoValidator.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-07T14:14:49.679Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "UserService.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\UserService.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Services\\UserService.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\UserService.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Services\\UserService.cs",
-              "ViewState": "AgIAAEQAAAAAAAAAAAAowE8AAAApAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-04T05:09:46.49Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "AuthController.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\AuthController.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.API\\Controllers\\AuthController.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\AuthController.cs",
-              "RelativeToolTip": "TheALMAProject.API\\Controllers\\AuthController.cs",
-              "ViewState": "AgIAAHIAAAAAAAAAAAAkwHIAAAAkAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-07T14:11:05.521Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\appsettings.json",
-              "RelativeDocumentMoniker": "TheALMAProject.API\\appsettings.json",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\appsettings.json",
-              "RelativeToolTip": "TheALMAProject.API\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAlAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2026-05-07T13:21:39.444Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "20260507130730_AddOAuthFields.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\Migrations\\20260507130730_AddOAuthFields.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Infrastructure\\Migrations\\20260507130730_AddOAuthFields.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\Migrations\\20260507130730_AddOAuthFields.cs",
-              "RelativeToolTip": "TheALMAProject.Infrastructure\\Migrations\\20260507130730_AddOAuthFields.cs",
-              "ViewState": "AgIAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-07T13:07:30.285Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "ExceptionMiddleware.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Middleware\\ExceptionMiddleware.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.API\\Middleware\\ExceptionMiddleware.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Middleware\\ExceptionMiddleware.cs",
-              "RelativeToolTip": "TheALMAProject.API\\Middleware\\ExceptionMiddleware.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAlAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-04T05:09:38.946Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "UpdateUserDtoValidator.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\UserValidators\\UpdateUserDtoValidator.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Validator\\UserValidators\\UpdateUserDtoValidator.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\UserValidators\\UpdateUserDtoValidator.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Validator\\UserValidators\\UpdateUserDtoValidator.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAACEAAABfAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-04T05:03:19.516Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
               "Title": "ServiceExtentions.cs",
               "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
               "RelativeDocumentMoniker": "TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
               "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
               "RelativeToolTip": "TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAA0AAAAdAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-04T05:01:16.783Z"
+              "WhenOpened": "2026-05-09T13:51:38.843Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "CreateUserDtoValidator.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\UserValidators\\CreateUserDtoValidator.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Validator\\UserValidators\\CreateUserDtoValidator.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Validator\\UserValidators\\CreateUserDtoValidator.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Validator\\UserValidators\\CreateUserDtoValidator.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAABKAAAAAAAAAA==",
+              "DocumentIndex": 3,
+              "Title": "OrderService.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\OrderService.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.Application\\Services\\OrderService.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\OrderService.cs",
+              "RelativeToolTip": "TheALMAProject.Application\\Services\\OrderService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-04T05:03:07.223Z"
+              "WhenOpened": "2026-05-09T13:47:10.457Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "UserController.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\UserController.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.API\\Controllers\\UserController.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\UserController.cs",
-              "RelativeToolTip": "TheALMAProject.API\\Controllers\\UserController.cs",
-              "ViewState": "AgIAABcAAAAAAAAAAAAYwCwAAAAAAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "IOrderService.cs",
+              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Interfaces\\IOrderService.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.Application\\Interfaces\\IOrderService.cs",
+              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Interfaces\\IOrderService.cs",
+              "RelativeToolTip": "TheALMAProject.Application\\Interfaces\\IOrderService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-04T04:26:19.448Z"
+              "WhenOpened": "2026-05-09T13:46:56.528Z",
+              "EditorCaption": ""
             }
           ]
         },

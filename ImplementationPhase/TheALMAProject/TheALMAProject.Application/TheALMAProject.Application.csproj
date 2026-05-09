@@ -21,4 +21,9 @@
     <ProjectReference Include="..\TheALMAProject.Infrastructure\TheALMAProject.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Validator\CartValidators\" />
+    <Folder Include="Validator\OrderValidators\" />
+  </ItemGroup>
+
 </Project>
