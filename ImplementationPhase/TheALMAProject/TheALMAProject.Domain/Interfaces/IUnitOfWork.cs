@@ -13,6 +13,8 @@ namespace TheALMAProject.Domain.Interfaces
         IStoreProductRepository StoreProductRepo { get; }
         IOrderRepository OrderRepo { get; }
         ICartRepository CartRepo { get; }
+        IUserDesignRepository UserDesignRepo { get; }
+        IReviewRepository ReviewRepo { get; }
         Task<int> SaveChangesAsync();
     }
 }

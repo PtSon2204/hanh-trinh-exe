@@ -23,8 +23,10 @@ namespace TheALMAProject.Infrastructure.Data
         public IOrderRepository OrderRepo {  get; }
         public ICartRepository CartRepo { get; }
 
-        
-    public UnitOfWork(ApplicationDbContext context)
+        public IUserDesignRepository UserDesignRepo { get; }
+        public IReviewRepository ReviewRepo { get; }
+
+        public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
 
@@ -33,6 +35,8 @@ namespace TheALMAProject.Infrastructure.Data
             StoreProductRepo = new StoreProductRepository(_context);
             OrderRepo = new OrderRepository(_context);
             CartRepo = new CartRepository(_context);
+            UserDesignRepo = new UserDesignRepository(_context);
+            ReviewRepo = new ReviewRepository(_context);    
         }
         public async Task<int> SaveChangesAsync()
         {
