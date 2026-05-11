@@ -1,34 +1,26 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\",
+  "WorkspaceRootPath": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\services\\cartservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\services\\cartservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\fpt\\fpt_ky_8\\exe202\\project\\hanh-trinh-exe\\implementationphase\\thealmaproject\\thealmaproject.api\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.api\\controllers\\cartcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\fpt\\fpt_ky_8\\exe202\\project\\hanh-trinh-exe\\implementationphase\\thealmaproject\\thealmaproject.api\\controllers\\cartcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\controllers\\cartcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.domain\\models\\userdesign.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|solutionrelative:thealmaproject.domain\\models\\userdesign.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|d:\\fpt\\fpt_ky_8\\exe202\\project\\hanh-trinh-exe\\implementationphase\\thealmaproject\\thealmaproject.api\\extensions\\serviceextentions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{4D0915FD-14CD-4390-B269-FC2AE8046E5C}|TheALMAProject.API\\TheALMAProject.API.csproj|solutionrelative:thealmaproject.api\\extensions\\serviceextentions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\dtos\\cartdtos\\addtocartdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\dtos\\cartdtos\\addtocartdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\fpt\\fpt_ky_8\\exe202\\project\\hanh-trinh-exe\\implementationphase\\thealmaproject\\thealmaproject.application\\services\\orderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\services\\orderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.application\\interfaces\\icartservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\interfaces\\icartservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{C6BC7963-7C93-40E2-B980-7E533F11B40B}|TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.infrastructure\\repositories\\cartrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{C6BC7963-7C93-40E2-B980-7E533F11B40B}|TheALMAProject.Infrastructure\\TheALMAProject.Infrastructure.csproj|solutionrelative:thealmaproject.infrastructure\\repositories\\cartrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|d:\\semester 8\\exe201\\implementationphase\\thealmaproject\\thealmaproject.domain\\interfaces\\icartrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{04091E2E-70B4-4E29-9B9B-12114FF23958}|TheALMAProject.Domain\\TheALMAProject.Domain.csproj|solutionrelative:thealmaproject.domain\\interfaces\\icartrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|d:\\fpt\\fpt_ky_8\\exe202\\project\\hanh-trinh-exe\\implementationphase\\thealmaproject\\thealmaproject.application\\interfaces\\iorderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B72ACBEC-5EE6-4CBA-880B-6DF3945D4F3E}|TheALMAProject.Application\\TheALMAProject.Application.csproj|solutionrelative:thealmaproject.application\\interfaces\\iorderservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -38,99 +30,72 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 2,
           "Children": [
             {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "CartService.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\CartService.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Services\\CartService.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\CartService.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Services\\CartService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAqAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T14:07:24.961Z",
-              "IsPinned": true,
-              "EditorCaption": ""
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{0ad07096-bba9-4900-a651-0598d26f6d24}"
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "CartController.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\CartController.cs",
+              "DocumentMoniker": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\CartController.cs",
               "RelativeDocumentMoniker": "TheALMAProject.API\\Controllers\\CartController.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\CartController.cs",
+              "ToolTip": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\CartController.cs",
               "RelativeToolTip": "TheALMAProject.API\\Controllers\\CartController.cs",
-              "ViewState": "AgIAAAgAAAAAAAAAAAAAACEAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAxwBIAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T14:48:30.808Z",
+              "WhenOpened": "2026-05-09T14:03:51.594Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "OrderController.cs",
+              "DocumentMoniker": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\OrderController.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.API\\Controllers\\OrderController.cs",
+              "ToolTip": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Controllers\\OrderController.cs",
+              "RelativeToolTip": "TheALMAProject.API\\Controllers\\OrderController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-09T14:02:30.074Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 2,
-              "Title": "UserDesign.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Models\\UserDesign.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Domain\\Models\\UserDesign.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Models\\UserDesign.cs",
-              "RelativeToolTip": "TheALMAProject.Domain\\Models\\UserDesign.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAArAAAAAAAAAA==",
+              "Title": "ServiceExtentions.cs",
+              "DocumentMoniker": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
+              "ToolTip": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
+              "RelativeToolTip": "TheALMAProject.API\\Extensions\\ServiceExtentions.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAaAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T14:34:29.535Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "ICartRepository.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Interfaces\\ICartRepository.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Domain\\Interfaces\\ICartRepository.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Domain\\Interfaces\\ICartRepository.cs",
-              "RelativeToolTip": "TheALMAProject.Domain\\Interfaces\\ICartRepository.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAA1AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T14:11:20.073Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "ICartService.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Interfaces\\ICartService.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\Interfaces\\ICartService.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Interfaces\\ICartService.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\Interfaces\\ICartService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAABEAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T14:06:38.903Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-09T13:51:38.843Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 3,
-              "Title": "AddToCartDto.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\DTOs\\CartDtos\\AddToCartDto.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Application\\DTOs\\CartDtos\\AddToCartDto.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\DTOs\\CartDtos\\AddToCartDto.cs",
-              "RelativeToolTip": "TheALMAProject.Application\\DTOs\\CartDtos\\AddToCartDto.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAApAAAAAAAAAA==",
+              "Title": "OrderService.cs",
+              "DocumentMoniker": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\OrderService.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.Application\\Services\\OrderService.cs",
+              "ToolTip": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Services\\OrderService.cs",
+              "RelativeToolTip": "TheALMAProject.Application\\Services\\OrderService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T14:05:37.507Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-09T13:47:10.457Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
-              "Title": "CartRepository.cs",
-              "DocumentMoniker": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\Repositories\\CartRepository.cs",
-              "RelativeDocumentMoniker": "TheALMAProject.Infrastructure\\Repositories\\CartRepository.cs",
-              "ToolTip": "D:\\Semester 8\\EXE201\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Infrastructure\\Repositories\\CartRepository.cs",
-              "RelativeToolTip": "TheALMAProject.Infrastructure\\Repositories\\CartRepository.cs",
-              "ViewState": "AgIAABUAAAAAAAAAAAA+wCcAAAATAAAAAAAAAA==",
+              "DocumentIndex": 4,
+              "Title": "IOrderService.cs",
+              "DocumentMoniker": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Interfaces\\IOrderService.cs",
+              "RelativeDocumentMoniker": "TheALMAProject.Application\\Interfaces\\IOrderService.cs",
+              "ToolTip": "D:\\FPT\\FPT_Ky_8\\EXE202\\Project\\hanh-trinh-exe\\ImplementationPhase\\TheALMAProject\\TheALMAProject.Application\\Interfaces\\IOrderService.cs",
+              "RelativeToolTip": "TheALMAProject.Application\\Interfaces\\IOrderService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAASAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-08T13:59:04.578Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-05-09T13:46:56.528Z"
             }
           ]
         },
