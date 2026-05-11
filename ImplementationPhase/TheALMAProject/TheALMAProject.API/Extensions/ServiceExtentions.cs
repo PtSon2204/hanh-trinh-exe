@@ -20,6 +20,7 @@ namespace TheALMAProject.API.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<ICartService, CartService>();
+            services.AddScoped<IProductService, ProductService>();
 
             //Đăng kí fluentValidation
             services.AddFluentValidationAutoValidation();

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Domain.Queries;
@@ -18,8 +18,14 @@ namespace TheALMAProject.Infrastructure.Repositories
 
         public async Task<PagedResult<StoreProduct>> GetStoreProducts(StoreProductQuery query)
         {
-            var products = _context.StoreProducts.AsNoTracking().AsQueryable();
+            var products = _context.StoreProducts
+                .Include(x => x.BaseProduct)
+                .Include(x => x.University)
+                .Include(x => x.Reviews)
+                .AsNoTracking()
+                .AsQueryable();
 
+            // Filter theo tên SP
             if (!string.IsNullOrWhiteSpace(query.Name))
             {
                 products = products.Where(x => x.Name.Contains(query.Name));
@@ -45,6 +51,42 @@ namespace TheALMAProject.Infrastructure.Repositories
                 products = products.Where(x => x.IsCustomizable == query.IsCustomizable.Value);
             }
 
+            // UC-08: Filter theo Category (kiểu dáng) từ BaseProduct
+            if (!string.IsNullOrWhiteSpace(query.Category))
+            {
+                products = products.Where(x => x.BaseProduct != null && x.BaseProduct.Category == query.Category);
+            }
+
+            // UC-08: Filter theo Material (chất liệu) từ BaseProduct
+            if (!string.IsNullOrWhiteSpace(query.Material))
+            {
+                products = products.Where(x => x.BaseProduct != null && x.BaseProduct.Material.Contains(query.Material));
+            }
+
+            // UC-08: Filter khoảng giá
+            if (query.MinPrice.HasValue)
+            {
+                products = products.Where(x => x.Price >= query.MinPrice.Value);
+            }
+
+            if (query.MaxPrice.HasValue)
+            {
+                products = products.Where(x => x.Price <= query.MaxPrice.Value);
+            }
+
+            // UC-08: Sorting
+            products = query.SortBy?.ToLower() switch
+            {
+                "price" => query.SortDescending
+                    ? products.OrderByDescending(x => x.Price)
+                    : products.OrderBy(x => x.Price),
+                "name" => query.SortDescending
+                    ? products.OrderByDescending(x => x.Name)
+                    : products.OrderBy(x => x.Name),
+                "newest" => products.OrderByDescending(x => x.ProductId),
+                _ => products.OrderByDescending(x => x.ProductId) // mặc định: mới nhất
+            };
+
             var totalRecords = await products.CountAsync();
             var data = await products
                 .Skip((query.PageNumber - 1) * query.PageSize)
@@ -64,6 +106,40 @@ namespace TheALMAProject.Infrastructure.Repositories
         public async Task<StoreProduct?> GetById(int id)
         {
             return await _context.StoreProducts.FindAsync(id);
+        }
+
+        // UC-09: Lấy chi tiết SP kèm BaseProduct, University, Reviews → User
+        public async Task<StoreProduct?> GetProductDetailById(int id)
+        {
+            return await _context.StoreProducts
+                .Include(x => x.BaseProduct)
+                .Include(x => x.University)
+                .Include(x => x.Reviews)
+                    .ThenInclude(r => r.User)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.ProductId == id);
+        }
+
+        // UC-09: Lấy SP liên quan (cùng BaseProduct hoặc University, loại trừ SP hiện tại)
+        public async Task<List<StoreProduct>> GetRelatedProducts(int productId, int count)
+        {
+            var product = await _context.StoreProducts
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.ProductId == productId);
+
+            if (product == null) return new List<StoreProduct>();
+
+            return await _context.StoreProducts
+                .Include(x => x.BaseProduct)
+                .Include(x => x.University)
+                .Include(x => x.Reviews)
+                .AsNoTracking()
+                .Where(x => x.ProductId != productId
+                    && x.IsActive
+                    && (x.BaseProductId == product.BaseProductId || x.UniversityId == product.UniversityId))
+                .OrderByDescending(x => x.ProductId)
+                .Take(count)
+                .ToListAsync();
         }
 
         public async Task<StoreProduct?> GetStoreProductByName(string name)

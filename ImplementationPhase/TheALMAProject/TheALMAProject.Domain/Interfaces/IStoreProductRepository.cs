@@ -1,4 +1,4 @@
-﻿using TheALMAProject.Domain.Common;
+using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Queries;
 using TheALMAProject.Infrastructure.Models;
 
@@ -11,6 +11,12 @@ namespace TheALMAProject.Domain.Interfaces
         Task<StoreProduct?> GetById(int id);
 
         Task<StoreProduct?> GetStoreProductByName(string name);
+
+        // UC-09: Lấy chi tiết SP kèm BaseProduct, University, Reviews
+        Task<StoreProduct?> GetProductDetailById(int id);
+
+        // UC-09: Lấy sản phẩm liên quan (cùng BaseProduct hoặc University)
+        Task<List<StoreProduct>> GetRelatedProducts(int productId, int count);
 
         Task CreateStoreProduct(StoreProduct storeProduct);
 
