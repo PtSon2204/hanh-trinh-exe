@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using TheALMAProject.Domain.Models;
 using TheALMAProject.Infrastructure.Models;
 
 namespace TheALMAProject.Infrastructure.Data;
@@ -42,6 +43,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserDesign> UserDesigns { get; set; }
            
     public DbSet<Voucher> Vouchers { get; set; }
+    public DbSet<Invoice> Invoices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -332,6 +334,70 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.MaxDiscount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.MinOrderAmount).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.StartDate).HasColumnType("datetime");
+        });
+
+        modelBuilder.Entity<Invoice>(entity =>
+        {
+            entity.HasKey(e => e.InvoiceId).HasName("PK__Invoices");
+
+            entity.HasIndex(e => e.OrderId, "UQ__Invoices__OrderId").IsUnique();
+            entity.HasIndex(e => e.InvoiceNumber, "UQ__Invoices__InvoiceNumber").IsUnique();
+
+            entity.Property(e => e.InvoiceNumber).HasMaxLength(50);
+            entity.Property(e => e.BillingName).HasMaxLength(255);
+            entity.Property(e => e.BillingAddress).HasMaxLength(500);
+            entity.Property(e => e.BuyerPhone).HasMaxLength(20);
+            entity.Property(e => e.BuyerEmail).HasMaxLength(255);
+
+            entity.Property(e => e.CurrencyCode)
+                .HasMaxLength(3)
+                .IsFixedLength() 
+                .HasDefaultValue("VND");
+
+            entity.Property(e => e.SubTotal).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.VoucherDiscountAmount)
+                .HasColumnType("decimal(18, 2)")
+                .HasDefaultValue(0m);
+            entity.Property(e => e.ShippingFee)
+                .HasColumnType("decimal(18, 2)")
+                .HasDefaultValue(0m);
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
+
+            entity.Property(e => e.InvoiceStatus)
+                .HasMaxLength(50)
+                .HasDefaultValue("Issued");
+
+            entity.Property(e => e.PdfUrl).HasMaxLength(500);
+
+            entity.Property(e => e.IssueDate)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .HasColumnType("datetime2");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .HasColumnType("datetime2");
+
+            // Relationship (1-1 với Order)
+            entity.HasOne(d => d.Order).WithOne(p => p.Invoice)
+                .HasForeignKey<Invoice>(d => d.OrderId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK__Invoices__OrderId");
+
+            // Check Constraints
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Invoices_Amounts",
+                    "[SubTotal] >= 0 AND [VoucherDiscountAmount] >= 0 AND [ShippingFee] >= 0 AND [TotalAmount] >= 0 AND [VoucherDiscountAmount] <= [SubTotal]");
+
+                t.HasCheckConstraint("CK_Invoices_TotalAmount",
+                    "[TotalAmount] = [SubTotal] - [VoucherDiscountAmount] + [ShippingFee]");
+
+                t.HasCheckConstraint("CK_Invoices_Status",
+                    "[InvoiceStatus] IN ('Draft', 'Issued', 'Cancelled')");
+
+                t.HasCheckConstraint("CK_Invoices_Currency",
+                    "[CurrencyCode] IN ('VND', 'USD')");
+            });
         });
     }
 }

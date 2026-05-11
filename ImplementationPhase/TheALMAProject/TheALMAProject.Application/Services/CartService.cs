@@ -21,34 +21,46 @@ namespace TheALMAProject.Application.Services
         public async Task<bool> AddToCartAsync(int userId, AddToCartDto request)
         {
             var cart = await _unitOfWork.CartRepo.GetCartByUserIdAsync(userId);
-
             if (cart == null)
             {
                 cart = new Cart { UserId = userId };
                 await _unitOfWork.CartRepo.AddCartAsync(cart);
-
                 await _unitOfWork.SaveChangesAsync();
             }
 
             decimal unitPrice = 0;
-            if (request.ProductId.HasValue)
+
+            if (request.ProductId.HasValue) //sản phẩm có sẵn
             {
                 var product = await _unitOfWork.StoreProductRepo.GetById(request.ProductId.Value);
-                if(product == null) return false;
-                unitPrice = product.Price;
-            }
-            else if (request.DesignId.HasValue)
-            {
+                if (product == null) return false;
 
+                unitPrice = product.Price;
+            } 
+            else if (request.DesignId.HasValue) //sản phẩm user design
+            {
+                var userDesign = await _unitOfWork.UserDesignRepo.GetByIdWithDetailsAsync(request.DesignId.Value);
+                if (userDesign == null) return false;
+
+                var baseProduct = await _unitOfWork.BaseProductRepo.GetById(userDesign.BaseProductId);
+                if (baseProduct == null) return false;
+
+                decimal totalIconPrice = 0;
+                if (userDesign.Icons != null && userDesign.Icons.Any())
+                {
+                    totalIconPrice = userDesign.Icons.Sum(icon => icon.PriceAddon);
+                }
+
+                unitPrice = baseProduct.BasePrice + totalIconPrice;
             }
             else
             {
                 return false;
             }
 
-            var existingItem = cart.CartItems.FirstOrDefault(i => 
+            var existingItem = cart.CartItems.FirstOrDefault(i =>
                                i.ProductId == request.ProductId &&
-                               i.DesignId == request.DesignId && 
+                               i.DesignId == request.DesignId &&
                                i.Size == request.Size);
 
             if (existingItem != null)
@@ -74,3 +86,4 @@ namespace TheALMAProject.Application.Services
         }
     }
 }
+

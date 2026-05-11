@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TheALMAProject.Domain.Models;
 
 namespace TheALMAProject.Infrastructure.Models;
 
@@ -42,4 +43,5 @@ public partial class Order
     public virtual User User { get; set; } = null!;
 
     public virtual Voucher? Voucher { get; set; }
+    public virtual Invoice? Invoice { get; set; }
 }
