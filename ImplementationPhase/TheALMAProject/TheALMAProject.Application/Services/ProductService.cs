@@ -148,5 +148,27 @@ namespace TheALMAProject.Application.Services
 
             return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
         }
+
+        /// <summary>
+        /// UC-10: Tìm kiếm sản phẩm theo từ khoá (AJAX real-time)
+        /// Trả về danh sách gọn nhẹ cho search overlay
+        /// </summary>
+        public async Task<List<SearchProductDto>> SearchProductsAsync(string keyword, int maxResults = 10)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+                return new List<SearchProductDto>();
+
+            var products = await _unitOfWork.StoreProductRepo.SearchProductsAsync(keyword.Trim(), maxResults);
+
+            return products.Select(p => new SearchProductDto
+            {
+                ProductId = p.ProductId,
+                Name = p.Name,
+                ImageUrl = p.ImageUrl,
+                Price = p.Price,
+                Category = p.BaseProduct?.Category,
+                UniversityName = p.University?.Name
+            }).ToList();
+        }
     }
 }

@@ -1,4 +1,4 @@
-﻿using TheALMAProject.Domain.Interfaces;
+using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Infrastructure.Repositories;
 
 namespace TheALMAProject.Infrastructure.Data
@@ -25,6 +25,8 @@ namespace TheALMAProject.Infrastructure.Data
         public IFontRepository FontRepo { get; }
         public IVoucherRepository VoucherRepo { get; }
         public IUniversityRepository UniversityRepo { get; }
+        public INotificationRepository NotificationRepo { get; }
+        public IAddressRepository AddressRepo { get; }
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
@@ -41,6 +43,8 @@ namespace TheALMAProject.Infrastructure.Data
             FontRepo = new FontRepository(_context);
             VoucherRepo = new VoucherRepository(_context);
             UniversityRepo = new UniversityRepository(_context);
+            NotificationRepo = new NotificationRepository(_context);
+            AddressRepo = new AddressRepository(_context);
         }
         public async Task<int> SaveChangesAsync()
         {

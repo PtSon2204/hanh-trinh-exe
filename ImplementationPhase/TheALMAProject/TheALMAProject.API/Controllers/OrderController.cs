@@ -36,6 +36,7 @@ namespace TheALMAProject.API.Controllers
         [HttpGet("{orderId}")]
         public async Task<IActionResult> GetOrderDetail(int orderId)
         {
+            
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))

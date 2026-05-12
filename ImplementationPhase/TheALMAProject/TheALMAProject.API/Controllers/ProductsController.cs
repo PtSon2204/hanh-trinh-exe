@@ -53,5 +53,20 @@ namespace TheALMAProject.API.Controllers
             var result = await _productService.GetRelatedProductsAsync(id, count);
             return Ok(result);
         }
+
+        /// <summary>
+        /// UC-10: Tìm kiếm sản phẩm theo từ khoá (AJAX real-time)
+        /// </summary>
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchProducts([FromQuery] string keyword, [FromQuery] int maxResults = 10)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                return Ok(new List<object>());
+            }
+
+            var result = await _productService.SearchProductsAsync(keyword, maxResults);
+            return Ok(result);
+        }
     }
 }

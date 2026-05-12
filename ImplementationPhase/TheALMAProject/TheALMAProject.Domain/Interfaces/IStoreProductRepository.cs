@@ -23,5 +23,8 @@ namespace TheALMAProject.Domain.Interfaces
         void UpdateStoreProduct(StoreProduct storeProduct);
 
         void DeleteStoreProduct(StoreProduct storeProduct);
+
+        // UC-10: Tìm kiếm sản phẩm theo từ khoá (AJAX real-time)
+        Task<List<StoreProduct>> SearchProductsAsync(string keyword, int maxResults);
     }
 }
