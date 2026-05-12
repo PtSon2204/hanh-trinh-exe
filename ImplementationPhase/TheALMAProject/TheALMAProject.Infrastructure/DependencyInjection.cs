@@ -26,6 +26,8 @@ namespace TheALMAProject.Infrastructure
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+            services.AddScoped<IUserDesignRepository, UserDesignRepository>();
+            services.AddScoped<IFontRepository, FontRepository>();
           
             return services;
         }

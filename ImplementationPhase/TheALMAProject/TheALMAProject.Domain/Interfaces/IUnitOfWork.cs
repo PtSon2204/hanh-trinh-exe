@@ -17,6 +17,7 @@ namespace TheALMAProject.Domain.Interfaces
         IUserDesignRepository UserDesignRepo { get; }
         IReviewRepository ReviewRepo { get; }
         IInvoiceRepository InvoiceRepo { get; }
+        IFontRepository FontRepo { get; }
         Task<int> SaveChangesAsync();
     }
 }
