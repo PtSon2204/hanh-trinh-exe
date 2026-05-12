@@ -25,6 +25,8 @@ namespace TheALMAProject.Infrastructure
             services.AddScoped<IFontRepository, FontRepository>();
             services.AddScoped<IVoucherRepository, VoucherRepository>();
             services.AddScoped<IUniversityRepository, UniversityRepository>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<IAddressRepository, AddressRepository>();
 
             return services;
         }

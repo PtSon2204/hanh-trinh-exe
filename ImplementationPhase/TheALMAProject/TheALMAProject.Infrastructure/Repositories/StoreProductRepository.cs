@@ -161,5 +161,24 @@ namespace TheALMAProject.Infrastructure.Repositories
         {
             _context.Remove(storeProduct);
         }
+
+        // UC-10: Tìm kiếm sản phẩm theo từ khoá
+        public async Task<List<StoreProduct>> SearchProductsAsync(string keyword, int maxResults)
+        {
+            var lowerKeyword = keyword.ToLower();
+
+            return await _context.StoreProducts
+                .Include(x => x.BaseProduct)
+                .Include(x => x.University)
+                .AsNoTracking()
+                .Where(x => x.IsActive
+                    && (x.Name.ToLower().Contains(lowerKeyword)
+                        || (x.Description != null && x.Description.ToLower().Contains(lowerKeyword))
+                        || (x.BaseProduct != null && x.BaseProduct.Category.ToLower().Contains(lowerKeyword))
+                        || (x.University != null && x.University.Name.ToLower().Contains(lowerKeyword))))
+                .OrderByDescending(x => x.ProductId)
+                .Take(maxResults)
+                .ToListAsync();
+        }
     }
 }

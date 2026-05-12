@@ -123,6 +123,9 @@ namespace TheALMAProject.API
 
             app.UseHttpsRedirection();
 
+            // Phục vụ file tĩnh (avatar, images) từ wwwroot
+            app.UseStaticFiles();
+
             // =====================================================
             // QUAN TRỌNG: Thứ tự middleware
             // UseAuthentication PHẢI trước UseAuthorization

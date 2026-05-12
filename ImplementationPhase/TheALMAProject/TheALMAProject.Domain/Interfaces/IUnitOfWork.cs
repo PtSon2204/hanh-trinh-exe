@@ -1,4 +1,4 @@
-﻿namespace TheALMAProject.Domain.Interfaces
+namespace TheALMAProject.Domain.Interfaces
 {
     public interface IUnitOfWork
     {
@@ -14,6 +14,8 @@
         IFontRepository FontRepo { get; }
         IVoucherRepository VoucherRepo { get; }
         IUniversityRepository UniversityRepo { get; }
+        INotificationRepository NotificationRepo { get; }
+        IAddressRepository AddressRepo { get; }
         Task<int> SaveChangesAsync();
     }
 }

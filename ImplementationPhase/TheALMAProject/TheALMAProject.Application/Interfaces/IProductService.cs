@@ -24,5 +24,10 @@ namespace TheALMAProject.Application.Interfaces
         /// UC-09: Sản phẩm liên quan
         /// </summary>
         Task<List<ProductListItemDto>> GetRelatedProductsAsync(int productId, int count = 4);
+
+        /// <summary>
+        /// UC-10: Tìm kiếm sản phẩm theo từ khoá (AJAX real-time)
+        /// </summary>
+        Task<List<SearchProductDto>> SearchProductsAsync(string keyword, int maxResults = 10);
     }
 }
