@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TheALMAProject.Domain.Models;
 using TheALMAProject.Infrastructure.Models;
 
 
@@ -202,6 +203,111 @@ namespace TheALMAProject.Infrastructure.Data
 
                 await context.Icons.AddRangeAsync(icons);
                 await context.SaveChangesAsync();
+            }
+
+            if (!await context.UserDesigns.AnyAsync())
+            {
+                var customer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Customer");
+                var baseProduct = await context.BaseProducts.FirstOrDefaultAsync();
+
+                if (customer != null && baseProduct != null)
+                {
+                    var userDesigns = new List<UserDesign>
+                    {
+                        new UserDesign
+                        {
+                            UserId = customer.UserId,
+                            BaseProductId = baseProduct.BaseProductId,
+                            CanvasJson = "{\"objects\": []}",
+                            PreviewImageUrl = "https://placehold.co/400x400/png?text=Mock+Design",
+                            DesignName = "My Awesome Design 1",
+                            IsOrdered = false,
+                            CreatedAt = DateTime.Now
+                        },
+                        new UserDesign
+                        {
+                            UserId = customer.UserId,
+                            BaseProductId = baseProduct.BaseProductId,
+                            CanvasJson = "{\"objects\": [{\"type\": \"text\", \"text\": \"FPT Rocks\"}]}",
+                            PreviewImageUrl = "https://placehold.co/400x400/png?text=FPT+Rocks",
+                            DesignName = "FPT Rocks Shirt",
+                            IsOrdered = true,
+                            CreatedAt = DateTime.Now.AddDays(-1)
+                        }
+                    };
+                    await context.UserDesigns.AddRangeAsync(userDesigns);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            if (!await context.Orders.AnyAsync())
+            {
+                var customer = await context.Users.FirstOrDefaultAsync(u => u.Role == "Customer");
+                var orderedDesign = await context.UserDesigns.FirstOrDefaultAsync(d => d.IsOrdered);
+
+                if (customer != null && orderedDesign != null)
+                {
+                    var order = new Order
+                    {
+                        UserId = customer.UserId,
+                        OrderCode = "ORD-" + DateTime.Now.Ticks.ToString().Substring(8),
+                        TotalAmount = 250000,
+                        ShippingFee = 30000,
+                        DiscountAmount = 0,
+                        ShipName = customer.FullName,
+                        ShipPhone = customer.Phone ?? "0988000000",
+                        ShipAddress = "123 FPT Street",
+                        ShipProvince = "Hanoi",
+                        PaymentMethod = "COD",
+                        PaymentStatus = "Pending",
+                        OrderStatus = "Pending",
+                        CreatedAt = DateTime.Now,
+                        OrderItems = new List<OrderItem>
+                        {
+                            new OrderItem
+                            {
+                                DesignId = orderedDesign.DesignId,
+                                Quantity = 1,
+                                UnitPrice = 250000,
+                                Size = "L"
+                            }
+                        }
+                    };
+                    await context.Orders.AddAsync(order);
+                    await context.SaveChangesAsync();
+                }
+            }
+
+            if (!await context.Invoices.AnyAsync())
+            {
+                var order = await context.Orders
+                    .Include(o => o.User)
+                    .OrderBy(o => o.OrderId)
+                    .FirstOrDefaultAsync();
+
+                if (order != null)
+                {
+                    var invoice = new Invoice
+                    {
+                        OrderId = order.OrderId,
+                        InvoiceNumber = $"INV-SEED-{order.OrderId:000000}",
+                        IssueDate = DateTime.UtcNow,
+                        BillingName = order.ShipName,
+                        BillingAddress = order.ShipAddress,
+                        BuyerPhone = order.ShipPhone,
+                        BuyerEmail = order.User.Email,
+                        CurrencyCode = "VND",
+                        SubTotal = order.TotalAmount - order.ShippingFee + order.DiscountAmount,
+                        VoucherDiscountAmount = order.DiscountAmount,
+                        ShippingFee = order.ShippingFee,
+                        TotalAmount = order.TotalAmount,
+                        InvoiceStatus = "Issued",
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await context.Invoices.AddAsync(invoice);
+                    await context.SaveChangesAsync();
+                }
             }
         }
     }

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TheALMAProject.Application.DTOs.InvoiceDtos
+﻿namespace TheALMAProject.Application.DTOs.InvoiceDtos
 {
     public class InvoiceResponseDto
     {
@@ -14,6 +8,7 @@ namespace TheALMAProject.Application.DTOs.InvoiceDtos
         public string BillingAddress { get; set; } = null!;
         public string? BuyerPhone { get; set; }
         public string? BuyerEmail { get; set; }
+        public string CurrencyCode { get; set; } = null!;
 
         public decimal SubTotal { get; set; }
         public decimal VoucherDiscountAmount { get; set; }

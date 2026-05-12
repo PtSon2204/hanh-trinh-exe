@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Domain.Queries;
@@ -26,6 +21,39 @@ namespace TheALMAProject.Infrastructure.Repositories
          .Include(ud => ud.Icons)
          .FirstOrDefaultAsync(ud => ud.DesignId == designId);
         }
+
+        public async Task<PagedResult<UserDesign>> GetAllAsync(PaginationParams paginationParams)
+        {
+            var query = _context.UserDesigns
+                .Include(ud => ud.User)
+                .Include(ud => ud.BaseProduct)
+                .AsQueryable();
+
+            var totalRecords = await query.CountAsync();
+            var data = await query
+                .OrderByDescending(ud => ud.CreatedAt)
+                .Skip((paginationParams.PageNumber - 1) * paginationParams.PageSize)
+                .Take(paginationParams.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<UserDesign>
+            {
+                Data = data,
+                PageNumber = paginationParams.PageNumber,
+                PageSize = paginationParams.PageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)paginationParams.PageSize)
+            };
+        }
+
+        public async Task<UserDesign?> GetByIdWithAdminDetailsAsync(int designId)
+        {
+            return await _context.UserDesigns
+                .Include(ud => ud.User)
+                .Include(ud => ud.BaseProduct)
+                .FirstOrDefaultAsync(ud => ud.DesignId == designId);
+        }
+
         public async Task<PagedResult<UserDesign>> GetMyDesignsAsync(int userId, UserDesignQuery query)
         {
             var designs = _context.UserDesigns
@@ -37,7 +65,7 @@ namespace TheALMAProject.Infrastructure.Repositories
 
             if (!string.IsNullOrWhiteSpace(query.DesignName))
             {
-                designs = designs.Where(ud => ud.DesignName.Contains(query.DesignName));
+                designs = designs.Where(ud => ud.DesignName != null && ud.DesignName.Contains(query.DesignName));
             }
 
             if (query.IsOrdered.HasValue)

@@ -90,5 +90,45 @@ namespace TheALMAProject.Infrastructure.Repositories
                     o.OrderStatus == "Completed" && // CHỈ cho phép review khi đơn đã hoàn thành/giao thành công
                     o.OrderItems.Any(i => i.ProductId == productId)); // Có chứa sản phẩm này trong đơn
         }
+
+        public async Task<PagedResult<Order>> GetAdminOrdersAsync(PaginationParams queryParams)
+        {
+            var query = _context.Orders
+                .Include(o => o.User)
+                .AsQueryable();
+
+            var totalRecords = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((queryParams.PageNumber - 1) * queryParams.PageSize)
+                .Take(queryParams.PageSize)
+                .ToListAsync();
+
+            return new PagedResult<Order>
+            {
+                Data = items,
+                PageNumber = queryParams.PageNumber,
+                PageSize = queryParams.PageSize,
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(totalRecords / (double)queryParams.PageSize)
+            };
+        }
+
+        public async Task<Order?> GetAdminOrderDetailAsync(int orderId)
+        {
+            return await _context.Orders
+                .Include(o => o.User)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.Product)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.Design)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+        }
+
+        public void UpdateOrder(Order order)
+        {
+            _context.Orders.Update(order);
+        }
     }
 }
