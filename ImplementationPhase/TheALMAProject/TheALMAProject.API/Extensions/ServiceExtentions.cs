@@ -24,6 +24,7 @@ namespace TheALMAProject.API.Extensions
             services.AddScoped<IPdfService, PdfService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
             services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IUserDesignService, UserDesignService>();
 
             //Đăng kí fluentValidation
             services.AddFluentValidationAutoValidation();

@@ -28,7 +28,7 @@ namespace TheALMAProject.Infrastructure.Data
         public IUserDesignRepository UserDesignRepo { get; }
         public IReviewRepository ReviewRepo { get; }
         public IInvoiceRepository InvoiceRepo { get; }
-
+        public IFontRepository FontRepo { get; }
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
@@ -42,6 +42,7 @@ namespace TheALMAProject.Infrastructure.Data
             UserDesignRepo = new UserDesignRepository(_context);
             ReviewRepo = new ReviewRepository(_context);   
             InvoiceRepo = new InvoiceRepository(_context);
+            FontRepo = new FontRepository(_context);
         }
         public async Task<int> SaveChangesAsync()
         {
