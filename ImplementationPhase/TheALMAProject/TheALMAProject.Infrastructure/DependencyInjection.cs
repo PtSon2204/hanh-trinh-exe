@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Infrastructure.Data;
@@ -28,7 +23,9 @@ namespace TheALMAProject.Infrastructure
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
             services.AddScoped<IUserDesignRepository, UserDesignRepository>();
             services.AddScoped<IFontRepository, FontRepository>();
-          
+            services.AddScoped<IVoucherRepository, VoucherRepository>();
+            services.AddScoped<IUniversityRepository, UniversityRepository>();
+
             return services;
         }
     }

@@ -12,7 +12,7 @@ using TheALMAProject.Infrastructure.Data;
 namespace TheALMAProject.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260511074323_InitialCreate")]
+    [Migration("20260512081438_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
