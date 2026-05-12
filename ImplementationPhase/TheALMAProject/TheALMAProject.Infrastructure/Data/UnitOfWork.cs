@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using TheALMAProject.Domain.Interfaces;
+﻿using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Infrastructure.Repositories;
 
 namespace TheALMAProject.Infrastructure.Data
@@ -29,6 +23,8 @@ namespace TheALMAProject.Infrastructure.Data
         public IReviewRepository ReviewRepo { get; }
         public IInvoiceRepository InvoiceRepo { get; }
         public IFontRepository FontRepo { get; }
+        public IVoucherRepository VoucherRepo { get; }
+        public IUniversityRepository UniversityRepo { get; }
         public UnitOfWork(ApplicationDbContext context)
         {
             _context = context;
@@ -43,6 +39,8 @@ namespace TheALMAProject.Infrastructure.Data
             ReviewRepo = new ReviewRepository(_context);   
             InvoiceRepo = new InvoiceRepository(_context);
             FontRepo = new FontRepository(_context);
+            VoucherRepo = new VoucherRepository(_context);
+            UniversityRepo = new UniversityRepository(_context);
         }
         public async Task<int> SaveChangesAsync()
         {
