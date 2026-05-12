@@ -27,6 +27,7 @@ namespace TheALMAProject.Infrastructure.Data
 
         public IUserDesignRepository UserDesignRepo { get; }
         public IReviewRepository ReviewRepo { get; }
+        public IInvoiceRepository InvoiceRepo { get; }
 
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -39,7 +40,8 @@ namespace TheALMAProject.Infrastructure.Data
             OrderRepo = new OrderRepository(_context);
             CartRepo = new CartRepository(_context);
             UserDesignRepo = new UserDesignRepository(_context);
-            ReviewRepo = new ReviewRepository(_context);    
+            ReviewRepo = new ReviewRepository(_context);   
+            InvoiceRepo = new InvoiceRepository(_context);
         }
         public async Task<int> SaveChangesAsync()
         {

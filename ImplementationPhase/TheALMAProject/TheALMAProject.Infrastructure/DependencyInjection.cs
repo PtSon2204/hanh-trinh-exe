@@ -25,6 +25,7 @@ namespace TheALMAProject.Infrastructure
             services.AddScoped<IFileStorageService, LocalFileStorageService>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ICartRepository, CartRepository>();
+            services.AddScoped<IInvoiceRepository, InvoiceRepository>();
           
             return services;
         }
