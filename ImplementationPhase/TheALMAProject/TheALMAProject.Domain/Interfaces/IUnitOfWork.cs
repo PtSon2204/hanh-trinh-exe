@@ -11,6 +11,7 @@ namespace TheALMAProject.Domain.Interfaces
         IUserRepository UserRepo { get; }
         IBaseProductRepository BaseProductRepo { get; }
         IStoreProductRepository StoreProductRepo { get; }
+        IIconRepository IconRepo { get; }
         IOrderRepository OrderRepo { get; }
         ICartRepository CartRepo { get; }
         IUserDesignRepository UserDesignRepo { get; }

@@ -19,8 +19,10 @@ namespace TheALMAProject.Infrastructure
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IBaseProductRepository, BaseProductRepository>();
             services.AddScoped<IStoreProductRepository, StoreProductRepository>();
+            services.AddScoped<IIconRepository, IconRepository>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IFileStorageService, LocalFileStorageService>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();

@@ -12,8 +12,8 @@ using TheALMAProject.Infrastructure.Data;
 namespace TheALMAProject.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260511072541_AddTableInvoice")]
-    partial class AddTableInvoice
+    [Migration("20260511074323_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

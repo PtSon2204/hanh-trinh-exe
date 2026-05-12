@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TheALMAProject.Infrastructure.Models;
 
 
@@ -171,6 +167,40 @@ namespace TheALMAProject.Infrastructure.Data
                 };
 
                 await context.StoreProducts.AddRangeAsync(storeProducts);
+                await context.SaveChangesAsync();
+            }
+
+            if (!await context.Icons.AnyAsync())
+            {
+                var icons = new List<Icon>
+                {
+                    new Icon
+                    {
+                        Name = "Premium Print Badge",
+                        ImageUrl = "/images/icons/premium-print-badge.png",
+                        PriceAddon = 15000.00m,
+                        Category = "PrintEffect",
+                        IsActive = true
+                    },
+                    new Icon
+                    {
+                        Name = "Student Favorite Star",
+                        ImageUrl = "/images/icons/student-favorite-star.png",
+                        PriceAddon = 0.00m,
+                        Category = "Sticker",
+                        IsActive = true
+                    },
+                    new Icon
+                    {
+                        Name = "Limited Edition Crown",
+                        ImageUrl = "/images/icons/limited-edition-crown.png",
+                        PriceAddon = 25000.00m,
+                        Category = "Badge",
+                        IsActive = false
+                    }
+                };
+
+                await context.Icons.AddRangeAsync(icons);
                 await context.SaveChangesAsync();
             }
         }
