@@ -23,6 +23,7 @@ namespace TheALMAProject.Infrastructure
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ICartRepository, CartRepository>();
+            services.AddScoped<IInvoiceRepository, InvoiceRepository>();
           
             return services;
         }

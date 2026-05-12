@@ -79,5 +79,16 @@ namespace TheALMAProject.Infrastructure.Repositories
                     .ThenInclude(i => i.Design)  
                 .FirstOrDefaultAsync(o => o.OrderId == orderId && o.UserId == userId);
         }
+
+        public async Task<bool> IsProductPurchasedAndCompletedAsync(int userId, int productId, int orderId)
+        {
+            return await _context.Orders
+                .Include(o => o.OrderItems)
+                .AnyAsync(o =>
+                    o.OrderId == orderId &&
+                    o.UserId == userId &&
+                    o.OrderStatus == "Completed" && // CHỈ cho phép review khi đơn đã hoàn thành/giao thành công
+                    o.OrderItems.Any(i => i.ProductId == productId)); // Có chứa sản phẩm này trong đơn
+        }
     }
 }
