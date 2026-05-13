@@ -92,16 +92,16 @@ namespace TheALMAProject.Application.Services
                     });
 
                     table.Cell().Text("Tiền hàng");
-                    table.Cell().AlignRight().Text($"{data.SubTotal:N0} {data.InvoiceNumber}");
+                    table.Cell().AlignRight().Text($"{data.SubTotal:N0} {data.CurrencyCode}");
 
                     table.Cell().Text("Phí vận chuyển");
-                    table.Cell().AlignRight().Text($"{data.ShippingFee:N0} {data.InvoiceNumber}");
+                    table.Cell().AlignRight().Text($"{data.ShippingFee:N0} {data.CurrencyCode}");
 
                     table.Cell().Text("Giảm giá");
-                    table.Cell().AlignRight().Text($"-{data.VoucherDiscountAmount:N0} {data.InvoiceNumber}");
+                    table.Cell().AlignRight().Text($"-{data.VoucherDiscountAmount:N0} {data.CurrencyCode}");
 
                     table.Cell().PaddingTop(10).Text("Tổng cộng").SemiBold();
-                    table.Cell().PaddingTop(10).AlignRight().Text($"{data.TotalAmount:N0} {data.InvoiceNumber}").SemiBold();
+                    table.Cell().PaddingTop(10).AlignRight().Text($"{data.TotalAmount:N0} {data.CurrencyCode}").SemiBold();
                 });
             });
         }

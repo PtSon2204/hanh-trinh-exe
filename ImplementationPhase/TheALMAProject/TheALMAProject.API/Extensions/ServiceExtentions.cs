@@ -23,12 +23,15 @@ namespace TheALMAProject.API.Extensions
             services.AddScoped<IReviewService, ReviewService>();
             services.AddScoped<IPdfService, PdfService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
+            services.AddScoped<IAdminInvoiceService, AdminInvoiceService>();
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<IUserDesignService, UserDesignService>();
             services.AddScoped<IAdminVoucherService, AdminVoucherService>();
             services.AddScoped<IAdminUniversityService, AdminUniversityService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<IAdminOrderService, AdminOrderService>();
+            services.AddScoped<IAdminUserDesignService, AdminUserDesignService>();
             //Đăng kí fluentValidation
             services.AddFluentValidationAutoValidation();
             services.AddValidatorsFromAssemblyContaining<CreateUserDtoValidator>();
