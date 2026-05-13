@@ -9,6 +9,7 @@ using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Domain.Queries;
+using TheALMAProject.Infrastructure.Models;
 
 namespace TheALMAProject.Application.Services
 {
@@ -87,6 +88,56 @@ namespace TheALMAProject.Application.Services
             }
 
             return await _unitOfWork.SaveChangesAsync() > 0;
+        }
+
+        public async Task<int?> CreateDesignAsync(int userId, CreateUserDesignDto dto)
+        {
+            var baseProduct = await _unitOfWork.BaseProductRepo.GetById(dto.BaseProductId);
+            if (baseProduct == null) return null;
+
+            var newDesign = new UserDesign
+            {
+                UserId = userId,
+                BaseProductId = dto.BaseProductId,
+                CanvasJson = dto.CanvasJson,
+                PreviewImageUrl = dto.PreviewImageUrl,
+                PrintFileUrl = dto.PrintFileUrl,
+                DesignName = string.IsNullOrWhiteSpace(dto.DesignName) ? "Bản thiết kế mới" : dto.DesignName,
+                IsOrdered = false, 
+                CreatedAt = DateTime.UtcNow
+            };
+
+
+            if (dto.IconIds != null && dto.IconIds.Any())
+            {
+                var distinctIconIds = dto.IconIds.Distinct().ToList();
+                foreach (var id in distinctIconIds)
+                {
+                    var icon = await _unitOfWork.IconRepo.GetById(id);
+                    if (icon != null)
+                    {
+                        newDesign.Icons.Add(icon); 
+                    }
+                }
+            }
+
+            if (dto.FontIds != null && dto.FontIds.Any())
+            {
+                var distinctFontIds = dto.FontIds.Distinct().ToList();
+                foreach (var id in distinctFontIds)
+                {
+                    var font = await _unitOfWork.FontRepo.GetByIdAsync(id);
+                    if (font != null)
+                    {
+                        newDesign.Fonts.Add(font);
+                    }
+                }
+            }
+
+            await _unitOfWork.UserDesignRepo.AddAsync(newDesign);
+            var saved = await _unitOfWork.SaveChangesAsync() > 0;
+
+            return saved ? newDesign.DesignId : null;
         }
     }
 }
