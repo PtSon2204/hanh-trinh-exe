@@ -76,5 +76,29 @@ namespace TheALMAProject.API.Controllers
 
             return Ok(result);
         }
+
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CreateDesign([FromBody] CreateUserDesignDto request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))
+            {
+                return Unauthorized(new { message = "Không xác định được danh tính. Vui lòng đăng nhập lại." });
+            }
+
+            var newDesignId = await _designService.CreateDesignAsync(currentUserId, request);
+
+            if (newDesignId == null)
+            {
+                return BadRequest("Tạo bản thiết kế thất bại. Vui lòng kiểm tra lại thông tin phôi áo.");
+            }
+
+            return Ok(new
+            {
+                Message = "Đã lưu bản thiết kế thành công!",
+                DesignId = newDesignId
+            });
+        }
     }
 }

@@ -116,5 +116,9 @@ namespace TheALMAProject.Infrastructure.Repositories
         {
             _context.UserDesigns.Remove(design);
         }
+        public async Task AddAsync(UserDesign design)
+        {
+            await _context.UserDesigns.AddAsync(design);
+        }
     }
 }

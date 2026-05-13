@@ -15,5 +15,6 @@ namespace TheALMAProject.Application.Interfaces
         Task<PagedResult<UserDesignResponseDto>> GetMyDesignsAsync(int userId, UserDesignQuery query);
         Task<string> DeleteDesignAsync(int userId, int designId);
         Task<UserDesignResponseDto?> GetSharedDesignAsync(int designId);
+        Task<int?> CreateDesignAsync(int userId, CreateUserDesignDto dto);
     }
 }

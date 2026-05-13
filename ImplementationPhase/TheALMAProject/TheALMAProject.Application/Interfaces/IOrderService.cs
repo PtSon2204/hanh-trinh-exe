@@ -13,5 +13,6 @@ namespace TheALMAProject.Application.Interfaces
     {
         Task<PagedResult<OrderResponseDto>> GetUserOrdersAsync(int userId, OrderQuery query);
         Task<OrderDetailResponseDto?> GetOrderDetailAsync(int userId, int orderId);
+        Task<CheckoutResponseDto> CheckoutAsync(int userId, CheckoutRequestDto request);
     }
 }

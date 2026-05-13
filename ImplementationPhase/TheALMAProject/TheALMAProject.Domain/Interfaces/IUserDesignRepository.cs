@@ -14,5 +14,6 @@ namespace TheALMAProject.Domain.Interfaces
         Task<UserDesign?> GetSharedDesignByIdAsync(int designId);
         Task<UserDesign?> GetByIdForUpdateAsync(int designId, int userId);
         void Delete(UserDesign design);
+        Task AddAsync(UserDesign design);
     }
 }

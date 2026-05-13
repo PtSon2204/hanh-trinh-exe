@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TheALMAProject.Application.DTOs.OrderDtos;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Queries;
 
@@ -52,6 +53,27 @@ namespace TheALMAProject.API.Controllers
             }
 
             return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost("checkout")]
+        public async Task<IActionResult> Checkout([FromBody] CheckoutRequestDto request)
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdString) || !int.TryParse(userIdString, out int currentUserId))
+            {
+                return Unauthorized(new { message = "Không xác định được danh tính. Vui lòng đăng nhập lại." });
+            }
+
+            var response = await _orderService.CheckoutAsync(currentUserId, request);
+
+            if (!response.IsSuccess)
+            {
+                return BadRequest(new { message = response.Message });
+            }
+
+            return Ok(response);
         }
     }
 }

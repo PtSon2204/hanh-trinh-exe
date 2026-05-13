@@ -130,5 +130,13 @@ namespace TheALMAProject.Infrastructure.Repositories
         {
             _context.Orders.Update(order);
         }
+        public async Task AddAsync(Order order)
+        {
+            await _context.Orders.AddAsync(order);
+        }
+        public async Task<Order?> GetByOrderCodeAsync(string orderCode)
+        {
+            return await _context.Orders.FirstOrDefaultAsync(o => o.OrderCode == orderCode);
+        }
     }
 }

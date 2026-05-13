@@ -17,5 +17,7 @@ namespace TheALMAProject.Domain.Interfaces
         Task<PagedResult<Order>> GetAdminOrdersAsync(PaginationParams queryParams);
         Task<Order?> GetAdminOrderDetailAsync(int orderId);
         void UpdateOrder(Order order);
+        Task AddAsync(Order order);
+        Task<Order?> GetByOrderCodeAsync(string orderCode);
     }
 }
