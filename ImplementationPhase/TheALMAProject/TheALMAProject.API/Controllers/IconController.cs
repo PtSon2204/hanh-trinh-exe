@@ -9,6 +9,7 @@ namespace TheALMAProject.API.Controllers
     [Route("api/Admin/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin,Product Manager")]
+    
     public class IconController : ControllerBase
     {
         private readonly IAdminIconService _iconService;
