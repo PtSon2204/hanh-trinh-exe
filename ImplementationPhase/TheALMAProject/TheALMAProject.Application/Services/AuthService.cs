@@ -307,7 +307,7 @@ namespace TheALMAProject.Application.Services
             _cache.Set(cacheKey, resetToken, TimeSpan.FromMinutes(15));
 
             // Gửi email chứa link reset (frontend sẽ gọi API reset-password kèm token này)
-            var resetLink = $"https://thealma.vn/reset-password?email={dto.Email}&token={resetToken}";
+            var resetLink = $"http://localhost:5173/reset-password?email={dto.Email}&token={resetToken}";
             var subject = "ALMA - Đặt lại mật khẩu";
             var body = $@"
                 <h2>Yêu cầu đặt lại mật khẩu</h2>

@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - UniCustom Admin</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Custom Scrollbar for sidebar */
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-gray-800">
+
+    <!-- Sidebar -->
+    <!-- On mobile, hide it off-screen and add high z-index when open. On md and up, normal flex -->
+    <aside id="admin-sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full lg:relative lg:translate-x-0 w-64 bg-white border-r border-gray-100 flex flex-col shadow-sm shrink-0 transition-transform duration-300 z-40">
+        <!-- Close button (Mobile only) -->
+        <button id="close-sidebar-btn" class="absolute top-4 right-4 lg:hidden text-gray-500 hover:text-gray-700">
+            <i class="fa-solid fa-xmark text-xl"></i>
+        </button>
+        <!-- Logo -->
+        <div class="h-16 flex items-center px-6 border-b border-gray-100 shrink-0">
+            <a href="admin.html" class="flex items-center gap-2">
+                <img src="images/logo.png" alt="ALMA Logo" class="h-8 w-auto object-contain">
+                <span class="font-bold text-xl text-gray-900 tracking-tight whitespace-nowrap hidden lg:block">ALMA Admin</span>
+            </a>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex-1 overflow-y-auto sidebar-scroll py-4 px-3">
+            <p class="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Quản lý chính</p>
+            <nav class="space-y-1 mb-8">
+                <a href="admin.html"
+                    class="bg-indigo-50 text-indigo-600 group flex items-center px-3 py-2.5 text-sm font-semibold rounded-lg">
+                    <i class="fa-solid fa-chart-pie w-6 text-center mr-2 text-indigo-500"></i>
+                    Tổng quan (Dashboard)
+                </a>
+                <a href="#"
+                    class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+                    <i class="fa-solid fa-box-open w-6 text-center mr-2 text-gray-400 group-hover:text-gray-500"></i>
+                    Đơn hàng mới
+                    <span class="ml-auto bg-red-100 text-red-600 py-0.5 px-2 rounded-full text-xs font-bold">12</span>
+                </a>
+                <a href="#"
+                    class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+                    <i
+                        class="fa-solid fa-clipboard-list w-6 text-center mr-2 text-gray-400 group-hover:text-gray-500"></i>
+                    Tất cả Đơn hàng
+                </a>
+                <a href="#"
+                    class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+                    <i class="fa-solid fa-palette w-6 text-center mr-2 text-gray-400 group-hover:text-gray-500"></i>
+                    Mẫu thiết kế User
+                </a>
+            </nav>
+
+            <p class="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Dữ liệu & Cấu hình</p>
+            <nav class="space-y-1">
+                <a href="#"
+                    class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+                    <i class="fa-solid fa-shirt w-6 text-center mr-2 text-gray-400 group-hover:text-gray-500"></i>
+                    Quản lý Phôi / Sản phẩm
+                </a>
+                <a href="#"
+                    class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+                    <i class="fa-solid fa-note-sticky w-6 text-center mr-2 text-gray-400 group-hover:text-gray-500"></i>
+                    Quản lý Stickers
+                </a>
+                <a href="#"
+                    class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+                    <i class="fa-solid fa-users w-6 text-center mr-2 text-gray-400 group-hover:text-gray-500"></i>
+                    Khách hàng
+                </a>
+                <a href="#"
+                    class="text-gray-600 hover:bg-gray-50 hover:text-gray-900 group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors">
+                    <i class="fa-solid fa-gear w-6 text-center mr-2 text-gray-400 group-hover:text-gray-500"></i>
+                    Cài đặt hệ thống
+                </a>
+            </nav>
+        </div>
+
+        <!-- User Profile (Bottom) -->
+        <div class="p-4 border-t border-gray-100 shrink-0">
+            <a href="#" class="flex items-center w-full group">
+                <div class="inline-block relative">
+                    <img class="h-9 w-9 rounded-full object-cover border-2 border-white shadow-sm"
+                        src="https://ui-avatars.com/api/?name=Admin&background=4f46e5&color=fff" alt="">
+                    <span
+                        class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-green-400"></span>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-bold text-gray-700 group-hover:text-gray-900">Admin_Son</p>
+                    <p class="text-xs font-medium text-gray-500 group-hover:text-gray-700">Quản trị viên</p>
+                </div>
+                <i
+                    class="fa-solid fa-arrow-right-from-bracket ml-auto text-gray-400 group-hover:text-red-500 transition-colors"></i>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content wrapper -->
+    <div class="flex-1 flex flex-col min-w-0 bg-gray-50/50">
+        <!-- Top bar -->
+        <header
+            class="h-16 flex items-center justify-between px-8 bg-white/80 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10 shrink-0">
+            <div class="flex items-center gap-4">
+                <button id="admin-menu-btn" class="text-gray-500 hover:text-gray-700 focus:outline-none lg:hidden">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+                <div class="relative hidden sm:block">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                    </div>
+                    <input type="text" placeholder="Tìm mã đơn hàng, email khách..."
+                        class="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none w-64 transition-all">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5">
+                <button class="text-gray-400 hover:text-gray-600 relative">
+                    <i class="fa-regular fa-bell text-xl"></i>
+                    <span class="absolute top-0 right-0 block h-2 w-2 rounded-full ring-2 ring-white bg-red-500"></span>
+                </button>
+                <div class="h-8 w-px bg-gray-200"></div>
+                <div class="text-sm font-medium text-gray-600">Thứ Ba, 10/03/2026</div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-7xl mx-auto">
+
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">Xin chào, Admin 👋</h1>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- Stat 1 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center">
+                        <div class="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-sack-dollar text-2xl text-indigo-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Doanh thu hôm nay</h3>
+                            <p class="text-2xl font-bold text-gray-900 mt-1">12.500.000đ</p>
+                            <p class="text-xs text-green-600 font-medium mt-1"><i
+                                    class="fa-solid fa-arrow-up mr-1"></i>+15% so với hôm qua</p>
+                        </div>
+                    </div>
+
+                    <!-- Stat 2 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center">
+                        <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-box-open text-2xl text-blue-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Đơn hàng mới</h3>
+                            <p class="text-2xl font-bold text-gray-900 mt-1">45</p>
+                            <p class="text-xs text-green-600 font-medium mt-1"><i
+                                    class="fa-solid fa-arrow-up mr-1"></i>+5% so với hôm qua</p>
+                        </div>
+                    </div>
+
+                    <!-- Stat 3 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center">
+                        <div class="w-14 h-14 rounded-full bg-purple-50 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-palette text-2xl text-purple-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Mẫu được thiết kế</h3>
+                            <p class="text-2xl font-bold text-gray-900 mt-1">128</p>
+                            <p class="text-xs text-gray-500 font-medium mt-1">Chờ Admin duyệt (3)</p>
+                        </div>
+                    </div>
+
+                    <!-- Stat 4 -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex items-center">
+                        <div class="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-users text-2xl text-green-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Khách hàng mới</h3>
+                            <p class="text-2xl font-bold text-gray-900 mt-1">32</p>
+                            <p class="text-xs text-green-600 font-medium mt-1"><i
+                                    class="fa-solid fa-arrow-up mr-1"></i>+12% so với tháng trước</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Recent Orders Table -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-lg font-bold text-gray-900">Đơn hàng cần xử lý</h2>
+                            <a href="#" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">Xem tất
+                                cả</a>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-xs font-semibold text-gray-500 uppercase bg-gray-50 rounded-lg">
+                                        <th class="px-4 py-3 rounded-l-lg">Mã ĐH</th>
+                                        <th class="px-4 py-3">Khách hàng</th>
+                                        <th class="px-4 py-3">Mẫu Thiết Kế</th>
+                                        <th class="px-4 py-3">Tổng Tiền</th>
+                                        <th class="px-4 py-3">Trạng Thái</th>
+                                        <th class="px-4 py-3 rounded-r-lg">.</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-gray-100">
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-4 font-semibold text-gray-900">#UNI-00129</td>
+                                        <td class="px-4 py-4">
+                                            <div class="font-medium text-gray-900">Nguyễn Văn A</div>
+                                            <div class="text-gray-500 text-xs text-gray-400">0901234567</div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center gap-2">
+                                                <img src="images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092125.png"
+                                                    alt="A1" class="w-8 h-8 rounded bg-gray-100 object-cover border">
+                                                <span class="text-gray-600 truncate max-w-[100px]">Áo Lớp A1
+                                                    (x40)</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 font-semibold text-gray-900">4.800.000đ</td>
+                                        <td class="px-4 py-4">
+                                            <span
+                                                class="px-2.5 py-1 text-xs font-bold rounded-md bg-yellow-100 text-yellow-700">Chờ
+                                                duyệt file</span>
+                                        </td>
+                                        <td class="px-4 py-4text-right">
+                                            <button
+                                                class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded font-medium text-xs">Chi
+                                                tiết</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-4 font-semibold text-gray-900">#UNI-00128</td>
+                                        <td class="px-4 py-4">
+                                            <div class="font-medium text-gray-900">Trần Thị Bé</div>
+                                            <div class="text-gray-500 text-xs text-gray-400">0987654321</div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center gap-2">
+                                                <img src="images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092149.png"
+                                                    alt="Sự kiện"
+                                                    class="w-8 h-8 rounded bg-gray-100 object-cover border">
+                                                <span class="text-gray-600 truncate max-w-[100px]">Áo Teambuilding
+                                                    (x100)</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 font-semibold text-gray-900">12.000.000đ</td>
+                                        <td class="px-4 py-4">
+                                            <span
+                                                class="px-2.5 py-1 text-xs font-bold rounded-md bg-blue-100 text-blue-700">Đang
+                                                in ấn</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-right">
+                                            <button
+                                                class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded font-medium text-xs">Chi
+                                                tiết</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50 transition-colors">
+                                        <td class="px-4 py-4 font-semibold text-gray-900">#UNI-00127</td>
+                                        <td class="px-4 py-4">
+                                            <div class="font-medium text-gray-900">Trường THPT ABC</div>
+                                            <div class="text-gray-500 text-xs text-gray-400">0243123456</div>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex items-center gap-2">
+                                                <img src="images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092131.png"
+                                                    alt="Sự kiện"
+                                                    class="w-8 h-8 rounded bg-gray-100 object-cover border">
+                                                <span class="text-gray-600 truncate max-w-[100px]">Áo Gió (x250)</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 font-semibold text-gray-900">35.000.000đ</td>
+                                        <td class="px-4 py-4">
+                                            <span
+                                                class="px-2.5 py-1 text-xs font-bold rounded-md bg-green-100 text-green-700">Đã
+                                                giao hàng</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-right">
+                                            <button
+                                                class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1.5 rounded font-medium text-xs">Chi
+                                                tiết</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Chart & Quick Actions -->
+                    <div class="space-y-8">
+                        <!-- Revenue Chart Widget -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h2 class="text-lg font-bold text-gray-900 mb-4">Doanh thu 7 ngày qua</h2>
+                            <div class="relative h-48 w-full">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Top Templates List -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h2 class="text-lg font-bold text-gray-900 mb-4">Phôi áo bán chạy</h2>
+                            <ul class="space-y-4">
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <img src="images/Phoi_ao/áo cộc tay ko cổ.jpg"
+                                            class="w-10 h-10 object-cover rounded shadow-sm border">
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-900">Áo Thun Cổ Tròn Trắng</p>
+                                            <p class="text-xs text-gray-500">1.240 sản phẩm</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-green-500 text-sm font-bold"><i
+                                            class="fa-solid fa-arrow-trend-up"></i></span>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <img src="images/Phoi_ao/áo cộc tay có cổ.jpg"
+                                            class="w-10 h-10 object-cover rounded shadow-sm border">
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-900">Áo Polo Trắng</p>
+                                            <p class="text-xs text-gray-500">856 sản phẩm</p>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <img src="images/Phoi_ao/áo hoodie.jpg"
+                                            class="w-10 h-10 object-cover rounded shadow-sm border">
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-900">Áo Hoodie Xám</p>
+                                            <p class="text-xs text-gray-500">420 sản phẩm</p>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Chart Setup Script -->
+    <script>
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const gradient = ctx.createLinearGradient(0, 0, 0, 200);
+        gradient.addColorStop(0, 'rgba(79, 70, 229, 0.4)'); /* Indigo-600 */
+        gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+                datasets: [{
+                    label: 'Doanh thu (Tr)',
+                    data: [12, 19, 15, 25, 22, 30, 28],
+                    borderColor: '#4f46e5',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#4f46e5',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Outfit' }, color: '#94a3b8' }
+                    },
+                    y: {
+                        border: { display: false },
+                        grid: { color: '#f1f5f9', borderDash: [5, 5] },
+                        ticks: { font: { family: 'Outfit' }, color: '#94a3b8' }
+                    }
+                }
+            }
+        });
+
+        // Sidebar Toggle Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuBtn = document.getElementById('admin-menu-btn');
+            const closeBtn = document.getElementById('close-sidebar-btn');
+            const sidebar = document.getElementById('admin-sidebar');
+
+            if (menuBtn && sidebar && closeBtn) {
+                menuBtn.addEventListener('click', () => {
+                    sidebar.classList.remove('-translate-x-full');
+                });
+                closeBtn.addEventListener('click', () => {
+                    sidebar.classList.add('-translate-x-full');
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
