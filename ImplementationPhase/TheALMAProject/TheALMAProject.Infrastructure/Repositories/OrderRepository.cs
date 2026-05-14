@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Domain.Queries;
@@ -115,6 +110,38 @@ namespace TheALMAProject.Infrastructure.Repositories
             };
         }
 
+        public async Task<List<Order>> GetAdminOrdersForStatisticsAsync(AdminOrderStatisticQuery queryParams)
+        {
+            var query = _context.Orders
+                .Include(o => o.OrderItems)
+                .AsQueryable();
+
+            if (queryParams.FromDate.HasValue)
+            {
+                query = query.Where(o => o.CreatedAt >= queryParams.FromDate.Value);
+            }
+
+            if (queryParams.ToDate.HasValue)
+            {
+                var toDateEnd = queryParams.ToDate.Value.AddDays(1).AddTicks(-1);
+                query = query.Where(o => o.CreatedAt <= toDateEnd);
+            }
+
+            if (!string.IsNullOrWhiteSpace(queryParams.OrderStatus))
+            {
+                query = query.Where(o => o.OrderStatus == queryParams.OrderStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(queryParams.PaymentStatus))
+            {
+                query = query.Where(o => o.PaymentStatus == queryParams.PaymentStatus);
+            }
+
+            return await query
+                .OrderBy(o => o.CreatedAt)
+                .ToListAsync();
+        }
+
         public async Task<Order?> GetAdminOrderDetailAsync(int orderId)
         {
             return await _context.Orders
@@ -123,6 +150,7 @@ namespace TheALMAProject.Infrastructure.Repositories
                     .ThenInclude(i => i.Product)
                 .Include(o => o.OrderItems)
                     .ThenInclude(i => i.Design)
+                        .ThenInclude(d => d!.BaseProduct)
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
 
