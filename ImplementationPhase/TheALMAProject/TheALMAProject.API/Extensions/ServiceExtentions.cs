@@ -32,10 +32,6 @@ namespace TheALMAProject.API.Extensions
             services.AddScoped<IProfileService, ProfileService>();
             services.AddScoped<IAdminOrderService, AdminOrderService>();
             services.AddScoped<IAdminUserDesignService, AdminUserDesignService>();
-            services.AddScoped<IVnPayService, VnPayService>();
-            services.AddScoped<IVietQrService, VietQrService>(); 
-            services.AddHttpContextAccessor();
-
             //Đăng kí fluentValidation
             services.AddFluentValidationAutoValidation();
             services.AddValidatorsFromAssemblyContaining<CreateUserDtoValidator>();

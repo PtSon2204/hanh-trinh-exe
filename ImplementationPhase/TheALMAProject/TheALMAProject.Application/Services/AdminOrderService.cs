@@ -5,6 +5,8 @@ using TheALMAProject.Application.Exceptions;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Interfaces;
+using TheALMAProject.Domain.Queries;
+using TheALMAProject.Infrastructure.Services;
 
 namespace TheALMAProject.Application.Services
 {
@@ -12,11 +14,15 @@ namespace TheALMAProject.Application.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        private readonly IFileStorageService _fileStorageService;
+        private readonly IPrintFileRenderer _printFileRenderer;
 
-        public AdminOrderService(IUnitOfWork unitOfWork, IMapper mapper)
+        public AdminOrderService(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService fileStorageService, IPrintFileRenderer printFileRenderer)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
+            _fileStorageService = fileStorageService;
+            _printFileRenderer = printFileRenderer;
         }
 
         public async Task<PagedResult<AdminOrderListDto>> GetOrders(PaginationParams query)
@@ -44,6 +50,100 @@ namespace TheALMAProject.Application.Services
             return _mapper.Map<AdminOrderDto>(order);
         }
 
+        public async Task<IEnumerable<AdminOrderStatisticDto>> GetOrderStatistics(AdminOrderStatisticQuery query)
+        {
+            var groupBy = NormalizeGroupBy(query.GroupBy);
+            var orders = await _unitOfWork.OrderRepo.GetAdminOrdersForStatisticsAsync(query);
+
+            var groupedOrders = orders
+                .Where(o => o.CreatedAt.HasValue)
+                .GroupBy(o => GetPeriodKey(o.CreatedAt!.Value, groupBy))
+                .OrderBy(g => g.Key.SortValue);
+
+            var result = new List<AdminOrderStatisticDto>();
+            foreach (var group in groupedOrders)
+            {
+                var itemCount = 0;
+                var totalRevenue = 0m;
+                var totalShippingFee = 0m;
+                var totalDiscount = 0m;
+                var totalSubTotal = 0m;
+
+                foreach (var order in group)
+                {
+                    itemCount += order.OrderItems.Sum(i => i.Quantity);
+                    totalRevenue += order.TotalAmount;
+                    totalShippingFee += order.ShippingFee;
+                    totalDiscount += order.DiscountAmount;
+                    totalSubTotal += order.TotalAmount - order.ShippingFee + order.DiscountAmount;
+                }
+
+                result.Add(new AdminOrderStatisticDto
+                {
+                    Period = group.Key.Label,
+                    OrderCount = group.Count(),
+                    ItemCount = itemCount,
+                    TotalRevenue = totalRevenue,
+                    TotalShippingFee = totalShippingFee,
+                    TotalDiscount = totalDiscount,
+                    TotalSubTotal = totalSubTotal
+                });
+            }
+
+            return result;
+        }
+
+        public async Task<IEnumerable<AdminOrderPrintFileDto>> ExportPrintFiles(int id)
+        {
+            var order = await _unitOfWork.OrderRepo.GetAdminOrderDetailAsync(id);
+            if (order == null)
+            {
+                throw new AppHttpException(StatusCodes.Status404NotFound, "Order not found");
+            }
+
+            var designItems = order.OrderItems
+                .Where(i => i.Design != null)
+                .ToList();
+
+            if (designItems.Count == 0)
+            {
+                throw new AppHttpException(StatusCodes.Status400BadRequest, "Order has no custom design items to export");
+            }
+
+            var result = new List<AdminOrderPrintFileDto>();
+            foreach (var item in designItems)
+            {
+                var design = item.Design!;
+                var pngBytes = _printFileRenderer.GenerateOrderItemPrintPng(order, item, design);
+                await using var stream = new MemoryStream(pngBytes);
+                var fileName = $"order-{order.OrderId}-item-{item.OrderItemId}-design-{design.DesignId}.png";
+                var formFile = new FormFile(stream, 0, pngBytes.Length, "file", fileName)
+                {
+                    Headers = new HeaderDictionary(),
+                    ContentType = "image/png"
+                };
+
+                design.PrintFileUrl = await _fileStorageService.SaveFileAsync(formFile, "uploads/print-files");
+
+                result.Add(new AdminOrderPrintFileDto
+                {
+                    OrderId = order.OrderId,
+                    OrderCode = order.OrderCode,
+                    OrderItemId = item.OrderItemId,
+                    DesignId = design.DesignId,
+                    DesignName = design.DesignName,
+                    Size = item.Size,
+                    Quantity = item.Quantity,
+                    PrintFileUrl = design.PrintFileUrl
+                });
+            }
+
+            _unitOfWork.OrderRepo.UpdateOrder(order);
+            await _unitOfWork.SaveChangesAsync();
+
+            return result;
+        }
+
         public async Task UpdateOrderStatus(int id, AdminUpdateOrderStatusDto dto)
         {
             var order = await _unitOfWork.OrderRepo.GetAdminOrderDetailAsync(id);
@@ -57,6 +157,32 @@ namespace TheALMAProject.Application.Services
 
             _unitOfWork.OrderRepo.UpdateOrder(order);
             await _unitOfWork.SaveChangesAsync();
+        }
+
+        private static string NormalizeGroupBy(string? groupBy)
+        {
+            return groupBy?.Trim().ToLowerInvariant() switch
+            {
+                "day" => "day",
+                "week" => "week",
+                "month" => "month",
+                _ => "month"
+            };
+        }
+
+        private static (string Label, DateTime SortValue) GetPeriodKey(DateTime date, string groupBy)
+        {
+            return groupBy switch
+            {
+                "day" => (date.ToString("yyyy-MM-dd"), date.Date),
+                "week" => ($"{date.Year}-W{GetWeekOfYear(date):00}", date.Date.AddDays(-(int)date.DayOfWeek)),
+                _ => (date.ToString("yyyy-MM"), new DateTime(date.Year, date.Month, 1))
+            };
+        }
+
+        private static int GetWeekOfYear(DateTime date)
+        {
+            return System.Globalization.ISOWeek.GetWeekOfYear(date);
         }
     }
 }

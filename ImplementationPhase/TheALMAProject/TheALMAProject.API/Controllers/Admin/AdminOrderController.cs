@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TheALMAProject.Application.DTOs.AdminOrderDtos;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Common;
+using TheALMAProject.Domain.Queries;
 
 namespace TheALMAProject.API.Controllers.Admin
 {
@@ -34,6 +35,20 @@ namespace TheALMAProject.API.Controllers.Admin
                 return NotFound(new { message = $"Order with id {id} not found!" });
             }
 
+            return Ok(result);
+        }
+
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetOrderStatistics([FromQuery] AdminOrderStatisticQuery query)
+        {
+            var result = await _adminOrderService.GetOrderStatistics(query);
+            return Ok(result);
+        }
+
+        [HttpPost("{id:int}/print-files")]
+        public async Task<IActionResult> ExportPrintFiles(int id)
+        {
+            var result = await _adminOrderService.ExportPrintFiles(id);
             return Ok(result);
         }
 
