@@ -51,7 +51,7 @@ namespace TheALMAProject.API.Extensions
             {
                 options.AddPolicy("AllowReactApp", builder =>
                 {
-                    builder.WithOrigins("http://localhost:5173", "http://localhost:3000") // Điền link Frontend của bạn vào đây
+                    builder.WithOrigins("http://localhost:5173", "http://localhost:3000", "http://localhost:5174", "http://localhost:5175") // Điền link Frontend của bạn vào đây
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials(); 

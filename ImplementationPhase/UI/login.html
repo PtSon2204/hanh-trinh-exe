@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - ALMA Custom Threads</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800 flex flex-col min-h-screen">
+
+    <div class="flex-1 flex min-h-screen">
+        <!-- LEFT: Product Image Side -->
+        <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-end" style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 40%,#312e81 100%)">
+            <!-- Dot pattern overlay -->
+            <div class="absolute inset-0 opacity-[0.04]" style="background-image:radial-gradient(rgba(255,255,255,.5) 1px,transparent 1px);background-size:28px 28px"></div>
+            <!-- Blobs -->
+            <div class="absolute top-10 left-[10%] w-[350px] h-[350px] bg-blue-500 rounded-full mix-blend-screen filter blur-[120px] opacity-20"></div>
+            <div class="absolute bottom-10 right-[15%] w-[300px] h-[300px] bg-purple-500 rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
+
+            <!-- Large product image with overlay -->
+            <div class="absolute inset-0">
+                <img src="images/hero-bg.png" alt="FPT University Custom T-Shirt" class="w-full h-full object-cover opacity-40">
+                <div class="absolute inset-0" style="background:linear-gradient(to top, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.6) 40%, rgba(49,46,129,0.4) 100%)"></div>
+            </div>
+
+            <!-- Content over image -->
+            <div class="relative z-10 p-12 pb-16">
+                <!-- Logo Text (Swapped image to right side) -->
+                <a href="index.html" class="flex items-center gap-3 mb-8">
+                    <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                        <i class="fa-solid fa-shirt text-white text-xl"></i>
+                    </div>
+                    <span class="font-bold text-2xl text-white tracking-tight">ALMA Custom Threads<span class="text-blue-400">.</span></span>
+                </a>
+
+                <h2 class="text-3xl font-extrabold text-white mb-3 leading-tight">Thế giới đồng phục<br><span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400">Dành riêng cho bạn</span></h2>
+                <p class="text-gray-400 text-sm leading-relaxed mb-8 max-w-md">Tự tay sáng tạo áo thiết kế riêng với công cụ trực tuyến, hoặc thao tác mua ngay các mẫu áo trường cực đẹp đã được thiết kế sẵn trên hệ thống.</p>
+
+                <!-- Stats -->
+                <div class="flex gap-6">
+                    <div class="bg-white/[0.08] backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3 text-center">
+                        <p class="text-xl font-extrabold text-white">500+</p>
+                        <p class="text-[10px] text-gray-400 font-medium">Trường đối tác</p>
+                    </div>
+                    <div class="bg-white/[0.08] backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3 text-center">
+                        <p class="text-xl font-extrabold text-white">10K+</p>
+                        <p class="text-[10px] text-gray-400 font-medium">Áo đã in</p>
+                    </div>
+                    <div class="bg-white/[0.08] backdrop-blur-sm border border-white/10 rounded-xl px-5 py-3 text-center">
+                        <p class="text-xl font-extrabold text-white">100+</p>
+                        <p class="text-[10px] text-gray-400 font-medium">Mẫu phôi sẵn</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Login Form Side (BRIGHT & PREMIUM) -->
+        <div class="flex-1 flex flex-col justify-center items-center px-6 sm:px-12 lg:px-16 bg-slate-50 relative overflow-hidden">
+            <!-- Subtle ambient glows -->
+            <div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-blue-100 rounded-full mix-blend-multiply filter blur-[100px] opacity-60"></div>
+            <div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-indigo-100 rounded-full mix-blend-multiply filter blur-[100px] opacity-60"></div>
+            
+            <div class="w-full max-w-[420px] relative z-10">
+                <!-- Elevated Form Card -->
+                <div class="bg-white px-8 py-10 sm:px-10 rounded-[2.5rem] shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] ring-1 ring-gray-100/50 border border-white relative overflow-hidden">
+                    
+                    <!-- Decorative top gradient line -->
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+
+                    <!-- Official Logo -->
+                    <div class="flex justify-center mb-8">
+                        <a href="index.html" class="block relative group">
+                            <div class="absolute inset-0 bg-blue-500/10 rounded-full blur-xl scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                            <img src="images/logo.png" alt="ALMA Logo" class="h-14 w-auto object-contain relative z-10 drop-shadow-sm transition-transform duration-500 group-hover:scale-105">
+                        </a>
+                    </div>
+
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-extrabold text-gray-900 mb-1.5 tracking-tight">Chào mừng trở lại</h2>
+                        <p class="text-sm text-gray-500">Đăng nhập để tiếp tục sáng tạo</p>
+                    </div>
+
+                    <form class="space-y-5" action="index.html" method="GET">
+                        <!-- Email Input -->
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-500 transition-colors">
+                                <i class="fa-regular fa-envelope text-sm"></i>
+                            </div>
+                            <input id="email" name="email" type="email" required placeholder="Email hoặc số điện thoại"
+                                class="block w-full pl-11 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all focus:bg-white shadow-sm ring-1 ring-transparent">
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-500 transition-colors">
+                                <i class="fa-solid fa-lock text-sm"></i>
+                            </div>
+                            <input id="password" name="password" type="password" required placeholder="Mật khẩu"
+                                class="block w-full pl-11 pr-4 py-3.5 bg-gray-50/50 border border-gray-200 rounded-2xl text-gray-900 text-sm placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all focus:bg-white shadow-sm ring-1 ring-transparent">
+                            
+                            <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                                <a href="#" class="text-[11px] font-bold text-blue-600 hover:text-blue-800 transition-colors">QUÊN?</a>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit"
+                            class="relative w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 transition-all overflow-hidden group shadow-[0_10px_20px_-10px_rgba(79,70,229,0.5)] hover:shadow-[0_10px_20px_-5px_rgba(79,70,229,0.5)] hover:-translate-y-0.5">
+                            <div class="absolute inset-0 w-full h-full bg-white/20 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out"></div>
+                            <span class="relative z-10 flex items-center gap-2">Đăng nhập <i class="fa-solid fa-arrow-right text-xs"></i></span>
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <div class="relative my-8">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-100"></div>
+                        </div>
+                        <div class="relative flex justify-center text-xs">
+                            <span class="px-3 text-gray-400 font-medium bg-white">hoặc</span>
+                        </div>
+                    </div>
+
+                    <!-- Social Logins (Optional, adds premium feel) -->
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <button type="button" class="flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm group">
+                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" class="w-4 h-4 group-hover:scale-110 transition-transform">
+                            <span class="text-xs font-bold text-gray-700">Google</span>
+                        </button>
+                        <button type="button" class="flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm group">
+                            <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook" class="w-4 h-4 group-hover:scale-110 transition-transform">
+                            <span class="text-xs font-bold text-gray-700">Facebook</span>
+                        </button>
+                    </div>
+
+                    <!-- Register link -->
+                    <p class="text-center text-sm text-gray-500 mt-2">
+                        Chưa có tài khoản? <a href="#" class="text-indigo-600 font-bold hover:text-indigo-800 transition-colors">Tạo ngay</a>
+                    </p>
+                </div>
+
+                <!-- Back link (outside card) -->
+                <div class="mt-8 text-center text-sm">
+                    <a href="index.html" class="inline-flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors font-medium">
+                        <div class="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center shadow-sm">
+                            <i class="fa-solid fa-arrow-left text-[10px]"></i>
+                        </div>
+                        Về trang chủ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

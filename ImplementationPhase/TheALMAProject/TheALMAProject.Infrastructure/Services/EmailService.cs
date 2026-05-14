@@ -1,40 +1,62 @@
 using TheALMAProject.Domain.Interfaces;
+using Microsoft.Extensions.Configuration;
+using MimeKit;
+using MimeKit.Text;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 
 namespace TheALMAProject.Infrastructure.Services
 {
-    /// <summary>
-    /// EmailService — Implementation gửi email.
-    /// 
-    /// HIỆN TẠI: Chỉ log ra Console cho mục đích development/test.
-    /// SAU NÀY: Thay bằng SendGrid, Mailgun, hoặc SMTP provider thật.
-    /// 
-    /// Cách thay thế:
-    /// 1. Install package (vd: SendGrid SDK)
-    /// 2. Sửa code trong SendEmailAsync để gọi SendGrid API thay vì Console.WriteLine
-    /// 3. Thêm API Key vào appsettings.json
-    /// Không cần sửa bất kỳ file nào khác nhờ Dependency Inversion (dùng interface IEmailService)
-    /// </summary>
     public class EmailService : IEmailService
     {
-        /// <summary>
-        /// Gửi email (hiện tại chỉ log ra console).
-        /// </summary>
-        public Task SendEmailAsync(string toEmail, string subject, string htmlBody)
-        {
-            // ======================================================================
-            // 📧 MOCK EMAIL SERVICE — Chỉ dùng cho Development
-            // Trong Console sẽ hiện nội dung email để verify logic đúng.
-            // ======================================================================
-            Console.WriteLine("╔══════════════════════════════════════════════════════╗");
-            Console.WriteLine("║               📧 MOCK EMAIL SERVICE                 ║");
-            Console.WriteLine("╠══════════════════════════════════════════════════════╣");
-            Console.WriteLine($"║ To:      {toEmail}");
-            Console.WriteLine($"║ Subject: {subject}");
-            Console.WriteLine("╠══════════════════════════════════════════════════════╣");
-            Console.WriteLine($"║ Body:    {StripHtml(htmlBody)}");
-            Console.WriteLine("╚══════════════════════════════════════════════════════╝");
+        private readonly IConfiguration _config;
 
-            return Task.CompletedTask;
+        public EmailService(IConfiguration config)
+        {
+            _config = config;
+        }
+
+        public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
+        {
+            var email = new MimeMessage();
+            email.From.Add(new MailboxAddress(
+                _config["Smtp:SenderName"] ?? "ALMA Custom Threads", 
+                _config["Smtp:SenderEmail"] ?? "noreply@almacustom.vn"));
+            email.To.Add(MailboxAddress.Parse(toEmail));
+            email.Subject = subject;
+            email.Body = new TextPart(TextFormat.Html) { Text = htmlBody };
+
+            using var smtp = new SmtpClient();
+            try
+            {
+                var host = _config["Smtp:Host"];
+                var port = int.Parse(_config["Smtp:Port"] ?? "587");
+                var user = _config["Smtp:Username"];
+                var pass = _config["Smtp:Password"];
+
+                // Bỏ qua nếu chưa cấu hình thật, log ra console
+                if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || user == "your_email@gmail.com")
+                {
+                    Console.WriteLine("╔══════════════════════════════════════════════════════╗");
+                    Console.WriteLine("║        📧 MOCK EMAIL SERVICE (Chưa cấu hình SMTP)   ║");
+                    Console.WriteLine("╠══════════════════════════════════════════════════════╣");
+                    Console.WriteLine($"║ To:      {toEmail}");
+                    Console.WriteLine($"║ Subject: {subject}");
+                    Console.WriteLine("╠══════════════════════════════════════════════════════╣");
+                    Console.WriteLine($"║ Body:    {StripHtml(htmlBody)}");
+                    Console.WriteLine("╚══════════════════════════════════════════════════════╝");
+                    return;
+                }
+
+                await smtp.ConnectAsync(host, port, SecureSocketOptions.StartTls);
+                await smtp.AuthenticateAsync(user, pass);
+                await smtp.SendAsync(email);
+                await smtp.DisconnectAsync(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Email Error]: Lỗi gửi mail đến {toEmail}. Chi tiết: {ex.Message}");
+            }
         }
 
         /// <summary>

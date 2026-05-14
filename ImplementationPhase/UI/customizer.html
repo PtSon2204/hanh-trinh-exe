@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Design Studio - UniCustom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 h-[100dvh] overflow-hidden flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b px-4 sm:px-6 py-3 flex justify-between items-center shrink-0 shadow-sm z-50 relative h-16">
+        <div class="flex items-center gap-4">
+            <a href="category.html" class="text-gray-400 hover:text-gray-800 transition"><i
+                    class="fa-solid fa-arrow-left"></i></a>
+            <div class="w-px h-6 bg-gray-200"></div>
+            <a href="index.html" class="flex items-center gap-2">
+                <img src="images/logo.png" alt="ALMA Logo" class="h-8 w-auto object-contain">
+                <span class="font-bold text-lg md:text-xl text-gray-800 whitespace-nowrap hidden sm:block">ALMA Custom Threads<span class="text-blue-600">.</span></span>
+            </a>
+            <span
+                class="ml-4 text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium border border-blue-100 hidden sm:block">Đang
+                thiết kế: Áo Sơ Mi Lớp</span>
+        </div>
+        <div class="flex gap-4 items-center">
+            <a href="cart.html" class="text-gray-500 hover:text-gray-800 relative mr-4">
+                <i class="fa-solid fa-cart-shopping text-lg"></i>
+                <span
+                    class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">1</span>
+            </a>
+            <button id="btn-open-history"
+                class="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg text-sm font-semibold shadow-sm transition flex items-center gap-1.5"
+                title="Lịch sử thiết kế">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span class="hidden sm:inline">Lịch Sử</span>
+                <span id="history-count-badge" class="bg-blue-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold hidden">0</span>
+            </button>
+            <button id="btn-save-design"
+                class="text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition flex items-center gap-1.5"><i
+                    class="fa-regular fa-floppy-disk"></i> Lưu Thiết Kế</button>
+        </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <div class="flex flex-1 overflow-hidden h-[calc(100vh-64px)] relative">
+
+        <!-- LEFT SIDEBAR -->
+        <aside id="left-sidebar"
+            class="absolute md:relative inset-y-0 left-0 transform -translate-x-full md:translate-x-0 w-64 bg-white border-r flex flex-col shrink-0 overflow-y-auto z-40 shadow-[4px_0_15px_rgba(0,0,0,0.02)] transition-transform duration-300">
+            <button class="md:hidden absolute top-3 right-3 text-gray-400 hover:text-gray-800" onclick="document.getElementById('left-sidebar').classList.add('-translate-x-full');">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <!-- Tabs -->
+            <div class="flex mb-4 px-4 pt-4">
+                <button
+                    class="w-1/2 py-2.5 text-sm text-center bg-white border border-b-2 border-b-blue-600 text-blue-600 font-semibold shadow-sm rounded-t-lg relative z-10 -mb-0.5">Customizer</button>
+                <!-- <button
+                    class="w-1/2 py-2.5 text-sm text-center bg-gray-50 border border-t-transparent border-r-transparent border-b-gray-200 text-gray-500 font-medium">Lớp
+                    Layer</button> -->
+            </div>
+
+            <!-- Menu Tools -->
+            <div class="flex flex-col px-4 text-sm text-gray-700 font-medium">
+                <div id="btn-tab-base"
+                    class="tool-btn flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer rounded-t-lg bg-blue-50 text-blue-600 transition">
+                    <i class="fa-solid fa-shirt w-5 text-center text-blue-500 text-lg"></i> Kiểu Dáng (Phôi Áo)
+                </div>
+                <div id="btn-tab-ai"
+                    class="tool-btn flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer hover:bg-gray-50 transition">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-purple-500 text-lg"></i> AI Thiết Kế
+                </div>
+                <div id="btn-tab-text"
+                    class="tool-btn flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer hover:bg-gray-50 transition">
+                    <i class="fa-solid fa-font w-5 text-center text-green-500 text-lg"></i> Thêm Chữ
+                </div>
+                <div
+                    class="tool-btn flex items-center gap-3 p-3.5 border border-gray-200 cursor-pointer rounded-b-lg hover:bg-gray-50 transition">
+                    <i class="fa-regular fa-futbol w-5 text-center text-gray-400 text-lg"></i> Thư viện Logo & Icon
+                </div>
+            </div>
+
+            <!-- Active Control Panel -->
+            <div class="px-4 mt-6 flex-1 border-t pt-4 overflow-y-auto custom-scrollbar relative">
+
+                <!-- PANEL: BASE & STICKERS -->
+                <div id="panel-base" class="block">
+                    <div class="mb-6">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 mt-2">Chọn Phôi Áo</h4>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center cursor-pointer hover:border-blue-300 hover:shadow-sm transition">
+                                <img src="images/Phoi_ao/áo cộc tay ko cổ.jpg" class="w-full aspect-square object-cover bg-white rounded" alt="Basic T-Shirt">
+                                <p class="text-[10px] font-medium mt-2 text-gray-600">Áo Thun Cổ Tròn</p>
+                            </div>
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center cursor-pointer hover:border-blue-300 hover:shadow-sm transition">
+                                <img src="images/Phoi_ao/áo cộc tay có cổ.jpg" class="w-full aspect-square object-cover bg-white rounded" alt="Polo Shirt">
+                                <p class="text-[10px] font-medium mt-2 text-gray-600">Áo Polo (Có Cổ)</p>
+                            </div>
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center cursor-pointer hover:border-blue-300 hover:shadow-sm transition">
+                                <img src="images/Phoi_ao/áo hoodie.jpg" class="w-full aspect-square object-cover bg-white rounded" alt="Hoodie">
+                                <p class="text-[10px] font-medium mt-2 text-gray-600">Áo Hoodie</p>
+                            </div>
+                            <div class="bg-gray-50 border-2 border-blue-500 rounded-lg p-2 text-center cursor-pointer relative shadow-sm">
+                                <img src="images/Phoi_ao/áo sơ mi.jpg" class="w-full aspect-square object-cover bg-white rounded" alt="Sơ mi">
+                                <p class="text-[10px] font-bold mt-2 text-blue-600">Áo Sơ Mi Lớp</p>
+                                <i class="fa-solid fa-circle-check absolute -top-2 -right-2 text-blue-500 bg-white rounded-full text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-px bg-gray-200 mb-4"></div>
+
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Thư viện Stickers</h4>
+                    <div class="grid grid-cols-3 gap-2 pb-4">
+                        <img src="images/stickers/1.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/2.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/3.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/4.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/5.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/6.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/7.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/8.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/9.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/10.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/11.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/12.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/13.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/14.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/15.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/16.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/17.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/19.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                        <img src="images/stickers/20.png" onclick="addStickerToCanvas(this.src)" class="w-full aspect-square object-contain bg-gray-50 border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-blue-500 hover:shadow-sm transition" alt="Sticker">
+                    </div>
+                </div>
+
+                <!-- PANEL: AI GENERATOR -->
+                <div id="panel-ai" class="hidden">
+                    <h4 class="text-xs font-bold text-purple-600 uppercase tracking-widest mb-3 mt-2 flex items-center gap-2">
+                        <i class="fa-solid fa-sparkles"></i> AI Text-to-Image
+                    </h4>
+                    <p class="text-xs text-gray-500 mb-4">Mô tả ý tưởng của bạn, AI sẽ tạo ra hình in độc nhất vô nhị cho chiếc áo.</p>
+                    <div class="mb-4">
+                        <textarea id="ai-prompt" rows="4" class="w-full border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-400" placeholder="Ví dụ: Một phi hành gia đang chơi lướt ván trên sao Hỏa..."></textarea>
+                    </div>
+                    <button id="btn-generate-ai" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-3 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Tạo Họa Tiết
+                    </button>
+                    <div id="ai-loading" class="hidden flex-col items-center justify-center py-6">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-3"></div>
+                        <p class="text-xs font-semibold text-purple-600 animate-pulse">AI đang vẽ tác phẩm...</p>
+                    </div>
+                    <div id="ai-results" class="hidden mt-6">
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Kết quả tạo (<span class="text-purple-600">4</span>)</h4>
+                        <div class="grid grid-cols-2 gap-3 pb-4" id="ai-results-grid"></div>
+                    </div>
+                </div>
+
+                <!-- PANEL: TEXT TOOL -->
+                <div id="panel-text" class="hidden">
+                    <h4 class="text-xs font-bold text-green-600 uppercase tracking-widest mb-3 mt-2 flex items-center gap-2">
+                        <i class="fa-solid fa-font"></i> Thêm Chữ Lên Áo
+                    </h4>
+                    <div class="mb-3">
+                        <label class="text-xs font-medium text-gray-600 mb-1 block">Nội dung</label>
+                        <input type="text" id="text-content-input" value="Text mới" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500" placeholder="Nhập chữ...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-xs font-medium text-gray-600 mb-1 block">Font chữ</label>
+                        <select id="text-font-select" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-green-500">
+                            <option value="Arial">Arial</option>
+                            <option value="Impact" selected>Impact</option>
+                            <option value="Georgia">Georgia</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Verdana">Verdana</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Cỡ chữ</label>
+                            <input type="number" id="text-size-input" value="28" min="8" max="120" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-green-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-gray-600 mb-1 block">Màu chữ</label>
+                            <input type="color" id="text-color-input" value="#000000" class="w-full h-[42px] border border-gray-300 rounded-lg cursor-pointer">
+                        </div>
+                    </div>
+                    <button onclick="addTextToCanvas()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 rounded-lg shadow-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Thêm Chữ Vào Áo
+                    </button>
+                </div>
+
+            </div>
+
+        </aside>
+
+        <!-- CENTER CANVAS AREA -->
+        <main class="flex-1 flex flex-col relative bg-gray-50/50 w-full"
+            style="background-image: radial-gradient(#e5e7eb 1px, transparent 1px); background-size: 20px 20px;">
+            
+            <!-- Mobile Sidebar Toggles -->
+            <div class="md:hidden flex justify-between items-center px-4 py-2 bg-white/80 backdrop-blur border-b absolute top-0 w-full z-30">
+                <button onclick="document.getElementById('left-sidebar').classList.remove('-translate-x-full'); document.getElementById('right-sidebar').classList.add('translate-x-full');" class="flex flex-col items-center justify-center text-blue-600 bg-blue-50 px-4 py-1.5 rounded shadow-sm text-xs font-bold">
+                    <i class="fa-solid fa-palette mb-1"></i> Công Cụ
+                </button>
+                <button onclick="document.getElementById('right-sidebar').classList.remove('translate-x-full'); document.getElementById('left-sidebar').classList.add('-translate-x-full');" class="flex flex-col items-center justify-center text-purple-600 bg-purple-50 px-4 py-1.5 rounded shadow-sm text-xs font-bold">
+                    <i class="fa-solid fa-sliders mb-1"></i> Tùy Chỉnh
+                </button>
+            </div>
+
+            <div class="flex-1 relative flex items-center justify-center p-4 mt-10 md:mt-0">
+                <!-- Shirt Mockup Container -->
+                <div id="editor-2d"
+                    class="relative w-full max-w-[550px] aspect-[4/5] flex items-center justify-center shirt-container overflow-hidden rounded-xl">
+                    <!-- Shirt Image -->
+                    <img src="images/Phoi_ao/Áo sơ mi mặt trước .jpg" alt="Áo Sơ Mi" id="shirt-image"
+                        class="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
+                        draggable="false">
+                    <!-- Color Overlay (tints the shirt) -->
+                    <div id="shirt-color-overlay" class="absolute z-[11] pointer-events-none" style="width: 85%; height: 100%; left: 50%; top: 0; transform: translateX(-50%); background-color: transparent; mix-blend-mode: color; opacity: 0.65; border-radius: 10%;"></div>
+
+                    <!-- Design Canvas (Fabric.js) overlaying the printable area -->
+                    <div class="absolute w-[60%] h-[65%] top-[18%] left-[20%] z-20 border-2 border-dashed border-gray-400/40 rounded-md" id="canvas-wrapper">
+                        <canvas id="design-canvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- Floating Toolbar -->
+                <div id="floating-tools"
+                    class="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 bg-white border rounded shadow flex flex-col z-30 w-11 overflow-hidden">
+                    <button class="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center transition" title="Lật dọc"><i class="fa-solid fa-arrows-up-down"></i></button>
+                    <button class="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center transition" title="Canh giữa"><i class="fa-solid fa-align-center fa-rotate-90"></i></button>
+                    <button class="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center transition" title="Đưa xuống dưới"><i class="fa-solid fa-angle-left"></i></button>
+                    <button class="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center transition" title="Đưa lên trên"><i class="fa-solid fa-angle-right"></i></button>
+                    <button class="h-11 text-red-500 hover:text-red-700 hover:bg-red-50 border-b flex items-center justify-center transition bg-white" title="Xóa Element"><i class="fa-regular fa-trash-can"></i></button>
+                    <button class="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 flex items-center justify-center transition" title="Nhân bản (Copy)"><i class="fa-regular fa-copy"></i></button>
+                </div>
+            </div>
+
+            <!-- View Selector -->
+            <div class="h-16 flex items-center justify-center shrink-0 mb-[70px] md:mb-6 z-20 w-full absolute bottom-4">
+                <div class="flex border border-gray-300 rounded overflow-hidden shadow-lg bg-white">
+                    <button id="btn-2d" class="px-6 py-2.5 bg-gray-800 text-white text-xs sm:text-sm font-semibold transition">Mặt Trước</button>
+                    <button id="btn-3d" class="px-6 py-2.5 text-gray-600 hover:bg-gray-50 text-xs sm:text-sm font-medium border-l border-gray-300 transition flex items-center gap-2">Mặt Sau</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- RIGHT SIDEBAR -->
+        <aside id="right-sidebar" class="absolute md:relative inset-y-0 right-0 transform translate-x-full md:translate-x-0 w-80 bg-white border-l shrink-0 flex flex-col z-40 shadow-[-4px_0_15px_rgba(0,0,0,0.02)] transition-transform duration-300">
+            <button class="md:hidden absolute top-2 right-2 text-gray-400 hover:text-gray-800 z-50 bg-white rounded-full p-1" onclick="document.getElementById('right-sidebar').classList.add('translate-x-full');">
+                <i class="fa-solid fa-xmark text-lg px-2"></i>
+            </button>
+            <!-- Top Action Buttons -->
+            <div class="grid grid-cols-4 gap-0 text-xs font-medium text-gray-600 border-b border-gray-100 p-2">
+                <button class="flex flex-col items-center justify-center h-14 hover:bg-gray-50 rounded transition text-gray-400" disabled>
+                    <i class="fa-solid fa-rotate-left mb-1.5 text-lg"></i> Hủy (Z)
+                </button>
+                <button class="flex flex-col items-center justify-center h-14 hover:bg-gray-50 rounded transition text-gray-400" disabled>
+                    <i class="fa-solid fa-rotate-right mb-1.5 text-lg"></i> Quay lại
+                </button>
+                <button class="flex flex-col items-center justify-center h-14 hover:bg-gray-50 rounded transition text-blue-600">
+                    <i class="fa-solid fa-magnifying-glass mb-1.5 text-lg"></i> Zoom HD
+                </button>
+                <button class="flex flex-col items-center justify-center h-14 hover:bg-gray-50 rounded transition">
+                    <i class="fa-solid fa-share-nodes mb-1.5 text-lg"></i> Chia sẻ
+                </button>
+            </div>
+
+            <!-- Product Selection Section -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                <div class="p-5 border-b">
+                    <p class="text-sm text-gray-800 mb-3 font-semibold">Bảng Màu Nền Áo</p>
+                    <div class="grid grid-cols-5 gap-3 mb-4">
+                        <div class="w-8 h-8 rounded-full border-2 border-blue-500 flex items-center justify-center cursor-pointer shadow-sm relative color-swatch active bg-white" data-color="transparent">
+                            <i class="fa-solid fa-check text-blue-500 text-xs"></i>
+                        </div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-black color-swatch" data-color="#222222"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-gray-400 color-swatch" data-color="#9ca3af"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-pink-300 color-swatch" data-color="#f9a8d4"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-blue-100 color-swatch" data-color="#dbeafe"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-green-400 color-swatch" data-color="#4ade80"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-purple-400 color-swatch" data-color="#c084fc"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-yellow-300 color-swatch" data-color="#fde047"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-orange-500 color-swatch" data-color="#f97316"></div>
+                        <div class="w-8 h-8 rounded-full border border-gray-300 cursor-pointer shadow-sm bg-red-600 color-swatch" data-color="#dc2626"></div>
+                    </div>
+
+                    <!-- Suggest Size -->
+                    <div class="mb-4 mt-6 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                        <p class="text-sm text-blue-800 font-semibold mb-3"><i class="fa-solid fa-ruler-combined mr-1.5"></i> Gợi ý size phù hợp</p>
+                        <div class="flex gap-4 mb-3">
+                            <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                                <input type="radio" name="gender" value="male" checked class="mr-2 text-blue-600 focus:ring-blue-500 w-4 h-4"> Nam
+                            </label>
+                            <label class="flex items-center text-sm text-gray-700 cursor-pointer">
+                                <input type="radio" name="gender" value="female" class="mr-2 text-blue-600 focus:ring-blue-500 w-4 h-4"> Nữ
+                            </label>
+                        </div>
+                        <div class="flex gap-3 mb-3 text-sm">
+                            <div class="flex-1 relative">
+                                <input type="number" id="suggest-height" placeholder="Chiều cao" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 pr-8 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">cm</span>
+                            </div>
+                            <div class="flex-1 relative">
+                                <input type="number" id="suggest-weight" placeholder="Cân nặng" class="w-full text-sm border border-gray-300 rounded-lg p-2.5 pr-8 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">kg</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center bg-white p-2 rounded-lg border border-gray-100 mb-2">
+                            <button onclick="suggestSize()" class="bg-blue-600 text-white text-xs px-4 py-2 rounded-md hover:bg-blue-700 transition-colors shadow-sm font-semibold">🔍 Xem gợi ý</button>
+                            <span id="suggest-result" class="text-sm font-medium text-gray-500 px-2">Nhập thông số</span>
+                        </div>
+                    </div>
+
+                    <!-- Size Selectors -->
+                    <p class="text-sm text-gray-800 mb-2 font-semibold flex justify-between">Thông Số Kích Cỡ <a href="#" class="text-xs text-blue-500 font-normal hover:underline">Bảng quy đổi</a></p>
+                    <div class="flex gap-3 mb-2">
+                        <div class="flex flex-col items-center flex-1">
+                            <label class="text-xs text-gray-500 mb-1 font-medium bg-gray-100 w-full text-center py-1 rounded-t">S</label>
+                            <input type="number" min="0" value="0" class="size-input w-full border border-gray-300 rounded-b p-2 text-center text-sm font-semibold focus:outline-none focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="flex flex-col items-center flex-1">
+                            <label class="text-xs text-gray-500 mb-1 font-medium bg-gray-100 w-full text-center py-1 rounded-t">M</label>
+                            <input type="number" min="0" value="0" class="size-input w-full border border-gray-300 rounded-b p-2 text-center text-sm font-semibold focus:outline-none focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="flex flex-col items-center flex-1">
+                            <label class="text-xs text-gray-500 mb-1 font-medium bg-gray-100 w-full text-center py-1 rounded-t">L</label>
+                            <input type="number" min="0" value="0" class="size-input w-full border border-gray-300 rounded-b p-2 text-center text-sm font-semibold focus:outline-none focus:border-blue-500 transition-colors">
+                        </div>
+                        <div class="flex flex-col items-center flex-1">
+                            <label class="text-xs text-gray-500 mb-1 font-medium bg-gray-100 w-full text-center py-1 rounded-t">XL</label>
+                            <input type="number" min="0" value="0" class="size-input w-full border border-gray-300 rounded-b p-2 text-center text-sm font-semibold focus:outline-none focus:border-blue-500 transition-colors">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layer List -->
+                <div class="flex justify-between items-center p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors" data-toggle-layers>
+                    <h3 class="text-sm text-gray-700 font-medium">Họa tiết đã dùng <span class="bg-gray-200 text-gray-800 px-2 py-0.5 rounded text-xs ml-2 font-bold layer-count-badge">0</span></h3>
+                    <i class="fa-solid fa-chevron-down text-gray-400 text-xs"></i>
+                </div>
+                <div class="px-4 py-3 bg-gray-50 border-b hidden" id="layer-list"></div>
+            </div>
+
+            <!-- Pricing & Checkout -->
+            <div class="bg-gradient-to-b from-white to-gray-50 flex flex-col pt-0 border-t">
+                <div class="p-5">
+                    <div class="flex justify-between w-full items-end mb-1">
+                        <span class="text-sm font-medium text-gray-500 mb-1">Tạm tính:</span>
+                        <span id="total-price-display" class="text-3xl font-bold text-gray-900 tracking-tight">0đ</span>
+                    </div>
+                    <span id="qty-summary-display" class="text-sm text-blue-600 font-medium block text-right mt-1">Số lượng: 0 áo</span>
+                </div>
+                <div class="p-4 pt-0">
+                    <a href="cart.html"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2">
+                        <i class="fa-regular fa-square-check text-lg"></i> Chốt & Cho Vào Giỏ
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- ========== HISTORY PANEL ========== -->
+    <div id="history-panel" class="fixed inset-0 z-[200] flex pointer-events-none">
+        <!-- Backdrop -->
+        <div id="history-backdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+        <!-- Drawer -->
+        <div id="history-drawer"
+            class="relative ml-auto w-full max-w-md bg-white h-full flex flex-col shadow-2xl translate-x-full transition-transform duration-300 ease-in-out">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-5 py-4 border-b bg-gradient-to-r from-blue-600 to-indigo-600 text-white shrink-0">
+                <div>
+                    <h2 class="text-base font-bold flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử Thiết Kế</h2>
+                    <p class="text-xs text-blue-100 mt-0.5">Các bản thiết kế đã lưu của bạn</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-clear-history"
+                        class="text-xs text-red-200 hover:text-white bg-red-500/20 hover:bg-red-500/40 px-3 py-1.5 rounded-lg transition font-medium">
+                        <i class="fa-regular fa-trash-can mr-1"></i>Xóa tất cả
+                    </button>
+                    <button id="btn-close-history" class="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <!-- List -->
+            <div id="history-list" class="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50"></div>
+            <!-- Empty State -->
+            <div id="history-empty" class="hidden flex-col items-center justify-center flex-1 text-center py-16 px-8 bg-gray-50">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fa-regular fa-folder-open text-2xl text-gray-400"></i>
+                </div>
+                <p class="text-gray-500 font-semibold">Chưa có thiết kế nào</p>
+                <p class="text-gray-400 text-sm mt-1">Nhấn <span class="font-medium text-blue-500">Lưu Thiết Kế</span> để lưu bản thiết kế hiện tại.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-notify"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-xl z-[300] flex items-center gap-2.5 opacity-0 translate-y-4 pointer-events-none transition-all duration-300">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-green-400 text-base"></i>
+        <span id="toast-message">Đã lưu thiết kế!</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // ========== Fabric.js Canvas ==========
+        let canvas;
+
+        function initCanvas() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            const w = wrapper.offsetWidth;
+            const h = wrapper.offsetHeight;
+
+            canvas = new fabric.Canvas('design-canvas', {
+                width: w,
+                height: h,
+                backgroundColor: 'transparent',
+                selection: true,
+            });
+
+            // Add default text
+            const defaultText = new fabric.IText('A1 CLASS', {
+                left: w / 2, top: h * 0.35,
+                originX: 'center', originY: 'center',
+                fontSize: 32, fontFamily: 'Impact', fontWeight: 'bold',
+                fill: '#1e293b', editable: true,
+                cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
+                transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
+            });
+            canvas.add(defaultText);
+            canvas.setActiveObject(defaultText);
+            canvas.renderAll();
+
+            canvas.on('object:added', updateLayerList);
+            canvas.on('object:removed', updateLayerList);
+            canvas.on('object:modified', updateLayerList);
+            updateLayerList();
+        }
+
+        // ========== Add Text ==========
+        function addTextToCanvas() {
+            if (!canvas) return;
+            const content = document.getElementById('text-content-input')?.value?.trim() || 'Text mới';
+            const font = document.getElementById('text-font-select')?.value || 'Arial';
+            const size = parseInt(document.getElementById('text-size-input')?.value) || 28;
+            const color = document.getElementById('text-color-input')?.value || '#000000';
+
+            if (!content) { alert('Vui lòng nhập nội dung chữ!'); return; }
+
+            const text = new fabric.IText(content, {
+                left: canvas.width / 2, top: canvas.height / 2,
+                originX: 'center', originY: 'center',
+                fontSize: size, fontFamily: font, fill: color, editable: true,
+                cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
+                transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
+            });
+            canvas.add(text);
+            canvas.setActiveObject(text);
+            canvas.renderAll();
+        }
+
+        // ========== Add Sticker ==========
+        function addStickerToCanvas(imgSrc) {
+            if (!canvas) return;
+            fabric.Image.fromURL(imgSrc, function(img) {
+                const maxSize = canvas.width * 0.5;
+                const scale = maxSize / Math.max(img.width, img.height);
+                img.set({
+                    left: canvas.width / 2, top: canvas.height / 2,
+                    originX: 'center', originY: 'center',
+                    scaleX: scale, scaleY: scale,
+                    cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
+                    transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
+                });
+                canvas.add(img);
+                canvas.setActiveObject(img);
+                canvas.renderAll();
+            }, { crossOrigin: 'anonymous' });
+        }
+
+        function applyAIGraphic(src) { addStickerToCanvas(src); }
+
+        // ========== Layer List ==========
+        function updateLayerList() {
+            const layerListEl = document.getElementById('layer-list');
+            const countBadge = document.querySelector('.layer-count-badge');
+            if (!canvas || !layerListEl) return;
+            const objects = canvas.getObjects();
+            if (countBadge) countBadge.textContent = objects.length;
+
+            layerListEl.innerHTML = '';
+            objects.forEach((obj, i) => {
+                const isText = obj.type === 'i-text' || obj.type === 'text';
+                const label = isText ? '"' + (obj.text || 'Text').substring(0, 15) + '"' : 'Sticker ' + (i + 1);
+                const icon = isText ? 'fa-t' : 'fa-image';
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center text-sm bg-white border p-2 rounded shadow-sm mb-1 cursor-pointer hover:bg-blue-50 transition';
+                div.innerHTML = '<span class="font-medium text-gray-800 truncate"><i class="fa-solid ' + icon + ' text-gray-400 mr-2"></i>' + label + '</span><button class="text-red-400 hover:text-red-600 text-xs" title="Xóa"><i class="fa-regular fa-trash-can"></i></button>';
+                div.addEventListener('click', (e) => {
+                    if (e.target.closest('button')) { canvas.remove(obj); canvas.renderAll(); return; }
+                    canvas.setActiveObject(obj); canvas.renderAll();
+                });
+                layerListEl.appendChild(div);
+            });
+        }
+
+        // ========== Floating Toolbar ==========
+        const floatingBtns = document.querySelectorAll('#floating-tools button');
+        floatingBtns[0]?.addEventListener('click', () => { const a = canvas?.getActiveObject(); if (a) { a.set('flipY', !a.flipY); canvas.renderAll(); } });
+        floatingBtns[1]?.addEventListener('click', () => { const a = canvas?.getActiveObject(); if (a) { a.set({ left: canvas.width / 2, originX: 'center' }); canvas.renderAll(); } });
+        floatingBtns[2]?.addEventListener('click', () => { const a = canvas?.getActiveObject(); if (a) { canvas.sendBackwards(a); canvas.renderAll(); } });
+        floatingBtns[3]?.addEventListener('click', () => { const a = canvas?.getActiveObject(); if (a) { canvas.bringForward(a); canvas.renderAll(); } });
+        floatingBtns[4]?.addEventListener('click', () => { const a = canvas?.getActiveObject(); if (a) { canvas.remove(a); canvas.renderAll(); } });
+        floatingBtns[5]?.addEventListener('click', () => { const a = canvas?.getActiveObject(); if (a) { a.clone(function(c) { c.set({ left: a.left + 20, top: a.top + 20 }); canvas.add(c); canvas.setActiveObject(c); canvas.renderAll(); }); } });
+
+        // ========== Color Change (CSS Filters) ==========
+        const swatches = document.querySelectorAll('.color-swatch');
+        const shirtImage = document.getElementById('shirt-image');
+
+        const colorOverlay = document.getElementById('shirt-color-overlay');
+        swatches.forEach(swatch => {
+            swatch.addEventListener('click', function() {
+                swatches.forEach(s => { s.innerHTML = ''; s.classList.remove('border-blue-500', 'border-2'); s.classList.add('border-gray-300', 'border'); });
+                this.classList.remove('border-gray-300', 'border');
+                this.classList.add('border-blue-500', 'border-2');
+                const color = this.dataset.color;
+                this.innerHTML = color === 'transparent'
+                    ? '<i class="fa-solid fa-check text-blue-500 text-xs"></i>'
+                    : '<i class="fa-solid fa-check text-white text-xs drop-shadow-md"></i>';
+                // Apply color overlay on shirt
+                if (colorOverlay) {
+                    colorOverlay.style.backgroundColor = color;
+                }
+            });
+        });
+
+        // ========== Tab Navigation ==========
+        const allToolBtns = document.querySelectorAll('.tool-btn');
+        const panels = { 'btn-tab-base': 'panel-base', 'btn-tab-ai': 'panel-ai', 'btn-tab-text': 'panel-text' };
+
+        Object.keys(panels).forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            btn?.addEventListener('click', () => {
+                allToolBtns.forEach(b => { b.classList.remove('bg-blue-50', 'text-blue-600'); b.classList.add('hover:bg-gray-50'); });
+                Object.values(panels).forEach(pId => document.getElementById(pId)?.classList.add('hidden'));
+                btn.classList.add('bg-blue-50', 'text-blue-600');
+                btn.classList.remove('hover:bg-gray-50');
+                document.getElementById(panels[btnId])?.classList.remove('hidden');
+            });
+        });
+
+        // ========== Front/Back Toggle ==========
+        const btn2D = document.getElementById('btn-2d');
+        const btn3D = document.getElementById('btn-3d');
+        const canvasWrapperEl = document.getElementById('canvas-wrapper');
+
+        btn2D?.addEventListener('click', () => {
+            btn2D.className = 'px-6 py-2.5 bg-gray-800 text-white text-xs sm:text-sm font-semibold transition';
+            btn3D.className = 'px-6 py-2.5 text-gray-600 hover:bg-gray-50 text-xs sm:text-sm font-medium border-l border-gray-300 transition flex items-center gap-2';
+            shirtImage.src = 'images/Phoi_ao/Áo sơ mi mặt trước .jpg';
+            if (canvasWrapperEl) canvasWrapperEl.style.display = 'block';
+        });
+
+        btn3D?.addEventListener('click', () => {
+            btn3D.className = 'px-6 py-2.5 bg-gray-800 text-white text-xs sm:text-sm font-semibold transition border-l border-gray-300 flex items-center gap-2';
+            btn2D.className = 'px-6 py-2.5 text-gray-600 hover:bg-gray-50 text-xs sm:text-sm font-medium transition';
+            shirtImage.src = 'images/Phoi_ao/Áo sơ mi mặt sau .jpg';
+            if (canvasWrapperEl) canvasWrapperEl.style.display = 'none';
+        });
+
+        // ========== Layer Toggle ==========
+        document.querySelector('[data-toggle-layers]')?.addEventListener('click', () => {
+            document.getElementById('layer-list')?.classList.toggle('hidden');
+            const caret = document.querySelector('[data-toggle-layers] i');
+            if (caret) { caret.classList.toggle('fa-chevron-down'); caret.classList.toggle('fa-chevron-up'); }
+        });
+
+        // ========== AI Generate ==========
+        document.getElementById('btn-generate-ai')?.addEventListener('click', () => {
+            const aiPrompt = document.getElementById('ai-prompt');
+            const aiLoading = document.getElementById('ai-loading');
+            const aiResults = document.getElementById('ai-results');
+            const aiResultsGrid = document.getElementById('ai-results-grid');
+            const btn = document.getElementById('btn-generate-ai');
+
+            if (!aiPrompt.value.trim()) { alert("Vui lòng nhập mô tả ý tưởng!"); return; }
+
+            btn.disabled = true;
+            btn.classList.replace('from-purple-600', 'from-gray-400');
+            btn.classList.replace('to-indigo-600', 'to-gray-500');
+            aiLoading.classList.remove('hidden'); aiLoading.classList.add('flex');
+            aiResults.classList.add('hidden');
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.classList.replace('from-gray-400', 'from-purple-600');
+                btn.classList.replace('to-gray-500', 'to-indigo-600');
+                aiLoading.classList.add('hidden'); aiLoading.classList.remove('flex');
+                aiResults.classList.remove('hidden');
+                const stickers = ['9', '11', '2', '3'];
+                aiResultsGrid.innerHTML = stickers.map(s =>
+                    '<div class="relative group cursor-pointer border border-transparent hover:border-purple-500 rounded-lg overflow-hidden transition" onclick="applyAIGraphic(\'images/stickers/' + s + '.png\')">' +
+                    '<img src="images/stickers/' + s + '.png" class="w-full aspect-square object-contain bg-white group-hover:scale-105 transition-transform">' +
+                    '<div class="absolute inset-0 bg-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>' +
+                    '<span class="absolute bottom-1 right-1 text-white bg-purple-600 rounded-full w-5 h-5 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-plus text-xs"></i></span></div>'
+                ).join('');
+            }, 2000);
+        });
+
+        // ========== Size Suggestion ==========
+        function suggestSize() {
+            const h = document.getElementById('suggest-height').value;
+            const w = document.getElementById('suggest-weight').value;
+            const isMale = document.querySelector('input[name="gender"]:checked').value === 'male';
+            const r = document.getElementById('suggest-result');
+            if (!h || !w) { r.innerHTML = '<span class="text-red-500 text-xs font-bold">Vui lòng nhập đủ!</span>'; return; }
+            let size = 'M';
+            if (isMale) { if (h < 165 && w < 55) size = 'S'; else if (h < 172 && w < 65) size = 'M'; else if (h < 178 && w < 75) size = 'L'; else size = 'XL'; }
+            else { if (h < 155 && w < 45) size = 'S'; else if (h < 162 && w < 52) size = 'M'; else if (h < 168 && w < 60) size = 'L'; else size = 'XL'; }
+            r.innerHTML = 'Gợi ý: <span class="text-blue-600 text-lg font-bold ml-1">' + size + '</span>';
+        }
+
+        // ========== Pricing ==========
+        function updatePricing() {
+            const BASE_PRICE = 180000;
+            const PRINT_PRICE = 30000;
+            let totalQty = 0;
+            document.querySelectorAll('.size-input').forEach(inp => { totalQty += parseInt(inp.value) || 0; });
+            const hasDesign = canvas && canvas.getObjects().length > 0;
+            const total = totalQty * (BASE_PRICE + (hasDesign ? PRINT_PRICE : 0));
+            document.getElementById('total-price-display').textContent = total.toLocaleString('vi-VN') + 'đ';
+            document.getElementById('qty-summary-display').textContent = 'Số lượng: ' + totalQty + ' áo';
+        }
+        document.querySelectorAll('.size-input').forEach(inp => inp.addEventListener('input', updatePricing));
+
+        // ========== Design History (localStorage) ==========
+        const HISTORY_KEY = 'alma_design_history';
+
+        function getHistory() {
+            try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+            catch(e) { return []; }
+        }
+
+        function saveHistory(arr) {
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+        }
+
+        function updateHistoryBadge() {
+            const count = getHistory().length;
+            const badge = document.getElementById('history-count-badge');
+            if (count > 0) {
+                badge.textContent = count > 9 ? '9+' : count;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function saveDesign() {
+            if (!canvas) return;
+            // Generate thumbnail from canvas
+            const canvasDataURL = canvas.toDataURL({ format: 'png', multiplier: 0.5 });
+
+            // Get current shirt color
+            const activeColor = document.querySelector('.color-swatch.border-blue-500');
+            const shirtColor = activeColor ? (activeColor.dataset.color || 'transparent') : 'transparent';
+
+            // Get current shirt type
+            const shirtImg = document.getElementById('shirt-image');
+            const shirtSrc = shirtImg ? shirtImg.src.split('/').pop() : '';
+
+            // Get size quantities
+            const sizes = {};
+            const sizeLabels = ['S','M','L','XL'];
+            document.querySelectorAll('.size-input').forEach((inp, i) => {
+                sizes[sizeLabels[i]] = parseInt(inp.value) || 0;
+            });
+
+            // Get canvas JSON
+            const canvasJSON = canvas.toJSON(['id','selectable']);
+
+            const entry = {
+                id: Date.now(),
+                name: 'Thiết kế ' + new Date().toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'}),
+                time: new Date().toLocaleString('vi-VN', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric'}),
+                thumbnail: canvasDataURL,
+                shirtColor: shirtColor,
+                shirtSrc: shirtSrc,
+                sizes: sizes,
+                canvasJSON: canvasJSON,
+                objectCount: canvas.getObjects().length,
+            };
+
+            const history = getHistory();
+            history.unshift(entry); // newest first
+            if (history.length > 20) history.pop(); // cap at 20
+            saveHistory(history);
+            updateHistoryBadge();
+            showToast('✓ Đã lưu thiết kế thành công!', 'success');
+        }
+
+        function renderHistoryList() {
+            const history = getHistory();
+            const listEl = document.getElementById('history-list');
+            const emptyEl = document.getElementById('history-empty');
+
+            if (history.length === 0) {
+                listEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+                emptyEl.classList.add('flex');
+                return;
+            }
+
+            listEl.classList.remove('hidden');
+            emptyEl.classList.add('hidden');
+            emptyEl.classList.remove('flex');
+
+            listEl.innerHTML = history.map((entry, idx) => {
+                const colorDot = entry.shirtColor && entry.shirtColor !== 'transparent'
+                    ? `<span class="w-4 h-4 rounded-full border border-gray-200 inline-block" style="background:${entry.shirtColor}"></span>`
+                    : `<span class="w-4 h-4 rounded-full border border-gray-300 bg-white inline-block flex items-center justify-center"><i class='fa-solid fa-slash text-[6px] text-gray-400'></i></span>`;
+                const objLabel = entry.objectCount === 0 ? 'Chưa có họa tiết'
+                    : entry.objectCount + ' họa tiết';
+                return `
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow group" data-idx="${idx}">
+                    <div class="flex gap-3 p-3">
+                        <!-- Thumbnail -->
+                        <div class="shrink-0 w-20 h-20 bg-gray-100 rounded-lg overflow-hidden border border-gray-100 flex items-center justify-center relative">
+                            <div class="absolute inset-0" style="background:${entry.shirtColor === 'transparent' ? 'transparent' : entry.shirtColor + '33'}"></div>
+                            ${entry.thumbnail
+                                ? `<img src="${entry.thumbnail}" alt="preview" class="w-full h-full object-contain relative z-10">`
+                                : `<i class="fa-solid fa-shirt text-3xl text-gray-300"></i>`
+                            }
+                        </div>
+                        <!-- Info -->
+                        <div class="flex-1 min-w-0">
+                            <p class="font-semibold text-gray-800 text-sm truncate">${entry.name}</p>
+                            <p class="text-gray-400 text-xs mt-0.5">${entry.time}</p>
+                            <div class="flex items-center gap-2 mt-1.5">
+                                ${colorDot}
+                                <span class="text-xs text-gray-500">${objLabel}</span>
+                            </div>
+                            <div class="flex gap-1 mt-1.5 text-[10px] font-medium">
+                                ${['S','M','L','XL'].map(s => {
+                                    const qty = (entry.sizes || {})[s] || 0;
+                                    return qty > 0 ? `<span class="bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">${s}: ${qty}</span>` : '';
+                                }).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Actions -->
+                    <div class="flex border-t border-gray-100">
+                        <button onclick="loadDesignFromHistory(${idx})"
+                            class="flex-1 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-rotate-left"></i> Tải lại thiết kế
+                        </button>
+                        <div class="w-px bg-gray-100"></div>
+                        <button onclick="deleteHistoryItem(${idx})"
+                            class="px-5 py-2 text-xs font-semibold text-red-500 hover:bg-red-50 transition flex items-center justify-center gap-1.5">
+                            <i class="fa-regular fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function loadDesignFromHistory(idx) {
+            const history = getHistory();
+            const entry = history[idx];
+            if (!entry || !canvas) return;
+
+            // Restore canvas
+            canvas.loadFromJSON(entry.canvasJSON, () => {
+                canvas.renderAll();
+                updateLayerList();
+            });
+
+            // Restore shirt color
+            const overlay = document.getElementById('shirt-color-overlay');
+            if (overlay) overlay.style.backgroundColor = entry.shirtColor || 'transparent';
+            // Update swatch UI
+            document.querySelectorAll('.color-swatch').forEach(s => {
+                s.innerHTML = '';
+                s.classList.remove('border-blue-500','border-2');
+                s.classList.add('border-gray-300','border');
+                if (s.dataset.color === entry.shirtColor) {
+                    s.classList.add('border-blue-500','border-2');
+                    s.classList.remove('border-gray-300','border');
+                    s.innerHTML = entry.shirtColor === 'transparent'
+                        ? '<i class="fa-solid fa-check text-blue-500 text-xs"></i>'
+                        : '<i class="fa-solid fa-check text-white text-xs drop-shadow-md"></i>';
+                }
+            });
+
+            // Restore sizes
+            const sizeLabels = ['S','M','L','XL'];
+            document.querySelectorAll('.size-input').forEach((inp, i) => {
+                inp.value = (entry.sizes || {})[sizeLabels[i]] || 0;
+            });
+            updatePricing();
+
+            closeHistoryPanel();
+            showToast('✓ Đã tải lại thiết kế!', 'success');
+        }
+
+        function deleteHistoryItem(idx) {
+            const history = getHistory();
+            history.splice(idx, 1);
+            saveHistory(history);
+            updateHistoryBadge();
+            renderHistoryList();
+            showToast('Đã xóa bản thiết kế.', 'info');
+        }
+
+        function clearAllHistory() {
+            if (!confirm('Bạn có chắc muốn xóa toàn bộ lịch sử thiết kế?')) return;
+            saveHistory([]);
+            updateHistoryBadge();
+            renderHistoryList();
+            showToast('Đã xóa toàn bộ lịch sử.', 'info');
+        }
+
+        function openHistoryPanel() {
+            renderHistoryList();
+            const panel = document.getElementById('history-panel');
+            const backdrop = document.getElementById('history-backdrop');
+            const drawer = document.getElementById('history-drawer');
+            panel.classList.remove('pointer-events-none');
+            backdrop.classList.remove('pointer-events-none');
+            backdrop.style.opacity = '1';
+            drawer.style.transform = 'translateX(0)';
+        }
+
+        function closeHistoryPanel() {
+            const panel = document.getElementById('history-panel');
+            const backdrop = document.getElementById('history-backdrop');
+            const drawer = document.getElementById('history-drawer');
+            backdrop.style.opacity = '0';
+            drawer.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                panel.classList.add('pointer-events-none');
+                backdrop.classList.add('pointer-events-none');
+            }, 310);
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast-notify');
+            const icon = document.getElementById('toast-icon');
+            const msgEl = document.getElementById('toast-message');
+            icon.className = type === 'success'
+                ? 'fa-solid fa-circle-check text-green-400 text-base'
+                : 'fa-solid fa-circle-info text-blue-400 text-base';
+            msgEl.textContent = msg;
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            toast.classList.remove('pointer-events-none');
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(-50%) translateY(1rem)';
+                toast.classList.add('pointer-events-none');
+            }, 2800);
+        }
+
+        // ========== History Button Wiring ==========
+        document.getElementById('btn-save-design')?.addEventListener('click', saveDesign);
+        document.getElementById('btn-open-history')?.addEventListener('click', openHistoryPanel);
+        document.getElementById('btn-close-history')?.addEventListener('click', closeHistoryPanel);
+        document.getElementById('btn-clear-history')?.addEventListener('click', clearAllHistory);
+        document.getElementById('history-backdrop')?.addEventListener('click', closeHistoryPanel);
+
+        // ========== Init ==========
+        window.addEventListener('load', () => { initCanvas(); updateHistoryBadge(); });
+        window.addEventListener('resize', () => {
+            if (canvas) {
+                const wr = document.getElementById('canvas-wrapper');
+                canvas.setWidth(wr.offsetWidth);
+                canvas.setHeight(wr.offsetHeight);
+                canvas.renderAll();
+            }
+        });
+    </script>
+</body>
+
+</html>
