@@ -36,6 +36,7 @@ namespace TheALMAProject.API.Extensions
             services.AddScoped<IVietQrService, VietQrService>();
             services.AddScoped<IPrintFileRenderer, PrintFileRenderer>();
             services.AddHttpContextAccessor();
+
             //Đăng kí fluentValidation
             services.AddFluentValidationAutoValidation();
             services.AddValidatorsFromAssemblyContaining<CreateUserDtoValidator>();
@@ -44,6 +45,18 @@ namespace TheALMAProject.API.Extensions
             services.AddAutoMapper(cfg => cfg.AddMaps(typeof(UserMapping).Assembly));
             services.AddAutoMapper(cfg => cfg.AddMaps(typeof(OrderMapping).Assembly));
             services.AddAutoMapper(cfg => cfg.AddMaps(typeof(ReviewMapping).Assembly));
+
+            // Đăng ký cấu hình CORS
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowReactApp", builder =>
+                {
+                    builder.WithOrigins("http://localhost:5173", "http://localhost:3000") // Điền link Frontend của bạn vào đây
+                           .AllowAnyHeader()
+                           .AllowAnyMethod()
+                           .AllowCredentials(); 
+                });
+            });
 
             return services;
         }

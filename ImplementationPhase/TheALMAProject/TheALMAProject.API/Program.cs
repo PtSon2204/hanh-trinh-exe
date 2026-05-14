@@ -123,6 +123,8 @@ namespace TheALMAProject.API
 
             app.UseHttpsRedirection();
 
+            app.UseCors("AllowReactApp");
+
             // Phục vụ file tĩnh (avatar, images) từ wwwroot
             app.UseStaticFiles();
 
