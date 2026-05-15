@@ -30,7 +30,7 @@ const OrderListPage = () => {
     fetchOrders(); // Chạy hàm khi component vừa render
   }, []); // Mảng rỗng [] nghĩa là chỉ chạy 1 lần duy nhất
 
-  // 1. Nếu đang tải thì hiện dòng chữ này
+  // 1. Nếu đang tải thì hiện dòng chữ này  
   if (loading) return <div style={{ padding: '20px' }}>Đang tải dữ liệu...</div>;
   
   // 2. Nếu có lỗi thì hiện màu đỏ
