@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import type { UserSession } from '../../shared/types/auth.types';
-
+import type { UserSession } from '../../../shared/types/auth.types';
 // ─── Context Shape ────────────────────────────────────────────────────────────
 interface AuthContextValue {
   user: UserSession | null;

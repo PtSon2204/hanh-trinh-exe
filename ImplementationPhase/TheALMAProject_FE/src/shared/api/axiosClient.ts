@@ -17,4 +17,20 @@ axiosClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor: Xử lý lỗi Response
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token không hợp lệ hoặc hết hạn → xóa session và redirect về login
+      localStorage.removeItem('token');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userFullName');
+      localStorage.removeItem('userRole');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default axiosClient;

@@ -31,6 +31,7 @@ function Navbar() {
         <nav className="alma-nav__links">
           <Link to="/" className="alma-nav__link alma-nav__link--active">Trang Chủ</Link>
           <Link to="/category" className="alma-nav__link">Sản Phẩm</Link>
+          <Link to="/designs" className="alma-nav__link">Danh sách thiết kế</Link>
           <Link to="/customizer" className="alma-nav__link alma-nav__link--design">
             ✨ Thiết Kế Ngay
           </Link>
