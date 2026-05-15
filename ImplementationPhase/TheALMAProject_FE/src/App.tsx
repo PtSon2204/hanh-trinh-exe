@@ -5,6 +5,8 @@ import { AuthProvider } from './features/auth';
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage, ProfilePage } from './features/auth';
 import OrderListPage from './features/orders/pages/OrderListPage';
 import HomePage from './features/home/pages/HomePage';
+import CartPage from './features/cart/pages/CartPage';
+import CustomizerPage from './features/customizer/pages/CustomizerPage';
 
 function App() {
   return (
@@ -32,6 +34,16 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password"  element={<ResetPasswordPage />} />
           <Route path="/profile"         element={<ProfilePage />} />
+
+          {/* Cart route */}
+          <Route path="/cart"            element={
+            <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', paddingBottom: '40px' }}>
+              <CartPage />
+            </div>
+          } />
+
+          {/* Design route */}
+          <Route path="/customizer"      element={<CustomizerPage />} />
 
           {/* Existing routes */}
           <Route path="/orders"          element={
