@@ -42,6 +42,22 @@ function App() {
 					<Route path="/reset-password" element={<ResetPasswordPage />} />
 					<Route path="/profile" element={<ProfilePage />} />
 					<Route path="/error" element={<ErrorPage />} />
+          {/* Cart route */}
+          <Route path="/cart"            element={
+            <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', paddingBottom: '40px' }}>
+              <CartPage />
+            </div>
+          } />
+
+          {/* Design route */}
+          <Route path="/customizer"      element={<CustomizerPage />} />
+
+          {/* Existing routes */}
+          <Route path="/orders"          element={
+            <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
+              <OrderListPage />
+            </div>
+          } />
 
 					{/* Existing routes */}
 					<Route

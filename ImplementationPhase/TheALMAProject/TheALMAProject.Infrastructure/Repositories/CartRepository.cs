@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -39,6 +39,21 @@ namespace TheALMAProject.Infrastructure.Repositories
             return await _context.Carts
                          .Include(c => c.CartItems)
                          .FirstOrDefaultAsync(c => c.UserId == userId);
+        }
+
+        public async Task<Cart?> GetCartByUserIdWithDetailsAsync(int userId)
+        {
+            return await _context.Carts
+                         .Include(c => c.CartItems)
+                             .ThenInclude(ci => ci.Product)
+                         .Include(c => c.CartItems)
+                             .ThenInclude(ci => ci.Design)
+                         .FirstOrDefaultAsync(c => c.UserId == userId);
+        }
+
+        public async Task<CartItem?> GetCartItemByIdAsync(int cartItemId)
+        {
+            return await _context.CartItems.FindAsync(cartItemId);
         }
 
         public void UpdateCartItemAsync(CartItem cartItem)
