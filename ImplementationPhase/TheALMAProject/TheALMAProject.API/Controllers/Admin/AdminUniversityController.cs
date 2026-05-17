@@ -9,7 +9,7 @@ namespace TheALMAProject.API.Controllers.Admin
 {
     [Route(AdminUniversityContract.AdminUniversityRoutePrefix)]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Product Manager")]
     public class AdminUniversityController : ControllerBase
     {
         private readonly IAdminUniversityService _adminUniversityService;
@@ -41,6 +41,7 @@ namespace TheALMAProject.API.Controllers.Admin
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateAsync([FromBody] AdminCreateUniversityDto dto)
         {
             await _adminUniversityService.CreateUniversity(dto);
@@ -52,6 +53,7 @@ namespace TheALMAProject.API.Controllers.Admin
         }
 
         [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAsync(int id, [FromBody] AdminUpdateUniversityDto dto)
         {
             await _adminUniversityService.UpdateUniversity(id, dto);
@@ -63,6 +65,7 @@ namespace TheALMAProject.API.Controllers.Admin
         }
 
         [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAsync(int id)
         {
             await _adminUniversityService.DeleteUniversity(id);

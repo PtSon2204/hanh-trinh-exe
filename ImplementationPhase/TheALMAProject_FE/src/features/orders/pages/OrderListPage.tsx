@@ -1,5 +1,5 @@
 // src/features/orders/pages/OrderListPage.tsx
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { orderApi } from '../api/orderApi';
 import type { OrderResponseDto } from '../types/index';
 import type { PagedResult } from '../../../shared/types/pagination';
@@ -63,7 +63,7 @@ const OrderListPage = () => {
             </p>
             <p style={{ margin: '5px 0' }}>Thanh toán: {order.paymentStatus}</p>
             <p style={{ margin: '5px 0', color: '#666', fontSize: '14px' }}>
-              Ngày đặt: {new Date(order.createdAt).toLocaleDateString('vi-VN')}
+              Ngày đặt: {order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : 'Chưa có'}
             </p>
             
             <button style={{ 

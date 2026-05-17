@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TheALMAProject.Application.DTOs.BaseProductDtos;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Queries;
+using TheALMAProject.Infrastructure.Services;
 
 namespace TheALMAProject.API.Controllers
 {
@@ -12,10 +13,28 @@ namespace TheALMAProject.API.Controllers
     public class BaseProductController : ControllerBase
     {
         private readonly IAdminBaseProductService _baseProductService;
+        private readonly IFileStorageService _fileStorageService;
 
-        public BaseProductController(IAdminBaseProductService baseProductService)
+        public BaseProductController(
+            IAdminBaseProductService baseProductService,
+            IFileStorageService fileStorageService)
         {
             _baseProductService = baseProductService;
+            _fileStorageService = fileStorageService;
+        }
+
+        [HttpPost("image")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { message = "Image file is required" });
+            }
+
+            var imageUrl = await _fileStorageService.SaveFileAsync(file, "uploads/base-products");
+
+            return Ok(new { imageUrl });
         }
 
         [HttpGet("{id:int}")]
