@@ -78,6 +78,17 @@ namespace TheALMAProject.API.Controllers
         }
 
         /// <summary>
+        /// Admin gửi email thông báo/marketing
+        /// </summary>
+        [HttpPost("send-email")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> SendEmailNotification([FromBody] SendEmailNotificationDto dto)
+        {
+            await _notificationService.SendEmailNotificationAsync(dto);
+            return Ok(new { message = "Gửi email thành công." });
+        }
+
+        /// <summary>
         /// Lấy UserId từ JWT token
         /// </summary>
         private int GetCurrentUserId()

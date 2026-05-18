@@ -7,6 +7,7 @@ import AdminOrdersPage from "../orders/pages/adminOrdersPage";
 import { AdminProductLayout } from "../products/components/AdminProductLayout";
 import AdminBaseProductsPage from "../products/pages/AdminBaseProductsPage";
 import AdminStoreProductsPage from "../products/pages/AdminStoreProductsPage";
+import AdminNotificationsPage from "../notifications/pages/AdminNotificationsPage";
 
 const ADMIN_ROLES = new Set(["Admin", "Product Manager"]);
 
@@ -61,6 +62,10 @@ export function AdminRoutes() {
 							<AdminStoreProductsPage />
 						</AdminProductLayout>
 					}
+				/>
+				<Route
+					path="notifications"
+					element={<AdminNotificationsPage />}
 				/>
 				<Route path="*" element={<Navigate to="/admin" replace />} />
 			</Routes>

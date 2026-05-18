@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fabric } from 'fabric';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
@@ -28,7 +28,7 @@ export default function CustomizerPage() {
 
     // --- States Dữ liệu Thiết kế ---
     const [shirtColor, setShirtColor] = useState('transparent');
-    const [layerTrigger, setLayerTrigger] = useState(0);
+    const [, setLayerTrigger] = useState(0);
     const [historyList, setHistoryList] = useState<any[]>([]);
 
     // --- States Icons từ DB ---

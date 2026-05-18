@@ -41,6 +41,10 @@ const authApi = {
   /** PUT /api/auth/change-password */
   changePassword: (dto: ChangePasswordDto) =>
     axiosClient.put<{ message: string }>('/auth/change-password', dto),
+
+  /** POST /api/auth/oauth-login */
+  oAuthLogin: (dto: { provider: string; idToken: string }) =>
+    axiosClient.post<AuthResponse>('/auth/oauth-login', dto),
 };
 
 export default authApi;

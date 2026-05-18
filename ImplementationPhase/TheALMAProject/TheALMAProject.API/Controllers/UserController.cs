@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TheALMAProject.Application.DTOs.UserDtos;
 using TheALMAProject.Application.Interfaces;

@@ -1,12 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-// ALMA shirt SVG icon
-const ShirtIcon = () => (
-  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H5v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9h1.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/>
-  </svg>
-);
+
 const ArrowLeftIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M19 12H5M12 5l-7 7 7 7"/>
@@ -34,15 +29,16 @@ export default function AuthLayout({
     <div className="auth-layout">
       {/* ── Left branding panel ─────────────────────────────── */}
       <div className="auth-left">
+        <div className="auth-left__bg-image">
+          <img src="/images/hero-bg.png" alt="Background" />
+        </div>
         <div className="auth-left__dots" />
         <div className="auth-left__blob auth-left__blob--blue" />
         <div className="auth-left__blob auth-left__blob--purple" />
 
         <div className="auth-left__content">
           <Link to="/" className="auth-left__logo">
-            <div className="auth-left__logo-icon">
-              <ShirtIcon />
-            </div>
+            <img src="/images/logo.png" alt="ALMA Logo" className="h-12 w-auto object-contain bg-white rounded-lg p-1.5 shadow-md mr-3" />
             <span className="auth-left__logo-text">
               ALMA Custom Threads<span className="auth-left__logo-dot">.</span>
             </span>
@@ -80,9 +76,7 @@ export default function AuthLayout({
             {/* Logo inside card */}
             <div className="auth-card__logo">
               <Link to="/">
-                <div className="auth-card__logo-icon">
-                  <ShirtIcon />
-                </div>
+                <img src="/images/logo.png" alt="ALMA Logo" className="h-14 w-auto object-contain" />
               </Link>
             </div>
 
