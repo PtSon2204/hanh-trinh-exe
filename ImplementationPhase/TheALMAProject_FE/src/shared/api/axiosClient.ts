@@ -1,16 +1,42 @@
-import axios from 'axios';
+import axios from "axios";
 
 const axiosClient = axios.create({
-  // Đã sửa lại thành 7106 cho khớp với Swagger của bạn
-  baseURL: 'https://localhost:7106/api', 
+  baseURL: import.meta.env.VITE_API_BASE_URL ?? "https://localhost:7106/api",
   headers: {
-    'Content-Type': 'application/json',
+    Accept: "application/json",
   },
 });
 
+function readServerMessage(data: unknown): string | null {
+  if (typeof data === "string") return data;
+  if (!data || typeof data !== "object") return null;
+
+  const record = data as Record<string, unknown>;
+  if (typeof record.message === "string") return record.message;
+  if (typeof record.title === "string") return record.title;
+
+  return null;
+}
+
+export function getApiErrorMessage(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    return readServerMessage(error.response?.data) ?? error.message ?? fallback;
+  }
+
+  if (error instanceof Error) return error.message;
+
+  return fallback;
+}
+
+export function resolveApiAssetUrl(url: string | null) {
+  if (!url) return null;
+
+  return new URL(url, axiosClient.defaults.baseURL).href;
+}
+
 // Interceptor: Tự động gắn Token
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token'); 
+  const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
