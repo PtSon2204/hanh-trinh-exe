@@ -1,3 +1,4 @@
+
 import { Toaster } from "react-hot-toast";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AdminRoutes } from "./features/admin/routes/adminRoutes";
@@ -12,6 +13,10 @@ import {
 import ErrorPage from "./features/error/pages/ErrorPage";
 import HomePage from "./features/home/pages/HomePage";
 import OrderListPage from "./features/orders/pages/OrderListPage";
+import { ProductListPage, ProductDetailPage } from './features/products';
+import CartPage from './features/cart/pages/CartPage';
+import CustomizerPage from './features/customizer/pages/CustomizerPage';
+
 
 function App() {
 	return (
@@ -42,38 +47,26 @@ function App() {
 					<Route path="/reset-password" element={<ResetPasswordPage />} />
 					<Route path="/profile" element={<ProfilePage />} />
 					<Route path="/error" element={<ErrorPage />} />
-          {/* Cart route */}
-          <Route path="/cart"            element={
-            <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', paddingBottom: '40px' }}>
-              <CartPage />
-            </div>
-          } />
+					{/* Cart route */}
+					<Route path="/cart" element={
+						<div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', paddingBottom: '40px' }}>
+							<CartPage />
+						</div>
+					} />
 
-          {/* Design route */}
-          <Route path="/customizer"      element={<CustomizerPage />} />
+					{/* Design route */}
+					<Route path="/customizer" element={<CustomizerPage />} />
 
-          {/* Existing routes */}
-          <Route path="/orders"          element={
-            <div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-              <OrderListPage />
-            </div>
-          } />
+					{/* Shopping & Product Discovery (UC-08, UC-09) */}
+					<Route path="/category" element={<ProductListPage />} />
+					<Route path="/products/:id" element={<ProductDetailPage />} />
 
 					{/* Existing routes */}
-					<Route
-						path="/orders"
-						element={
-							<div
-								style={{
-									backgroundColor: "#f5f5f5",
-									minHeight: "100vh",
-									padding: "20px",
-								}}
-							>
-								<OrderListPage />
-							</div>
-						}
-					/>
+					<Route path="/orders" element={
+						<div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
+							<OrderListPage />
+						</div>
+					} />
 
 					{/* Default redirect */}
 					<Route path="/" element={<HomePage />} />

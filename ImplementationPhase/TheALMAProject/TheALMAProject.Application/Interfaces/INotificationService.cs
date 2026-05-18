@@ -39,5 +39,10 @@ namespace TheALMAProject.Application.Interfaces
         /// Gửi notification cho Admin + email xác nhận cho khách
         /// </summary>
         Task NotifyNewOrderAsync(int orderId);
+
+        /// <summary>
+        /// Gửi email thông báo/marketing cho 1 user cụ thể hoặc toàn bộ user
+        /// </summary>
+        Task SendEmailNotificationAsync(SendEmailNotificationDto dto);
     }
 }
