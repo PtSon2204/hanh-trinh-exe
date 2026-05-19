@@ -132,17 +132,26 @@ function Navbar() {
 
 // ── Hero ──────────────────────────────────────────────────────────────
 function buildCharSpans(text: string, container: HTMLSpanElement) {
+  if (!container) return;
   container.innerHTML = "";
-  [...text].forEach((char) => {
-    if (char === " ") {
-      const sp = document.createElement("span");
-      sp.className = "hero-space";
-      sp.innerHTML = "&nbsp;";
-      container.appendChild(sp);
-    } else {
+
+  // Tách chuỗi thành từng TỪ
+  const words = text.split(" ");
+
+  words.forEach((word, wordIndex) => {
+    // Tạo thẻ span bọc TỪ để tránh bị rớt dòng giữa chừng
+    const wordSpan = document.createElement("span");
+    wordSpan.style.display = "inline-block";
+    wordSpan.style.whiteSpace = "nowrap";
+
+    // Tách từ thành từng KÝ TỰ và thêm hiệu ứng
+    const chars = word.split("");
+    chars.forEach((char) => {
       const span = document.createElement("span");
       span.className = "hero-char";
       span.textContent = char;
+      
+      // Giữ nguyên hiệu ứng hover của bạn
       span.addEventListener("mouseenter", () => {
         const hue = Math.floor(Math.random() * 360);
         span.style.color = `hsl(${hue},85%,65%)`;
@@ -154,7 +163,18 @@ function buildCharSpans(text: string, container: HTMLSpanElement) {
         span.style.textShadow = "";
         span.style.transform = "";
       });
-      container.appendChild(span);
+      
+      wordSpan.appendChild(span);
+    });
+
+    container.appendChild(wordSpan);
+
+    // Thêm khoảng trắng giữa các từ
+    if (wordIndex < words.length - 1) {
+      const spaceSpan = document.createElement("span");
+      spaceSpan.className = "hero-space";
+      spaceSpan.innerHTML = "&nbsp;";
+      container.appendChild(spaceSpan);
     }
   });
 }
@@ -165,9 +185,9 @@ function Hero() {
 
   useEffect(() => {
     if (line1Ref.current)
-      buildCharSpans("Đồng phục trường lớp", line1Ref.current);
+      buildCharSpans("Đồng phục trường lớp ", line1Ref.current);
     if (line2Ref.current)
-      buildCharSpans("Thiết kế theo cách của bạn", line2Ref.current);
+      buildCharSpans("thiết kế theo cách của bạn", line2Ref.current);
   }, []);
 
   return (
@@ -680,7 +700,7 @@ export default function HomePage() {
   return (
     <div
       style={{
-        fontFamily: "'Outfit', sans-serif",
+        fontFamily: "'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif", // <--- Đổi thành Trebuchet MS
         minHeight: "100vh",
         display: "flex",
         flexDirection: "column",

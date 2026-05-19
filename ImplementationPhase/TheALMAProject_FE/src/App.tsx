@@ -12,6 +12,8 @@ import {
 import ErrorPage from "./features/error/pages/ErrorPage";
 import HomePage from "./features/home/pages/HomePage";
 import OrderListPage from "./features/orders/pages/OrderListPage";
+import CartPage from "./features/cart/pages/CartPage";
+import CustomizerPage from "./features/customizer/pages/CustomizerPage";
 
 function App() {
 	return (
