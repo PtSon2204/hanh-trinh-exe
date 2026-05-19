@@ -67,6 +67,7 @@ const navGroups: AdminNavGroup[] = [
       },
       { href: "/admin/stickers", icon: faFaceSmile, label: "Quản lý Stickers" },
       { href: "/admin/customers", icon: faUsers, label: "Khách hàng" },
+      { href: "/admin/notifications", icon: faBell, label: "Gửi Thông Báo" },
       { href: "/admin/settings", icon: faGear, label: "Cài đặt hệ thống" },
     ],
   },

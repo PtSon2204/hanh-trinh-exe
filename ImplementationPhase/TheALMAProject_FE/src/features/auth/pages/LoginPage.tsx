@@ -5,6 +5,7 @@ import AuthLayout from '../components/AuthLayout';
 import authApi from '../api/authApi';
 import { useAuth } from '../context/AuthContext';
 import type { AuthResponse } from '../../../shared/types/auth.types';
+import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
 import '../styles/auth.css';
 
 // ── Icons ────────────────────────────────────────────────────────────
@@ -65,8 +66,26 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = () => {
-    toast('Chức năng đăng nhập Google đang được tích hợp...', { icon: '🔗' });
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) return;
+    try {
+      setLoading(true);
+      const res = await authApi.oAuthLogin({ provider: 'Google', idToken: credentialResponse.credential });
+      const data = res.data;
+      login({ token: data.token, email: data.email, fullName: data.fullName, role: data.role });
+      toast.success(`Chào mừng, ${data.fullName}!`);
+      navigate('/');
+    } catch (err: unknown) {
+      const msg = (err as any)?.response?.data?.message || 'Đăng nhập Google thất bại.';
+      toast.error(msg);
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Đăng nhập Google bị lỗi hoặc bị hủy.');
   };
   const handleFacebookLogin = () => {
     toast('Chức năng đăng nhập Facebook đang được tích hợp...', { icon: '🔗' });
@@ -144,10 +163,16 @@ export default function LoginPage() {
 
       {/* Social */}
       <div className="social-grid">
-        <button id="login-google" type="button" className="btn-outline" onClick={handleGoogleLogin}>
-          <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
-          <span>Google</span>
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap
+            shape="rectangular"
+            theme="outline"
+            text="signin_with"
+          />
+        </div>
         <button id="login-facebook" type="button" className="btn-outline" onClick={handleFacebookLogin}>
           <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook" />
           <span>Facebook</span>

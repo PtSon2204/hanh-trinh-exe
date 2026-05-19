@@ -3,12 +3,14 @@ import { toast } from "react-hot-toast";
 import { Link } from "react-router-dom";
 import authApi from "../../auth/api/authApi";
 import { useAuth } from "../../auth/context/AuthContext";
+import { SearchOverlay } from "../../products";
 import "./HomePage.css";
 
 // ── Navbar ────────────────────────────────────────────────────────────
 function Navbar() {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -21,112 +23,101 @@ function Navbar() {
   };
 
   return (
-    <header className="alma-nav">
-      <div className="alma-nav__inner">
-        <button
-          className="alma-nav__mobile-btn"
-          onClick={() => setMobileOpen((o) => !o)}
-          type="button"
-        >
-          <span className="hamburger-icon">{mobileOpen ? "✕" : "☰"}</span>
-        </button>
-
-        <Link to="/" className="alma-nav__brand">
-          <img
-            src="/images/logo.png"
-            alt="ALMA Logo"
-            className="alma-nav__logo"
-          />
-          <span className="alma-nav__title">
-            ALMA Custom Threads<span className="dot">.</span>
-          </span>
-        </Link>
-
-        <nav className="alma-nav__links">
-          <Link to="/" className="alma-nav__link alma-nav__link--active">
-            Trang Chủ
-          </Link>
-          <Link to="/category" className="alma-nav__link">
-            Sản Phẩm
-          </Link>
-          <Link
-            to="/customizer"
-            className="alma-nav__link alma-nav__link--design"
+    <>
+      <header className="alma-nav">
+        <div className="alma-nav__inner">
+          <button
+            className="alma-nav__mobile-btn"
+            onClick={() => setMobileOpen((o) => !o)}
+            type="button"
           >
-            ✨ Thiết Kế Ngay
-          </Link>
-        </nav>
+            <span className="hamburger-icon">{mobileOpen ? "✕" : "☰"}</span>
+          </button>
 
-        <div className="alma-nav__actions">
-          <Link
-            to="/category"
-            className="alma-nav__icon-btn"
-            aria-label="Search"
-          >
-            🔍
+          <Link to="/" className="alma-nav__brand">
+            <img
+              src="/images/logo.png"
+              alt="ALMA Logo"
+              className="alma-nav__logo"
+            />
+            <span className="alma-nav__title">
+              ALMA Custom Threads<span className="dot">.</span>
+            </span>
           </Link>
-          <Link
-            to="/cart"
-            className="alma-nav__icon-btn alma-nav__cart"
-            aria-label="Cart"
-          >
-            🛒<span className="alma-nav__badge">1</span>
-          </Link>
-          {user ? (
-            <div className="alma-nav__user-menu">
-              <Link to="/profile" className="alma-nav__login-btn">
-                👤 {user.fullName.split(" ").pop()}
-              </Link>
-              {user.role === "Admin" && (
-                <Link to="/admin" className="alma-nav__logout-btn">
-                  Admin Dashboard
-                </Link>
-              )}
-              <button
-                onClick={handleLogout}
-                className="alma-nav__logout-btn"
-                type="button"
-              >
-                Đăng xuất
-              </button>
-            </div>
-          ) : (
-            <Link to="/login" className="alma-nav__login-btn">
-              👤 Đăng nhập
+
+          <nav className="alma-nav__links">
+            <Link to="/" className="alma-nav__link alma-nav__link--active">
+              Trang Chủ
             </Link>
-          )}
-        </div>
-      </div>
-
-      {mobileOpen && (
-        <div className="alma-nav__mobile-menu">
-          <Link to="/" onClick={() => setMobileOpen(false)}>
-            Trang Chủ
-          </Link>
-          <Link to="/category" onClick={() => setMobileOpen(false)}>
-            Sản Phẩm
-          </Link>
-          <Link to="/customizer" onClick={() => setMobileOpen(false)}>
-            ✨ Thiết Kế Ngay
-          </Link>
-          {user ? (
-            <button
-              onClick={() => {
-                void handleLogout();
-                setMobileOpen(false);
-              }}
-              type="button"
+            <Link to="/category" className="alma-nav__link">
+              Sản Phẩm
+            </Link>
+            <Link to="/designs" className="alma-nav__link">
+              Danh sách thiết kế
+            </Link>
+            <Link
+              to="/customizer"
+              className="alma-nav__link alma-nav__link--design"
             >
-              Đăng xuất
-            </button>
-          ) : (
-            <Link to="/login" onClick={() => setMobileOpen(false)}>
-              Đăng nhập
+              ✨ Thiết Kế Ngay
             </Link>
-          )}
+          </nav>
+
+          <div className="alma-nav__actions">
+            <Link
+              to="/category"
+              className="alma-nav__icon-btn"
+              aria-label="Search"
+            >
+              🔍
+            </Link>
+            <Link
+              to="/cart"
+              className="alma-nav__icon-btn alma-nav__cart"
+              aria-label="Cart"
+            >
+              🛒<span className="alma-nav__badge">1</span>
+            </Link>
+            {user ? (
+              <div className="alma-nav__user-menu">
+                <Link to="/profile" className="alma-nav__login-btn">
+                  👤 {user.fullName.split(" ").pop()}
+                </Link>
+                {user.role === "Admin" && (
+                  <Link to="/admin" className="alma-nav__logout-btn">
+                    Admin Dashboard
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="alma-nav__logout-btn"
+                  type="button"
+                >
+                  Đăng xuất
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="alma-nav__login-btn">
+                👤 Đăng nhập
+              </Link>
+            )}
+          </div>
         </div>
-      )}
-    </header>
+
+        {mobileOpen && (
+          <div className="alma-nav__mobile-menu">
+            <Link to="/" onClick={() => setMobileOpen(false)}>Trang Chủ</Link>
+            <Link to="/category" onClick={() => setMobileOpen(false)}>Sản Phẩm</Link>
+            <Link to="/customizer" onClick={() => setMobileOpen(false)}>✨ Thiết Kế Ngay</Link>
+            {user
+              ? <button onClick={() => { handleLogout(); setMobileOpen(false); }}>Đăng xuất</button>
+              : <Link to="/login" onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
+            }
+          </div>
+        )}
+      </header>
+      <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+    </>
   );
 }
 
