@@ -301,7 +301,7 @@ export default function CustomizerPage() {
             {/* --- NAVBAR --- */}
             <nav className="bg-white border-b px-4 sm:px-6 py-3 flex justify-between items-center shrink-0 shadow-sm z-50 relative h-16">
                 <div className="flex items-center gap-4">
-                    <Link to="/category" className="text-gray-400 hover:text-gray-800 transition"><i className="fa-solid fa-arrow-left"></i></Link>
+                    <Link to="/" className="text-gray-400 hover:text-gray-800 transition"><i className="fa-solid fa-arrow-left"></i></Link>
                     <div className="w-px h-6 bg-gray-200"></div>
                     <Link to="/" className="flex items-center gap-2">
                         <img src="/images/logo.png" alt="ALMA Logo" className="h-8 w-auto object-contain" />
