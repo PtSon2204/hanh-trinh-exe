@@ -3,7 +3,7 @@ import { AdminShell } from "../../components/AdminShell";
 
 interface AdminProductLayoutProps {
   children: ReactNode;
-  activePath: "/admin/base-products" | "/admin/products";
+  activePath: "/admin/base-products" | "/admin/products" | "/admin/stickers";
 }
 
 interface AdminProductErrorBoundaryProps {

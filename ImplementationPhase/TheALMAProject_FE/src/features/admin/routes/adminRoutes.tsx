@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth";
 import { AdminDashboardPage } from "../dashboard/pages/AdminDashboardPage";
+import AdminIconsPage from "../icons/pages/AdminIconsPage";
 import { AdminLayout } from "../orders/components/AdminLayout";
 import AdminOrdersPage from "../orders/pages/adminOrdersPage";
 import { AdminProductLayout } from "../products/components/AdminProductLayout";
@@ -59,6 +60,14 @@ export function AdminRoutes() {
 					element={
 						<AdminProductLayout activePath="/admin/products">
 							<AdminStoreProductsPage />
+						</AdminProductLayout>
+					}
+				/>
+				<Route
+					path="stickers"
+					element={
+						<AdminProductLayout activePath="/admin/stickers">
+							<AdminIconsPage />
 						</AdminProductLayout>
 					}
 				/>
