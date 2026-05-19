@@ -8,71 +8,73 @@ import AdminOrdersPage from "../orders/pages/adminOrdersPage";
 import { AdminProductLayout } from "../products/components/AdminProductLayout";
 import AdminBaseProductsPage from "../products/pages/AdminBaseProductsPage";
 import AdminStoreProductsPage from "../products/pages/AdminStoreProductsPage";
+import AdminNotificationsPage from "../notifications/pages/AdminNotificationsPage";
 
 const ADMIN_ROLES = new Set(["Admin", "Product Manager"]);
 
 function AdminGuard({ children }: { children: ReactNode }) {
-	const { user } = useAuth();
-	const location = useLocation();
+  const { user } = useAuth();
+  const location = useLocation();
 
-	if (!user || !ADMIN_ROLES.has(user.role)) {
-		return (
-			<Navigate
-				replace
-				to="/error"
-				state={{
-					from: location.pathname,
-					message: user
-						? "Tài khoản hiện tại không có quyền quản trị sản phẩm."
-						: "Bạn cần đăng nhập bằng tài khoản quản trị viên hoặc Product Manager để truy cập trang admin.",
-					title: "Không thể truy cập trang quản trị",
-				}}
-			/>
-		);
-	}
+  if (!user || !ADMIN_ROLES.has(user.role)) {
+    return (
+      <Navigate
+        replace
+        to="/error"
+        state={{
+          from: location.pathname,
+          message: user
+            ? "Tài khoản hiện tại không có quyền quản trị sản phẩm."
+            : "Bạn cần đăng nhập bằng tài khoản quản trị viên hoặc Product Manager để truy cập trang admin.",
+          title: "Không thể truy cập trang quản trị",
+        }}
+      />
+    );
+  }
 
-	return <>{children}</>;
+  return <>{children}</>;
 }
 
 export function AdminRoutes() {
-	return (
-		<AdminGuard>
-			<Routes>
-				<Route index element={<AdminDashboardPage />} />
-				<Route
-					path="orders"
-					element={
-						<AdminLayout>
-							<AdminOrdersPage />
-						</AdminLayout>
-					}
-				/>
-				<Route
-					path="base-products"
-					element={
-						<AdminProductLayout activePath="/admin/base-products">
-							<AdminBaseProductsPage />
-						</AdminProductLayout>
-					}
-				/>
-				<Route
-					path="products"
-					element={
-						<AdminProductLayout activePath="/admin/products">
-							<AdminStoreProductsPage />
-						</AdminProductLayout>
-					}
-				/>
-				<Route
-					path="stickers"
-					element={
-						<AdminProductLayout activePath="/admin/stickers">
-							<AdminIconsPage />
-						</AdminProductLayout>
-					}
-				/>
-				<Route path="*" element={<Navigate to="/admin" replace />} />
-			</Routes>
-		</AdminGuard>
-	);
+  return (
+    <AdminGuard>
+      <Routes>
+        <Route index element={<AdminDashboardPage />} />
+        <Route
+          path="orders"
+          element={
+            <AdminLayout>
+              <AdminOrdersPage />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="base-products"
+          element={
+            <AdminProductLayout activePath="/admin/base-products">
+              <AdminBaseProductsPage />
+            </AdminProductLayout>
+          }
+        />
+        <Route
+          path="products"
+          element={
+            <AdminProductLayout activePath="/admin/products">
+              <AdminStoreProductsPage />
+            </AdminProductLayout>
+          }
+        />
+        <Route
+          path="stickers"
+          element={
+            <AdminProductLayout activePath="/admin/stickers">
+              <AdminIconsPage />
+            </AdminProductLayout>
+          }
+        />
+        <Route path="notifications" element={<AdminNotificationsPage />} />
+        <Route path="*" element={<Navigate to="/admin" replace />} />
+      </Routes>
+    </AdminGuard>
+  );
 }

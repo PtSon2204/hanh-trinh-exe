@@ -165,5 +165,64 @@ namespace TheALMAProject.Application.Services
 
             await _unitOfWork.SaveChangesAsync();
         }
+
+        /// <summary>
+        /// Gửi email thông báo/marketing cho danh sách user cụ thể hoặc toàn bộ user
+        /// </summary>
+        public async Task SendEmailNotificationAsync(SendEmailNotificationDto dto)
+        {
+            if (dto.Emails != null && dto.Emails.Count > 0)
+            {
+                // Gửi cho danh sách người cụ thể
+                foreach (var email in dto.Emails)
+                {
+                    if (string.IsNullOrEmpty(email)) continue;
+                    
+                    var user = await _unitOfWork.UserRepo.GetUserByEmail(email);
+                    if (user != null)
+                    {
+                        try 
+                        {
+                            await _emailService.SendEmailAsync(user.Email, dto.Subject, dto.Body);
+                        }
+                        catch 
+                        {
+                            // Tiếp tục gửi cho những người khác
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Gửi cho toàn bộ hệ thống (Lấy theo Page để không bị over-memory)
+                int pageIndex = 1;
+                int pageSize = 50; // Xử lý batch 50 user 1 lần (tuy nhiên PaginationParams MaxPageSize là 50)
+                PagedResult<User> pagedUsers;
+                
+                do
+                {
+                    var query = new UserQuery { PageNumber = pageIndex, PageSize = pageSize };
+                    pagedUsers = await _unitOfWork.UserRepo.GetUsers(query);
+
+                    foreach (var user in pagedUsers.Data)
+                    {
+                        if (user.IsActive && !string.IsNullOrEmpty(user.Email))
+                        {
+                            // Cân nhắc dùng background job (Hangfire/RabbitMQ) cho production
+                            try 
+                            {
+                                await _emailService.SendEmailAsync(user.Email, dto.Subject, dto.Body);
+                            } 
+                            catch 
+                            {
+                                // Log lỗi nếu cần, tiếp tục gửi cho người khác
+                            }
+                        }
+                    }
+
+                    pageIndex++;
+                } while (pageIndex <= pagedUsers.TotalPages);
+            }
+        }
     }
 }
