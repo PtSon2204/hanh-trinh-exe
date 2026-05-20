@@ -1,5 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TheALMAProject.Application.DTOs.OrderDtos;
+using TheALMAProject.Application.DTOs.PaymentDtos;
+using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Infrastructure.Helper;
 
@@ -7,15 +11,22 @@ namespace TheALMAProject.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // Bắt buộc user phải đăng nhập mới được checkout
     public class PaymentController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
+        private readonly IVietQrService _vietQrService; // 1. Khai báo service VietQR
 
-        public PaymentController(IUnitOfWork unitOfWork, IConfiguration configuration)
+        // 2. Tiêm IVietQrService vào constructor
+        public PaymentController(
+            IUnitOfWork unitOfWork,
+            IConfiguration configuration,
+            IVietQrService vietQrService)
         {
             _unitOfWork = unitOfWork;
             _configuration = configuration;
+            _vietQrService = vietQrService;
         }
 
         // Endpoint này Server VNPay sẽ gọi (Webhook)
@@ -77,6 +88,42 @@ namespace TheALMAProject.API.Controllers
                 order.PaymentStatus = "Failed";
                 await _unitOfWork.SaveChangesAsync();
                 return Ok(new { RspCode = "00", Message = "Confirm Success (Failed Transaction)" });
+            }
+        }
+
+        [HttpPost("checkout-vietqr")]
+        // [Authorize] // Nên mở comment cái này để bắt buộc User phải đăng nhập
+        public async Task<IActionResult> CheckoutVietQr([FromBody] CheckoutRequestDto request)
+        {
+            try
+            {
+                string orderCode = "ALMA" + DateTime.Now.ToString("HHmmss");
+                decimal totalAmount = 500000; // Giả sử tổng đơn là 500k
+                // ----------------------------------------
+
+                // BƯỚC 2: Chuẩn bị data truyền vào VietQrService
+                var paymentModel = new PaymentInformationModel
+                {
+                    Amount = (double)totalAmount, // Cast về double nếu model của bạn dùng double
+                    OrderDescription = orderCode  // Nội dung chuyển khoản BẮT BUỘC có mã đơn để sau này check
+                };
+
+                // BƯỚC 3: Sinh URL mã QR
+                string qrCodeUrl = _vietQrService.GenerateQrImageUrl(paymentModel);
+
+                // BƯỚC 4: Trả dữ liệu về cho Frontend hiển thị
+                return Ok(new
+                {
+                    Success = true,
+                    OrderCode = orderCode,
+                    TotalAmount = totalAmount,
+                    QrUrl = qrCodeUrl,
+                    Message = "Tạo mã QR thanh toán thành công!"
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { Success = false, Message = ex.Message });
             }
         }
     }
