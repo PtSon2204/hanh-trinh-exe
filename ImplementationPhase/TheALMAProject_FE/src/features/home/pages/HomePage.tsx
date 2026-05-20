@@ -53,7 +53,10 @@ function Navbar() {
               Sản Phẩm
             </Link>
             <Link to="/designs" className="alma-nav__link">
-              Danh sách thiết kế
+              Lịch sử thiết kế
+            </Link>
+            <Link to="/orders" className="alma-nav__link">
+              Đơn hàng
             </Link>
             <Link
               to="/customizer"

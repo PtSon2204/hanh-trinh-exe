@@ -16,7 +16,9 @@ import OrderListPage from "./features/orders/pages/OrderListPage";
 import { ProductListPage, ProductDetailPage } from './features/products';
 import CartPage from './features/cart/pages/CartPage';
 import CustomizerPage from './features/customizer/pages/CustomizerPage';
-
+import CheckoutPage from "./features/checkout/pages/CheckoutPage";
+import MyDesignsPage from "./features/user-designs/pages/MyDesignsPage";
+import PrivateRoute from "./shared/components/PrivateRoute";
 
 function App() {
 	return (
@@ -61,11 +63,25 @@ function App() {
 					<Route path="/category" element={<ProductListPage />} />
 					<Route path="/products/:id" element={<ProductDetailPage />} />
 
-					{/* Existing routes */}
+					{/* Protected routes - yêu cầu đăng nhập */}
 					<Route path="/orders" element={
-						<div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-							<OrderListPage />
-						</div>
+						<PrivateRoute>
+							<div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
+								<OrderListPage />
+							</div>
+						</PrivateRoute>
+					} />
+
+					<Route path="/checkout" element={
+						<PrivateRoute>
+							<CheckoutPage />
+						</PrivateRoute>
+					} />
+
+					<Route path="/my-designs" element={
+						<PrivateRoute>
+							<MyDesignsPage />
+						</PrivateRoute>
 					} />
 
 					{/* Default redirect */}

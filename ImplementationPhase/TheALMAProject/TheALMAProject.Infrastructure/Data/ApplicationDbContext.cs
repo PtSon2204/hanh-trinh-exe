@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using TheALMAProject.Domain.Models;
@@ -279,7 +279,7 @@ public class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DesignName).HasMaxLength(255);
-            entity.Property(e => e.PreviewImageUrl).HasMaxLength(500);
+            entity.Property(e => e.PreviewImageUrl).HasColumnType("nvarchar(max)");
             entity.Property(e => e.PrintFileUrl).HasMaxLength(500);
 
             entity.HasOne(d => d.BaseProduct).WithMany(p => p.UserDesigns)
