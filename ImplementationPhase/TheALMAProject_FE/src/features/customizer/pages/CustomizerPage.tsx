@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { customizerApi } from '../api/customizerApi';
 import { useAuth } from '../../auth/context/AuthContext';
-import type { IconDto } from '../types';
+import type { BaseProductDto, IconDto } from '../types';
 import './CustomizerPage.css';
 
 
@@ -33,39 +33,11 @@ export default function CustomizerPage() {
     const [historyOpen, setHistoryOpen] = useState(false);
     const [selectedQty, setSelectedQty] = useState(1);
 
-    // --- Danh sách Phôi Áo ---
-    const BASE_PRODUCTS = [
-        {
-            id: 1,
-            name: 'Áo Phông',
-            label: 'Áo Phông (T-Shirt)',
-            frontImage: '/images/Phoi_ao/áo cộc tay ko cổ.jpg',
-            backImage: '/images/Phoi_ao/áo cộc tay ko cổ.jpg',
-        },
-        {
-            id: 2,
-            name: 'Áo Polo',
-            label: 'Áo Polo',
-            frontImage: '/images/Phoi_ao/áo cộc tay có cổ.jpg',
-            backImage: '/images/Phoi_ao/áo cộc tay có cổ.jpg',
-        },
-        {
-            id: 3,
-            name: 'Áo Hoodie',
-            label: 'Áo Hoodie',
-            frontImage: '/images/Phoi_ao/áo hoodie.jpg',
-            backImage: '/images/Phoi_ao/áo hoodie.jpg',
-        },
-        {
-            id: 4,
-            name: 'Áo Bomber',
-            label: 'Áo Bomber',
-            frontImage: '/images/Phoi_ao/áo bomber.jpg',
-            backImage: '/images/Phoi_ao/áo bomber.jpg',
-        },
-    ];
-    const [selectedProductId, setSelectedProductId] = useState(1);
-    const selectedProduct = BASE_PRODUCTS.find(p => p.id === selectedProductId) ?? BASE_PRODUCTS[0];
+    // --- Danh sách Phôi Áo (load từ DB) ---
+    const [baseProducts, setBaseProducts] = useState<BaseProductDto[]>([]);
+    const [baseProductsLoading, setBaseProductsLoading] = useState(true);
+    const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+    const selectedProduct = baseProducts.find(p => p.baseProductId === selectedProductId) ?? baseProducts[0];
 
 
     // --- States Dữ liệu Thiết kế ---
@@ -173,6 +145,17 @@ export default function CustomizerPage() {
         customizerApi.getIcons().then(data => {
             setIcons(data);
             setIconsLoading(false);
+        });
+    }, []);
+
+    // Load phôi áo từ DB khi mount
+    useEffect(() => {
+        customizerApi.getBaseProducts().then(data => {
+            setBaseProducts(data);
+            if (data.length > 0) {
+                setSelectedProductId(data[0].baseProductId);
+            }
+            setBaseProductsLoading(false);
         });
     }, []);
 
@@ -437,7 +420,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             const previewDataUrl = fabricCanvas.current.toDataURL({ format: 'png', multiplier: 0.5 });
             const canvasJSON = JSON.stringify(fabricCanvas.current.toJSON(['id', 'selectable']));
             await customizerApi.saveAndAddMultiSize(
-                { baseProductId: selectedProduct.id, canvasJson: canvasJSON, previewImageUrl: previewDataUrl, iconIds: usedIconIds, fontIds: [] },
+                { baseProductId: selectedProduct?.baseProductId ?? 1, canvasJson: canvasJSON, previewImageUrl: previewDataUrl, iconIds: usedIconIds, fontIds: [] },
                 sizeQty
             );
             const summary = Object.entries(sizeQty).filter(([, q]) => q > 0).map(([s, q]) => `${s}×${q}`).join(', ');
@@ -486,7 +469,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                         <img src="/images/logo.png" alt="ALMA Logo" className="h-8 w-auto object-contain" />
                         <span className="font-bold text-lg md:text-xl text-gray-800 whitespace-nowrap hidden sm:block">ALMA Custom Threads<span className="text-blue-600">.</span></span>
                     </Link>
-                    <span className="ml-4 text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium border border-blue-100 hidden sm:block">Đang thiết kế: {selectedProduct.label}</span>
+                    <span className="ml-4 text-sm bg-blue-50 text-blue-600 px-3 py-1 rounded-full font-medium border border-blue-100 hidden sm:block">Đang thiết kế: {selectedProduct?.name ?? '...'}</span>
                 </div>
                 <div className="flex gap-4 items-center">
                     <Link to="/cart" className="text-gray-500 hover:text-gray-800 relative mr-4">
@@ -530,29 +513,37 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                         {activeTab === 'base' && (
                             <div>
                                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 mt-2">Chọn Phôi Áo</h4>
+                                {baseProductsLoading ? (
+                                    <div className="flex items-center justify-center py-8 text-gray-400">
+                                        <i className="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải phôi áo...
+                                    </div>
+                                ) : (
                                 <div className="grid grid-cols-2 gap-3 mb-4">
-                                    {BASE_PRODUCTS.map(p => (
+                                    {baseProducts.map(p => (
                                         <div
-                                            key={p.id}
-                                            onClick={() => setSelectedProductId(p.id)}
-                                            className={`bg-gray-50 rounded-lg p-2 text-center cursor-pointer relative shadow-sm border-2 transition-all hover:shadow-md ${selectedProductId === p.id
+                                            key={p.baseProductId}
+                                            onClick={() => setSelectedProductId(p.baseProductId)}
+                                            className={`bg-gray-50 rounded-lg p-2 text-center cursor-pointer relative shadow-sm border-2 transition-all hover:shadow-md ${selectedProductId === p.baseProductId
                                                 ? 'border-blue-500 bg-blue-50'
                                                 : 'border-gray-200 hover:border-blue-300'
                                                 }`}
                                         >
                                             <img
-                                                src={p.frontImage}
+                                                src={p.frontImageUrl ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
                                                 className="w-full aspect-square object-cover bg-white rounded"
                                                 alt={p.name}
+                                                onError={(e) => (e.target as HTMLImageElement).src = '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
                                             />
-                                            <p className={`text-[10px] font-bold mt-2 ${selectedProductId === p.id ? 'text-blue-600' : 'text-gray-600'
+                                            <p className={`text-[10px] font-bold mt-2 ${selectedProductId === p.baseProductId ? 'text-blue-600' : 'text-gray-600'
                                                 }`}>{p.name}</p>
-                                            {selectedProductId === p.id && (
+                                            {selectedProductId === p.baseProductId && (
                                                 <i className="fa-solid fa-circle-check absolute -top-2 -right-2 text-blue-500 bg-white rounded-full text-sm"></i>
                                             )}
                                         </div>
                                     ))}
                                 </div>
+                                )}
+
                                 <div className="w-full h-px bg-gray-200 mb-4"></div>
 
                                 {/* SECTION: Icon cố định */}
@@ -778,8 +769,8 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                         <div className="relative w-full max-w-[550px] aspect-[4/5] flex items-center justify-center shirt-container overflow-hidden rounded-xl">
                             {/* Hình nền Áo */}
                             <img
-                                src={viewMode === 'front' ? selectedProduct.frontImage : selectedProduct.backImage}
-                                alt={selectedProduct.name}
+                                src={selectedProduct?.frontImageUrl ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
+                                alt={selectedProduct?.name ?? 'Phôi áo'}
                                 className="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
                                 draggable="false"
                             />

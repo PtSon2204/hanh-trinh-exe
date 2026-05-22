@@ -1,25 +1,56 @@
 import axiosClient from '../../../shared/api/axiosClient';
 import type { BaseProductDto, IconDto, CreateDesignRequest } from '../types';
 
+// Phôi áo fallback (chỉ dùng khi DB trả về rỗng hoặc lỗi)
+const FALLBACK_BASE_PRODUCT: BaseProductDto = {
+    baseProductId: 1,
+    name: "Áo Phông",
+    basePrice: 150000,
+    frontImageUrl: "/images/Phoi_ao/áo cộc tay ko cổ.jpg",
+    availableColors: "#FFFFFF,#000000,#9ca3af,#f9a8d4,#dbeafe,#4ade80,#c084fc,#fde047,#f97316,#dc2626"
+};
+
 export const customizerApi = {
-    // ─── Lấy danh sách phôi áo ───────────────────────────────────────────────
+    // ─── Lấy danh sách phôi áo từ DB ─────────────────────────────────────────
     getBaseProducts: async (): Promise<BaseProductDto[]> => {
-        return [
-            {
-                baseProductId: 1,
-                name: "Áo phông",
-                basePrice: 150000,
-                frontImageUrl: "/images/Phoi_ao/áo cộc tay ko cổ.jpg",
-                availableColors: "#FFFFFF,#000000,#9ca3af,#f9a8d4,#dbeafe,#4ade80,#c084fc,#fde047,#f97316,#dc2626"
-            },
-            {
-                baseProductId: 2,
-                name: "Áo Polo",
-                basePrice: 180000,
-                frontImageUrl: "/images/Phoi_ao/áo cộc tay có cổ.jpg",
-                availableColors: "#FFFFFF,#000000,#9ca3af,#f9a8d4,#dbeafe,#4ade80,#c084fc,#fde047,#f97316,#dc2626"
+        try {
+            const res = await axiosClient.get('/Admin/BaseProduct', {
+                params: { pageSize: 50, pageNumber: 1, isActive: true }
+            });
+            const data = res.data;
+
+            // BE trả về PagedResult<BaseProductListDto> → { data: [...], pageNumber, pageSize, ... }
+            let products: any[] = [];
+            if (Array.isArray(data)) {
+                products = data;
+            } else if (data?.data && Array.isArray(data.data)) {
+                products = data.data;               // PagedResult.Data (JSON camelCase → data)
+            } else if (data?.Data && Array.isArray(data.Data)) {
+                products = data.Data;               // PascalCase fallback
+            } else if (data?.items && Array.isArray(data.items)) {
+                products = data.items;
             }
-        ];
+
+            // Chỉ lấy những phôi active
+            const active = products.filter((p: any) => p.isActive !== false);
+
+            if (active.length === 0) {
+                console.warn('[customizerApi] DB trả về 0 phôi áo active, dùng fallback.');
+                return [FALLBACK_BASE_PRODUCT];
+            }
+
+            // Map sang interface FE
+            return active.map((p: any): BaseProductDto => ({
+                baseProductId: p.baseProductId ?? p.BaseProductId,
+                name: p.name ?? p.Name,
+                basePrice: p.basePrice ?? p.BasePrice ?? 150000,
+                frontImageUrl: p.frontImageUrl ?? p.FrontImageUrl ?? FALLBACK_BASE_PRODUCT.frontImageUrl,
+                availableColors: p.availableColors ?? p.AvailableColors ?? '#FFFFFF,#000000',
+            }));
+        } catch (err) {
+            console.error('[customizerApi] Không thể tải phôi áo từ DB:', err);
+            return [FALLBACK_BASE_PRODUCT];
+        }
     },
 
     // ─── Lấy icons từ DB ─────────────────────────────────────────────────────
