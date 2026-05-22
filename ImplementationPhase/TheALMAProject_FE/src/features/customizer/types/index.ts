@@ -3,6 +3,7 @@ export interface BaseProductDto {
     name: string;
     basePrice: number;
     frontImageUrl: string;
+    backImageUrl?: string;
     availableColors: string; // VD: "#FFFFFF,#000000"
 }
 
