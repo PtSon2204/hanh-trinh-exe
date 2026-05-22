@@ -20,6 +20,18 @@ import CustomizerPage from './features/customizer/pages/CustomizerPage';
 import CheckoutPage from "./features/checkout/pages/CheckoutPage";
 import MyDesignsPage from "./features/user-designs/pages/MyDesignsPage";
 import PrivateRoute from "./shared/components/PrivateRoute";
+import ContactPage from "./features/contact/pages/ContactPage";
+import ZaloPage from "./features/zalo/pages/ZaloPage";
+import ZaloFloat from "./shared/components/ZaloFloat";
+import StoryPage from "./features/story/pages/StoryPage";
+import { useLocation } from "react-router-dom";
+
+// Chỉ hiện ZaloFloat khi KHÔNG phải trang /zalo
+function ZaloFloatWrapper() {
+  const { pathname } = useLocation();
+  if (pathname === "/zalo") return null;
+  return <ZaloFloat />;
+}
 
 function App() {
 	return (
@@ -60,6 +72,15 @@ function App() {
 					{/* Design route */}
 					<Route path="/customizer" element={<CustomizerPage />} />
 
+					{/* Contact */}
+					<Route path="/contact" element={<ContactPage />} />
+
+					{/* Story */}
+					<Route path="/Story" element={<StoryPage />} />
+
+					{/* Zalo OA */}
+					<Route path="/zalo" element={<ZaloPage />} />
+
 					{/* Shopping & Product Discovery (UC-08, UC-09) */}
 					<Route path="/category" element={<ProductListPage />} />
 					<Route path="/products/:id" element={<ProductDetailPage />} />
@@ -97,6 +118,8 @@ function App() {
 					<Route path="/" element={<HomePage />} />
 					<Route path="*" element={<Navigate to="/login" replace />} />
 				</Routes>
+				{/* Floating Zalo button — hiển thị trên tất cả trang trừ /zalo */}
+				<ZaloFloatWrapper />
 			</BrowserRouter>
 		</AuthProvider>
 	);

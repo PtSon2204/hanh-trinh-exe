@@ -9,7 +9,7 @@ import './CustomizerPage.css';
 
 
 export default function CustomizerPage() {
-    const navigate = useNavigate();
+    const navigate = useNavigate(); 
     const { user } = useAuth();
 
     // --- Refs (Front) ---
