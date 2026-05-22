@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import Navbar from '../../../shared/components/Navbar';
 import { orderApi } from '../api/orderApi';
 import type { OrderDetailResponseDto } from '../types';
 import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
@@ -146,54 +147,171 @@ export default function OrderDetailPage() {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<any>(null);
     const markerRef = useRef<any>(null);
+    const osmTimeoutRef = useRef<any>(null);
 
     const [modalCoords, setModalCoords] = useState<{ lat: number, lng: number }>({ lat: 21.0285, lng: 105.8542 });
     const [osmSuggestions, setOsmSuggestions] = useState<any[]>([]);
     const [osmSearch, setOsmSearch] = useState('');
     const [osmLoading, setOsmLoading] = useState(false);
 
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (osmTimeoutRef.current) clearTimeout(osmTimeoutRef.current);
+        };
+    }, []);
+
+    // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
     // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
     const reverseGeocode = async (lat: number, lng: number, updateCallback: (address: string, province: string) => void) => {
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`, {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&email=son.bafpt@gmail.com`, {
                 headers: { 'Accept-Language': 'vi' }
             });
-            const data = await response.json();
-            if (data && data.display_name) {
-                const fullAddress = data.display_name;
-                let province = "";
-                if (data.address) {
-                    province = data.address.city || data.address.town || data.address.municipality || data.address.state || "";
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.display_name) {
+                    const fullAddress = data.display_name;
+                    let province = "";
+                    if (data.address) {
+                        province = data.address.city || data.address.town || data.address.municipality || data.address.state || "";
+                    }
+                    updateCallback(fullAddress, province || fullAddress);
+                    return;
                 }
-                updateCallback(fullAddress, province || fullAddress);
             }
         } catch (err) {
-            console.error("Reverse geocoding error:", err);
+            console.warn("Primary reverse geocoding failed, trying Photon fallback:", err);
         }
+
+        try {
+            const response = await fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`);
+            if (response.ok) {
+                const geojson = await response.json();
+                if (geojson && Array.isArray(geojson.features) && geojson.features.length > 0) {
+                    const feat = geojson.features[0];
+                    const props = feat.properties || {};
+                    
+                    const parts = [];
+                    if (props.name) parts.push(props.name);
+                    if (props.housenumber) parts[parts.length - 1] = `${props.housenumber} ${parts[parts.length - 1] || ""}`.trim();
+                    if (props.street) parts.push(props.street);
+                    if (props.locality) parts.push(props.locality);
+                    if (props.district) parts.push(props.district);
+                    if (props.city || props.town) parts.push(props.city || props.town);
+                    if (props.state) parts.push(props.state);
+                    if (props.country) parts.push(props.country);
+                    
+                    const fullAddress = parts.filter(Boolean).join(", ");
+                    const province = props.city || props.town || props.state || "";
+                    
+                    updateCallback(fullAddress, province || fullAddress);
+                }
+            }
+        } catch (err) {
+            console.error("All reverse geocoding options failed:", err);
+        }
+    };
+
+    const searchGeocodeSuggestions = async (query: string): Promise<any[]> => {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=vn&limit=5&addressdetails=1&email=son.bafpt@gmail.com`, {
+                headers: { 'Accept-Language': 'vi' }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (Array.isArray(data)) return data;
+            }
+        } catch (err) {
+            console.warn("Primary search geocoding failed, trying Photon fallback:", err);
+        }
+
+        try {
+            const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`);
+            if (response.ok) {
+                const geojson = await response.json();
+                if (geojson && Array.isArray(geojson.features)) {
+                    return geojson.features.map((feat: any) => {
+                        const props = feat.properties || {};
+                        const coords = feat.geometry?.coordinates || [0, 0];
+                        
+                        const parts = [];
+                        if (props.name) parts.push(props.name);
+                        if (props.housenumber) parts[parts.length - 1] = `${props.housenumber} ${parts[parts.length - 1] || ""}`.trim();
+                        if (props.street) parts.push(props.street);
+                        if (props.locality) parts.push(props.locality);
+                        if (props.district) parts.push(props.district);
+                        if (props.city || props.town) parts.push(props.city || props.town);
+                        if (props.state) parts.push(props.state);
+                        if (props.country) parts.push(props.country);
+                        
+                        const displayName = parts.filter(Boolean).join(", ");
+                        
+                        return {
+                            display_name: displayName,
+                            lat: coords[1].toString(),
+                            lon: coords[0].toString(),
+                            address: {
+                                city: props.city || props.town || "",
+                                town: props.town || "",
+                                state: props.state || "",
+                                country: props.country || "",
+                            }
+                        };
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Geocoding search fallback failed:", err);
+        }
+        return [];
     };
 
     const geocodeAddress = async (address: string) => {
         if (!address) return;
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=vn&limit=1&addressdetails=1`, {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=vn&limit=1&addressdetails=1&email=son.bafpt@gmail.com`, {
                 headers: { 'Accept-Language': 'vi' }
             });
-            const data = await response.json();
-            if (data && data.length > 0) {
-                const lat = parseFloat(data[0].lat);
-                const lng = parseFloat(data[0].lon);
-                setModalCoords({ lat, lng });
-                if (mapRef.current && markerRef.current) {
-                    mapRef.current.setView([lat, lng], 16);
-                    markerRef.current.setLatLng([lat, lng]);
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    const lat = parseFloat(data[0].lat);
+                    const lng = parseFloat(data[0].lon);
+                    setModalCoords({ lat, lng });
+                    if (mapRef.current && markerRef.current) {
+                        mapRef.current.setView([lat, lng], 16);
+                        markerRef.current.setLatLng([lat, lng]);
+                    }
+                    return;
                 }
             }
         } catch (err) {
-            console.error("Geocoding existing address error:", err);
+            console.warn("Primary geocoding for existing address failed, trying Photon fallback:", err);
+        }
+
+        try {
+            const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1`);
+            if (response.ok) {
+                const geojson = await response.json();
+                if (geojson && Array.isArray(geojson.features) && geojson.features.length > 0) {
+                    const feat = geojson.features[0];
+                    const coords = feat.geometry?.coordinates || [0, 0];
+                    const lat = coords[1];
+                    const lng = coords[0];
+                    setModalCoords({ lat, lng });
+                    if (mapRef.current && markerRef.current) {
+                        mapRef.current.setView([lat, lng], 16);
+                        markerRef.current.setLatLng([lat, lng]);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("All geocoding options failed for address:", err);
         }
     };
 
-    const handleOsmSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleOsmSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         setOsmSearch(val);
 
@@ -202,18 +320,21 @@ export default function OrderDetailPage() {
             return;
         }
 
-        setOsmLoading(true);
-        try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=vn&limit=5&addressdetails=1`, {
-                headers: { 'Accept-Language': 'vi' }
-            });
-            const data = await response.json();
-            setOsmSuggestions(data || []);
-        } catch (err) {
-            console.error("OSM search error:", err);
-        } finally {
-            setOsmLoading(false);
+        if (osmTimeoutRef.current) {
+            clearTimeout(osmTimeoutRef.current);
         }
+
+        setOsmLoading(true);
+        osmTimeoutRef.current = setTimeout(async () => {
+            try {
+                const results = await searchGeocodeSuggestions(val);
+                setOsmSuggestions(results);
+            } catch (err) {
+                console.error("OSM search error:", err);
+            } finally {
+                setOsmLoading(false);
+            }
+        }, 600);
     };
 
     const handleOsmSelect = (item: any) => {
@@ -446,25 +567,29 @@ export default function OrderDetailPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] py-12">
-                <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-gray-500 font-medium">Đang tải chi tiết đơn hàng...</p>
-            </div>
+            <PageShell>
+                <div className="flex flex-col items-center justify-center min-h-[60vh] py-12">
+                    <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+                    <p className="text-gray-500 font-medium">Đang tải chi tiết đơn hàng...</p>
+                </div>
+            </PageShell>
         );
     }
 
     if (!order) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
-                <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
-                    <i className="fa-solid fa-triangle-exclamation text-2xl" />
+            <PageShell>
+                <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+                    <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
+                        <i className="fa-solid fa-triangle-exclamation text-2xl" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-800">Không tìm thấy đơn hàng</h3>
+                    <p className="text-sm text-gray-500 mt-1 max-w-sm">Đơn hàng không tồn tại hoặc bạn không có quyền xem chi tiết đơn hàng này.</p>
+                    <button onClick={() => navigate('/orders')} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md">
+                        Quay lại danh sách
+                    </button>
                 </div>
-                <h3 className="text-lg font-bold text-gray-800">Không tìm thấy đơn hàng</h3>
-                <p className="text-sm text-gray-500 mt-1 max-w-sm">Đơn hàng không tồn tại hoặc bạn không có quyền xem chi tiết đơn hàng này.</p>
-                <button onClick={() => navigate('/orders')} className="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md">
-                    Quay lại danh sách
-                </button>
-            </div>
+            </PageShell>
         );
     }
 
@@ -474,7 +599,8 @@ export default function OrderDetailPage() {
     const isCancelled = order.orderStatus === 'Cancelled';
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6" style={{ fontFamily: "'Outfit', sans-serif" }}>
+        <PageShell>
+            <div className="max-w-4xl mx-auto space-y-6">
             {/* Header info */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white rounded-2xl p-6 border border-gray-100 shadow-sm gap-4">
                 <div className="space-y-1">
@@ -689,7 +815,7 @@ export default function OrderDetailPage() {
 
             {/* sleeker Edit Address Modal */}
             {isEditModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
                     <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full flex flex-col max-h-[90vh] overflow-hidden border border-gray-100 relative">
                         {/* Modal Header */}
                         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
@@ -728,8 +854,8 @@ export default function OrderDetailPage() {
 
                                 {/* Map Integrations using Leaflet + OpenStreetMap */}
                                 <div className="sm:col-span-2 space-y-4">
-                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-sm text-blue-900 shadow-sm relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-sm text-blue-900 shadow-sm relative">
+                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 rounded-l-2xl"></div>
                                         <p className="font-bold flex items-center gap-2 text-blue-900 text-sm">
                                             <i className="fa-solid fa-map-location-dot text-blue-500"></i>
                                             Định vị thông minh qua OpenStreetMap
@@ -832,6 +958,22 @@ export default function OrderDetailPage() {
                     </div>
                 </div>
             )}
+            </div>
+        </PageShell>
+    );
+}
+
+function PageShell({ children }: { children: React.ReactNode }) {
+    return (
+        <div
+            className="min-h-screen font-['Outfit'] flex flex-col"
+            style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)' }}
+        >
+            <Navbar />
+
+            <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
+                {children}
+            </main>
         </div>
     );
 }

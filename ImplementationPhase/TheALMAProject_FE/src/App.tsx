@@ -88,17 +88,13 @@ function App() {
 					{/* Protected routes - yêu cầu đăng nhập */}
 					<Route path="/orders" element={
 						<PrivateRoute>
-							<div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-								<OrderListPage />
-							</div>
+							<OrderListPage />
 						</PrivateRoute>
 					} />
 
 					<Route path="/orders/:id" element={
 						<PrivateRoute>
-							<div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: '20px' }}>
-								<OrderDetailPage />
-							</div>
+							<OrderDetailPage />
 						</PrivateRoute>
 					} />
 

@@ -73,6 +73,7 @@ export function AdminVoucherPage() {
 	const [pageSize, setPageSize] = useState(10);
 	const [codeFilter, setCodeFilter] = useState("");
 	const [statusFilter, setStatusFilter] = useState("all");
+	const [typeFilter, setTypeFilter] = useState<"all" | "percent" | "freeship">("all");
 
 	// Loading/Saving states
 	const [loading, setLoading] = useState(true);
@@ -184,13 +185,13 @@ export function AdminVoucherPage() {
 
 			// Validate percentage discount bounds
 			if (voucherType === "percent") {
-				if (discountPercentPayload < 5 || discountPercentPayload > 20) {
-					toast.error("Tỉ lệ giảm giá phải từ 5% đến 20%");
+				if (discountPercentPayload < 1 || discountPercentPayload > 100) {
+					toast.error("Tỉ lệ giảm giá phải từ 1% đến 100%");
 					setSaving(false);
 					return;
 				}
-				if (maxDiscountPayload <= 0 || maxDiscountPayload > 400000) {
-					toast.error("Giảm giá tối đa phải lớn hơn 0đ và không vượt quá 400.000đ");
+				if (maxDiscountPayload <= 0 || maxDiscountPayload > 50000000) {
+					toast.error("Giảm giá tối đa phải lớn hơn 0đ và không vượt quá 50.000.000đ");
 					setSaving(false);
 					return;
 				}
@@ -377,6 +378,20 @@ export function AdminVoucherPage() {
 							</select>
 						</label>
 						<label>
+							Loại voucher
+							<select
+								value={typeFilter}
+								onChange={(event) => {
+									setPageNumber(1);
+									setTypeFilter(event.target.value as "all" | "percent" | "freeship");
+								}}
+							>
+								<option value="all">Tất cả</option>
+								<option value="percent">🎟️ Giảm giá %</option>
+								<option value="freeship">🚚 Miễn phí vận chuyển</option>
+							</select>
+						</label>
+						<label>
 							Kích thước trang
 							<select
 								value={pageSize}
@@ -395,7 +410,13 @@ export function AdminVoucherPage() {
 
 					{loading ? (
 						<div className="admin-empty-state">Đang tải danh sách mã khuyến mãi...</div>
-					) : vouchers && vouchers.data.length > 0 ? (
+					) : vouchers && vouchers.data.length > 0 ? (() => {
+						const filteredData = typeFilter === "all"
+							? vouchers.data
+							: typeFilter === "freeship"
+								? vouchers.data.filter(v => v.code.toUpperCase().includes("FREESHIP"))
+								: vouchers.data.filter(v => !v.code.toUpperCase().includes("FREESHIP"));
+						return filteredData.length > 0 ? (
 						<div className="admin-table-wrap">
 							<table className="admin-table admin-vouchers-table">
 								<thead>
@@ -411,7 +432,7 @@ export function AdminVoucherPage() {
 									</tr>
 								</thead>
 								<tbody>
-									{vouchers.data.map((voucher) => {
+									{filteredData.map((voucher) => {
 										const hasExpired = isExpired(voucher.endDate);
 										const isFree = voucher.code.toUpperCase().includes("FREESHIP");
 										
@@ -492,6 +513,11 @@ export function AdminVoucherPage() {
 							</table>
 						</div>
 					) : (
+						<div className="admin-empty-state">
+							Không tìm thấy mã voucher loại "{typeFilter === "freeship" ? "Miễn phí vận chuyển" : "Giảm giá %"}" phù hợp.
+						</div>
+					);
+					})() : (
 						<div className="admin-empty-state">
 							Không tìm thấy mã voucher phù hợp trong hệ thống.
 						</div>
@@ -593,13 +619,13 @@ export function AdminVoucherPage() {
 							{voucherType === "percent" && (
 								<>
 									<label>
-										Tỉ lệ giảm (%)
+										Tỉ lệ giảm (%) — tối đa 100%
 										<input
 											type="number"
-											min={5}
-											max={20}
+											min={1}
+											max={100}
 											value={form.discountPercent}
-											onChange={(e) => setForm(prev => ({ ...prev, discountPercent: Number(e.target.value) }))}
+											onChange={(e) => setForm(prev => ({ ...prev, discountPercent: Math.min(100, Math.max(0, Number(e.target.value))) }))}
 										/>
 									</label>
 									<label>
@@ -607,7 +633,7 @@ export function AdminVoucherPage() {
 										<input
 											type="number"
 											min={1000}
-											max={400000}
+											max={50000000}
 											value={form.maxDiscount}
 											onChange={(e) => setForm(prev => ({ ...prev, maxDiscount: Number(e.target.value) }))}
 										/>

@@ -98,6 +98,7 @@ const CheckoutPage = () => {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<any>(null);
     const markerRef = useRef<any>(null);
+    const miniMapTimeoutRef = useRef<any>(null);
 
     // Mini-map autocomplete states
     const [miniMapSearch, setMiniMapSearch] = useState("");
@@ -114,33 +115,128 @@ const CheckoutPage = () => {
     const modalMapContainerRef = useRef<HTMLDivElement>(null);
     const modalMapRef = useRef<any>(null);
     const modalMarkerRef = useRef<any>(null);
+    const modalTimeoutRef = useRef<any>(null);
 
     // Modal search states
     const [modalSearch, setModalSearch] = useState("");
     const [modalSuggestions, setModalSuggestions] = useState<any[]>([]);
     const [modalLoading, setModalLoading] = useState(false);
 
+    // Cleanup timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (miniMapTimeoutRef.current) clearTimeout(miniMapTimeoutRef.current);
+            if (modalTimeoutRef.current) clearTimeout(modalTimeoutRef.current);
+        };
+    }, []);
+
+    // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
     // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
     const reverseGeocode = async (lat: number, lng: number, updateCallback: (address: string, province: string) => void) => {
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`, {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&email=son.bafpt@gmail.com`, {
                 headers: { 'Accept-Language': 'vi' }
             });
-            const data = await response.json();
-            if (data && data.display_name) {
-                const fullAddress = data.display_name;
-                let province = "";
-                if (data.address) {
-                    province = data.address.city || data.address.town || data.address.municipality || data.address.state || "";
+            if (response.ok) {
+                const data = await response.json();
+                if (data && data.display_name) {
+                    const fullAddress = data.display_name;
+                    let province = "";
+                    if (data.address) {
+                        province = data.address.city || data.address.town || data.address.municipality || data.address.state || "";
+                    }
+                    updateCallback(fullAddress, province || fullAddress);
+                    return;
                 }
-                updateCallback(fullAddress, province || fullAddress);
             }
         } catch (err) {
-            console.error("Reverse geocoding error:", err);
+            console.warn("Primary reverse geocoding failed, trying Photon fallback:", err);
+        }
+
+        try {
+            const response = await fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`);
+            if (response.ok) {
+                const geojson = await response.json();
+                if (geojson && Array.isArray(geojson.features) && geojson.features.length > 0) {
+                    const feat = geojson.features[0];
+                    const props = feat.properties || {};
+                    
+                    const parts = [];
+                    if (props.name) parts.push(props.name);
+                    if (props.housenumber) parts[parts.length - 1] = `${props.housenumber} ${parts[parts.length - 1] || ""}`.trim();
+                    if (props.street) parts.push(props.street);
+                    if (props.locality) parts.push(props.locality);
+                    if (props.district) parts.push(props.district);
+                    if (props.city || props.town) parts.push(props.city || props.town);
+                    if (props.state) parts.push(props.state);
+                    if (props.country) parts.push(props.country);
+                    
+                    const fullAddress = parts.filter(Boolean).join(", ");
+                    const province = props.city || props.town || props.state || "";
+                    
+                    updateCallback(fullAddress, province || fullAddress);
+                }
+            }
+        } catch (err) {
+            console.error("All reverse geocoding options failed:", err);
         }
     };
 
-    const handleMiniMapSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchGeocodeSuggestions = async (query: string): Promise<any[]> => {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=vn&limit=5&addressdetails=1&email=son.bafpt@gmail.com`, {
+                headers: { 'Accept-Language': 'vi' }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (Array.isArray(data)) return data;
+            }
+        } catch (err) {
+            console.warn("Primary search geocoding failed, trying Photon fallback:", err);
+        }
+
+        try {
+            const response = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5`);
+            if (response.ok) {
+                const geojson = await response.json();
+                if (geojson && Array.isArray(geojson.features)) {
+                    return geojson.features.map((feat: any) => {
+                        const props = feat.properties || {};
+                        const coords = feat.geometry?.coordinates || [0, 0];
+                        
+                        const parts = [];
+                        if (props.name) parts.push(props.name);
+                        if (props.housenumber) parts[parts.length - 1] = `${props.housenumber} ${parts[parts.length - 1] || ""}`.trim();
+                        if (props.street) parts.push(props.street);
+                        if (props.locality) parts.push(props.locality);
+                        if (props.district) parts.push(props.district);
+                        if (props.city || props.town) parts.push(props.city || props.town);
+                        if (props.state) parts.push(props.state);
+                        if (props.country) parts.push(props.country);
+                        
+                        const displayName = parts.filter(Boolean).join(", ");
+                        
+                        return {
+                            display_name: displayName,
+                            lat: coords[1].toString(),
+                            lon: coords[0].toString(),
+                            address: {
+                                city: props.city || props.town || "",
+                                town: props.town || "",
+                                state: props.state || "",
+                                country: props.country || "",
+                            }
+                        };
+                    });
+                }
+            }
+        } catch (err) {
+            console.error("Geocoding search fallback failed:", err);
+        }
+        return [];
+    };
+
+    const handleMiniMapSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         setMiniMapSearch(val);
 
@@ -149,18 +245,21 @@ const CheckoutPage = () => {
             return;
         }
 
-        setMiniMapLoading(true);
-        try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=vn&limit=5&addressdetails=1`, {
-                headers: { 'Accept-Language': 'vi' }
-            });
-            const data = await response.json();
-            setMiniMapSuggestions(data || []);
-        } catch (err) {
-            console.error("MiniMap OSM search error:", err);
-        } finally {
-            setMiniMapLoading(false);
+        if (miniMapTimeoutRef.current) {
+            clearTimeout(miniMapTimeoutRef.current);
         }
+
+        setMiniMapLoading(true);
+        miniMapTimeoutRef.current = setTimeout(async () => {
+            try {
+                const results = await searchGeocodeSuggestions(val);
+                setMiniMapSuggestions(results);
+            } catch (err) {
+                console.error("MiniMap search error:", err);
+            } finally {
+                setMiniMapLoading(false);
+            }
+        }, 600);
     };
 
     const handleMiniMapSelect = (item: any) => {
@@ -190,7 +289,7 @@ const CheckoutPage = () => {
         }
     };
 
-    const handleModalSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleModalSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         setModalSearch(val);
 
@@ -199,18 +298,21 @@ const CheckoutPage = () => {
             return;
         }
 
-        setModalLoading(true);
-        try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=vn&limit=5&addressdetails=1`, {
-                headers: { 'Accept-Language': 'vi' }
-            });
-            const data = await response.json();
-            setModalSuggestions(data || []);
-        } catch (err) {
-            console.error("Modal OSM search error:", err);
-        } finally {
-            setModalLoading(false);
+        if (modalTimeoutRef.current) {
+            clearTimeout(modalTimeoutRef.current);
         }
+
+        setModalLoading(true);
+        modalTimeoutRef.current = setTimeout(async () => {
+            try {
+                const results = await searchGeocodeSuggestions(val);
+                setModalSuggestions(results);
+            } catch (err) {
+                console.error("Modal search error:", err);
+            } finally {
+                setModalLoading(false);
+            }
+        }, 600);
     };
 
     const handleModalSelect = (item: any) => {
@@ -682,8 +784,8 @@ const CheckoutPage = () => {
                                     <input type="tel" name="shipPhone" required value={shippingInfo.shipPhone} onChange={handleInputChange} placeholder="Số điện thoại" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder-gray-400 text-sm" />
                                 </div>
                                 <div className="md:col-span-2 space-y-4">
-                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-sm text-blue-900 shadow-sm relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-sm text-blue-900 shadow-sm relative">
+                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500 rounded-l-2xl"></div>
                                         <p className="font-bold flex items-center gap-2 text-blue-900 text-base">
                                             <i className="fa-solid fa-map-location-dot text-blue-500"></i>
                                             Tìm địa chỉ tự động (Bản đồ miễn phí OpenStreetMap)
@@ -973,7 +1075,7 @@ const CheckoutPage = () => {
 
             {/* ── VietQR Modal ── */}
             {qrData.isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
                     <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center relative border border-gray-100">
 
                         <div className="mb-4">
@@ -1069,7 +1171,7 @@ const CheckoutPage = () => {
 
             {/* ── Google Maps Selector Modal ── */}
             {isMapModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
                     <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full flex flex-col max-h-[95vh] overflow-hidden border border-gray-100 relative">
                         {/* Modal Header */}
                         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">

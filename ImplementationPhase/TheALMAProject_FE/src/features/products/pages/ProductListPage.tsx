@@ -211,19 +211,15 @@ export default function ProductListPage() {
                   <Link to="/profile" className="alma-nav__dropdown-item">
                     👤 Trang cá nhân
                   </Link>
-                  {user.role !== "Admin" ? (
+                  {user.role !== "Admin" && (
                     <>
-                      <Link to="/designs" className="alma-nav__dropdown-item">
+                      <Link to="/my-designs" className="alma-nav__dropdown-item">
                         🎨 Lịch sử thiết kế
                       </Link>
                       <Link to="/orders" className="alma-nav__dropdown-item">
                         📦 Đơn hàng
                       </Link>
                     </>
-                  ) : (
-                    <Link to="/admin" className="alma-nav__dropdown-item">
-                      ⚙️ Admin Dashboard
-                    </Link>
                   )}
                   <button
                     onClick={handleLogout}
@@ -251,12 +247,9 @@ export default function ProductListPage() {
                 <Link to="/profile" onClick={() => setMobileNavOpen(false)}>👤 Trang cá nhân</Link>
                 {user.role !== "Admin" && (
                   <>
-                    <Link to="/designs" onClick={() => setMobileNavOpen(false)}>🎨 Lịch sử thiết kế</Link>
+                    <Link to="/my-designs" onClick={() => setMobileNavOpen(false)}>🎨 Lịch sử thiết kế</Link>
                     <Link to="/orders" onClick={() => setMobileNavOpen(false)}>📦 Đơn hàng</Link>
                   </>
-                )}
-                {user.role === "Admin" && (
-                  <Link to="/admin" onClick={() => setMobileNavOpen(false)}>⚙️ Admin Dashboard</Link>
                 )}
                 <button
                   onClick={() => { handleLogout(); setMobileNavOpen(false); }}
