@@ -8,6 +8,7 @@ import { AdminProductLayout } from "../products/components/AdminProductLayout";
 import AdminBaseProductsPage from "../products/pages/AdminBaseProductsPage";
 import AdminStoreProductsPage from "../products/pages/AdminStoreProductsPage";
 import AdminNotificationsPage from "../notifications/pages/AdminNotificationsPage";
+import { AdminVoucherPage } from "../vouchers/pages/AdminVoucherPage";
 
 const ADMIN_ROLES = new Set(["Admin", "Product Manager"]);
 
@@ -44,6 +45,14 @@ export function AdminRoutes() {
 					element={
 						<AdminLayout>
 							<AdminOrdersPage />
+						</AdminLayout>
+					}
+				/>
+				<Route
+					path="vouchers"
+					element={
+						<AdminLayout activePath="/admin/vouchers">
+							<AdminVoucherPage />
 						</AdminLayout>
 					}
 				/>

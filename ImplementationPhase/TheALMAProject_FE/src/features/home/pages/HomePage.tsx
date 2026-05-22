@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import authApi from "../../auth/api/authApi";
 import { useAuth } from "../../auth/context/AuthContext";
 import { SearchOverlay } from "../../products";
+import { cartApi } from "../../cart/api/cartApi";
 import "./HomePage.css";
 
 // ── Navbar ────────────────────────────────────────────────────────────
@@ -11,6 +12,20 @@ function Navbar() {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [cartCount, setCartCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!user) {
+      setCartCount(0);
+      return;
+    }
+    cartApi.getMyCart()
+      .then(cart => {
+        const totalQty = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(totalQty);
+      })
+      .catch(() => {});
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -52,12 +67,6 @@ function Navbar() {
             <Link to="/category" className="alma-nav__link">
               Sản Phẩm
             </Link>
-            <Link to="/designs" className="alma-nav__link">
-              Lịch sử thiết kế
-            </Link>
-            <Link to="/orders" className="alma-nav__link">
-              Đơn hàng
-            </Link>
             <Link
               to="/customizer"
               className="alma-nav__link alma-nav__link--design"
@@ -79,25 +88,39 @@ function Navbar() {
               className="alma-nav__icon-btn alma-nav__cart"
               aria-label="Cart"
             >
-              🛒<span className="alma-nav__badge">1</span>
+              🛒{cartCount > 0 && <span className="alma-nav__badge">{cartCount}</span>}
             </Link>
             {user ? (
               <div className="alma-nav__user-menu">
                 <Link to="/profile" className="alma-nav__login-btn">
                   👤 {user.fullName.split(" ").pop()}
                 </Link>
-                {user.role === "Admin" && (
-                  <Link to="/admin" className="alma-nav__logout-btn">
-                    Admin Dashboard
+                <div className="alma-nav__dropdown">
+                  <Link to="/profile" className="alma-nav__dropdown-item">
+                    👤 Trang cá nhân
                   </Link>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="alma-nav__logout-btn"
-                  type="button"
-                >
-                  Đăng xuất
-                </button>
+                  {user.role !== "Admin" ? (
+                    <>
+                      <Link to="/designs" className="alma-nav__dropdown-item">
+                        🎨 Lịch sử thiết kế
+                      </Link>
+                      <Link to="/orders" className="alma-nav__dropdown-item">
+                        📦 Đơn hàng
+                      </Link>
+                    </>
+                  ) : (
+                    <Link to="/admin" className="alma-nav__dropdown-item">
+                      ⚙️ Admin Dashboard
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="alma-nav__dropdown-item alma-nav__dropdown-item--logout"
+                    type="button"
+                  >
+                    🚪 Đăng xuất
+                  </button>
+                </div>
               </div>
             ) : (
               <Link to="/login" className="alma-nav__login-btn">
@@ -112,10 +135,29 @@ function Navbar() {
             <Link to="/" onClick={() => setMobileOpen(false)}>Trang Chủ</Link>
             <Link to="/category" onClick={() => setMobileOpen(false)}>Sản Phẩm</Link>
             <Link to="/customizer" onClick={() => setMobileOpen(false)}>✨ Thiết Kế Ngay</Link>
-            {user
-              ? <button onClick={() => { handleLogout(); setMobileOpen(false); }}>Đăng xuất</button>
-              : <Link to="/login" onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
-            }
+            {user ? (
+              <>
+                <Link to="/profile" onClick={() => setMobileOpen(false)}>👤 Trang cá nhân</Link>
+                {user.role !== "Admin" && (
+                  <>
+                    <Link to="/designs" onClick={() => setMobileOpen(false)}>🎨 Lịch sử thiết kế</Link>
+                    <Link to="/orders" onClick={() => setMobileOpen(false)}>📦 Đơn hàng</Link>
+                  </>
+                )}
+                {user.role === "Admin" && (
+                  <Link to="/admin" onClick={() => setMobileOpen(false)}>⚙️ Admin Dashboard</Link>
+                )}
+                <button
+                  onClick={() => { handleLogout(); setMobileOpen(false); }}
+                  className="alma-nav__logout-btn-mobile"
+                  type="button"
+                >
+                  🚪 Đăng xuất
+                </button>
+              </>
+            ) : (
+              <Link to="/login" onClick={() => setMobileOpen(false)}>👤 Đăng nhập</Link>
+            )}
           </div>
         )}
       </header>

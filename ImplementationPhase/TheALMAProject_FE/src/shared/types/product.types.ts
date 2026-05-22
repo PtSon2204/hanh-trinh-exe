@@ -63,6 +63,7 @@ export interface ProductQuery {
   name?: string;
   category?: string;
   material?: string;
+  university?: string;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: string;

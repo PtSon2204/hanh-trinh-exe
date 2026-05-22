@@ -17,12 +17,20 @@ interface StatusConfig {
 }
 
 const ORDER_STATUS_MAP: Record<string, StatusConfig> = {
-  Processing: {
-    label: 'Đang xử lý',
+  Pending: {
+    label: 'Chờ xác nhận',
     badge: 'bg-amber-100 text-amber-700 border-amber-300 shadow-amber-200/60',
     glow: 'border-l-amber-400',
-    icon: 'fa-hourglass-half',
+    icon: 'fa-clock',
     bg: 'from-amber-50/40 to-transparent',
+    payIcon: 'fa-clock',
+  },
+  Processing: {
+    label: 'Đang xử lý',
+    badge: 'bg-blue-100 text-blue-700 border-blue-300 shadow-blue-200/60',
+    glow: 'border-l-blue-400',
+    icon: 'fa-hourglass-half',
+    bg: 'from-blue-50/40 to-transparent',
     payIcon: 'fa-clock',
   },
   Confirmed: {
@@ -445,8 +453,9 @@ function OrderCard({ order, index }: OrderCardProps) {
 
 function StatusHint({ status }: { status: string }) {
   const hints: Record<string, { text: string; cls: string }> = {
-    Processing: { text: 'Đơn hàng đang chờ xác nhận từ cửa hàng', cls: 'text-amber-500' },
-    Confirmed: { text: 'Cửa hàng đã xác nhận, chuẩn bị hàng', cls: 'text-sky-500' },
+    Pending: { text: 'Đơn hàng đang chờ xác nhận từ cửa hàng', cls: 'text-amber-500' },
+    Processing: { text: 'Cửa hàng đã xác nhận, đang chuẩn bị hàng', cls: 'text-blue-500' },
+    Confirmed: { text: 'Cửa hàng đã chuẩn bị xong hàng', cls: 'text-sky-500' },
     Shipping: { text: 'Đơn hàng đang trên đường đến bạn', cls: 'text-violet-500' },
     Delivered: { text: 'Đơn hàng đã giao thành công 🎉', cls: 'text-emerald-600' },
     Cancelled: { text: 'Đơn hàng đã bị huỷ', cls: 'text-red-500' },

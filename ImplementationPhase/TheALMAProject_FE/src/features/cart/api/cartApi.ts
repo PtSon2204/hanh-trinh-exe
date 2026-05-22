@@ -3,6 +3,12 @@ import axiosClient from '../../../shared/api/axiosClient';
 import type { CartResponseDto } from '../types/index';
 
 export const cartApi = {
+  // Thêm sản phẩm vào giỏ hàng
+  addToCart: async (data: { productId?: number; designId?: number; size: string; quantity: number }) => {
+    const response = await axiosClient.post('/Cart/add', data);
+    return response.data;
+  },
+
   // Lấy toàn bộ giỏ hàng
   getMyCart: async () => {
     const response = await axiosClient.get<CartResponseDto>('/Cart/my-cart');

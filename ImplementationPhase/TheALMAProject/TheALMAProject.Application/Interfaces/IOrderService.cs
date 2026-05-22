@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,5 +14,9 @@ namespace TheALMAProject.Application.Interfaces
         Task<PagedResult<OrderResponseDto>> GetUserOrdersAsync(int userId, OrderQuery query);
         Task<OrderDetailResponseDto?> GetOrderDetailAsync(int userId, int orderId);
         Task<CheckoutResponseDto> CheckoutAsync(int userId, CheckoutRequestDto request);
+        Task<bool> ChangePaymentMethodAsync(int userId, int orderId, string paymentMethod);
+        Task<VoucherCheckResponseDto> CheckVoucherAsync(int userId, string voucherCode);
+        Task<bool> CancelOrderAsync(int userId, int orderId);
+        Task<bool> UpdateShippingAddressAsync(int userId, int orderId, UpdateShippingAddressDto request);
     }
 }

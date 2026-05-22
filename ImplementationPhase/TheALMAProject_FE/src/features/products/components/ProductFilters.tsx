@@ -7,6 +7,16 @@ interface Props {
 
 const CATEGORIES = ['Áo thun', 'Áo Polo', 'Áo Hoodie', 'Áo sơ mi', 'Áo khoác'];
 const MATERIALS = ['Cotton', 'Polyester', 'Cotton Pha', 'Thun Lạnh', 'Nỉ'];
+const UNIVERSITIES = [
+  'FPT University',
+  'Đại học Quốc gia Hà Nội (VNU)',
+  'Học viện Tài chính (AOF)',
+  'Đại học Luật Hà Nội (HLU)',
+  'Đại học Kinh tế Quốc dân (NEU)',
+  'Đại học Ngoại thương (FTU)',
+  'Đại học Bách khoa Hà Nội (HUST)',
+  'Đại học Thương mại (TMU)',
+];
 const PRICE_RANGES = [
   { label: 'Tất cả', min: undefined, max: undefined },
   { label: 'Dưới 100K', min: undefined, max: 100000 },
@@ -31,7 +41,7 @@ export default function ProductFilters({ query, onChange }: Props) {
       sortDescending: query.sortDescending,
     });
 
-  const hasFilters = query.category || query.material || query.minPrice != null || query.maxPrice != null;
+  const hasFilters = query.category || query.material || query.university || query.minPrice != null || query.maxPrice != null;
 
   return (
     <aside className="pf-sidebar" id="product-filters">
@@ -47,33 +57,52 @@ export default function ProductFilters({ query, onChange }: Props) {
       {/* Kiểu dáng */}
       <div className="pf-group">
         <h4 className="pf-group__title">Kiểu dáng</h4>
-        <div className="pf-group__chips">
+        <select
+          className="pf-select"
+          value={query.category || ""}
+          onChange={(e) => setField({ category: e.target.value ? e.target.value : undefined })}
+        >
+          <option value="">Tất cả kiểu dáng</option>
           {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              className={`pf-chip ${query.category === cat ? 'pf-chip--active' : ''}`}
-              onClick={() => setField({ category: query.category === cat ? undefined : cat })}
-            >
+            <option key={cat} value={cat}>
               {cat}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       {/* Chất liệu */}
       <div className="pf-group">
         <h4 className="pf-group__title">Chất liệu</h4>
-        <div className="pf-group__chips">
+        <select
+          className="pf-select"
+          value={query.material || ""}
+          onChange={(e) => setField({ material: e.target.value ? e.target.value : undefined })}
+        >
+          <option value="">Tất cả chất liệu</option>
           {MATERIALS.map((mat) => (
-            <button
-              key={mat}
-              className={`pf-chip ${query.material === mat ? 'pf-chip--active' : ''}`}
-              onClick={() => setField({ material: query.material === mat ? undefined : mat })}
-            >
+            <option key={mat} value={mat}>
               {mat}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
+      </div>
+
+      {/* Trường học */}
+      <div className="pf-group">
+        <h4 className="pf-group__title">Trường học</h4>
+        <select
+          className="pf-select"
+          value={query.university || ""}
+          onChange={(e) => setField({ university: e.target.value ? e.target.value : undefined })}
+        >
+          <option value="">Tất cả trường học</option>
+          {UNIVERSITIES.map((uni) => (
+            <option key={uni} value={uni}>
+              {uni}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* Khoảng giá */}

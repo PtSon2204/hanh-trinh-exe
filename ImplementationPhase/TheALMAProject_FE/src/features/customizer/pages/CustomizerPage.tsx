@@ -218,24 +218,7 @@ export default function CustomizerPage() {
         }, { crossOrigin: 'anonymous' });
     };
 
-    const handleAddSticker = (imgSrc: string) => {
-        const ac = getActiveCanvas();
-        if (!ac) return;
-        fabric.Image.fromURL(imgSrc, (img) => {
-            const maxSize = ac.width! * 0.5;
-            const scale = maxSize / Math.max(img.width!, img.height!);
-            img.set({
-                left: ac.width! / 2, top: ac.height! / 2,
-                originX: 'center', originY: 'center',
-                scaleX: scale, scaleY: scale,
-                selectable: true, evented: true,
-                cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
-                transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
-            });
-            ac.add(img);
-            ac.setActiveObject(img);
-        }, { crossOrigin: 'anonymous' });
-    };
+
 
     // 4. Các nút Toolbar nổi
     const handleFloatingAction = (action: string) => {
@@ -378,7 +361,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
     const iconTotalPrice = getIconTotalPrice();
     const frontObjCount = fabricCanvas.current ? fabricCanvas.current.getObjects().length : 0;
     const backObjCount = backFabricCanvas.current ? backFabricCanvas.current.getObjects().length : 0;
-    const hasDesign = frontObjCount > 0 || backObjCount > 0;
+
     const unitPrice = BASE_PRICE + iconTotalPrice;
     const totalQtyModal = Object.values(sizeQty).reduce((a, b) => a + b, 0);
     const totalPrice = unitPrice * totalQtyModal;

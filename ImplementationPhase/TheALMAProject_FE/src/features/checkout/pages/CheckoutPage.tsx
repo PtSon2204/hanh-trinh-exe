@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import axiosClient from "../../../shared/api/axiosClient";
+import axiosClient, { resolveApiAssetUrl } from "../../../shared/api/axiosClient";
 import { cartApi } from "../../cart/api/cartApi";
 import type { CartResponseDto } from "../../cart/types/index";
+
+// Declare Leaflet types
+declare global {
+    interface Window {
+        L: any;
+    }
+}
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
@@ -26,8 +33,7 @@ const CheckoutPage = () => {
         shipName: "",
         shipPhone: "",
         shipAddress: "",
-        shipProvince: "Hà Nội",
-        shipDistrict: "Quận 1"
+        shipProvince: "",
     });
 
     const [paymentMethod, setPaymentMethod] = useState<"VIETQR" | "COD">("VIETQR");
@@ -39,6 +45,482 @@ const CheckoutPage = () => {
         orderId: null,
         amount: 0,
     });
+
+    const [changingPaymentMethod, setChangingPaymentMethod] = useState(false);
+
+    // ── Voucher states & handlers ─────────────────────────────────────────────
+    const [voucherCode, setVoucherCode] = useState("");
+    const [appliedVoucherCode, setAppliedVoucherCode] = useState("");
+    const [voucherDiscount, setVoucherDiscount] = useState(0);
+    const [isFreeShipping, setIsFreeShipping] = useState(false);
+    const [voucherMessage, setVoucherMessage] = useState("");
+    const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
+
+    const handleApplyVoucher = async () => {
+        if (!voucherCode.trim()) return;
+        setIsValidatingVoucher(true);
+        setVoucherMessage("");
+        try {
+            const response = await axiosClient.get(`/order/check-voucher?code=${encodeURIComponent(voucherCode.trim())}`);
+            const data = response.data;
+            if (data.isValid) {
+                setAppliedVoucherCode(voucherCode.trim());
+                setVoucherDiscount(data.discountAmount || 0);
+                setIsFreeShipping(data.isFreeShipping || false);
+                setVoucherMessage(data.message || "Áp dụng mã thành công!");
+                toast.success("Đã áp dụng mã giảm giá!");
+            } else {
+                setVoucherMessage(data.message || "Mã giảm giá không hợp lệ.");
+                toast.error(data.message || "Mã giảm giá không hợp lệ.");
+            }
+        } catch (error: any) {
+            const msg = error.response?.data?.message ?? "Mã giảm giá không hợp lệ hoặc không đủ điều kiện.";
+            setVoucherMessage(msg);
+            toast.error(msg);
+        } finally {
+            setIsValidatingVoucher(false);
+        }
+    };
+
+    const handleRemoveVoucher = () => {
+        setVoucherCode("");
+        setAppliedVoucherCode("");
+        setVoucherDiscount(0);
+        setIsFreeShipping(false);
+        setVoucherMessage("");
+        toast.success("Đã hủy áp dụng mã giảm giá.");
+    };
+
+    // ── Leaflet + OpenStreetMap (OSM) Map State & Refs ──────────────────────────
+    const [leafletReady, setLeafletReady] = useState(false);
+    const [mapReady, setMapReady] = useState(false);
+
+    const mapContainerRef = useRef<HTMLDivElement>(null);
+    const mapRef = useRef<any>(null);
+    const markerRef = useRef<any>(null);
+
+    // Mini-map autocomplete states
+    const [miniMapSearch, setMiniMapSearch] = useState("");
+    const [miniMapSuggestions, setMiniMapSuggestions] = useState<any[]>([]);
+    const [miniMapLoading, setMiniMapLoading] = useState(false);
+
+    // ── Map Modal states & refs ───────────────────────────────────────
+    const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+    const [modalAddress, setModalAddress] = useState("");
+    const [modalProvince, setModalProvince] = useState("");
+    const [modalCoords, setModalCoords] = useState<{ lat: number, lng: number }>({ lat: 21.0285, lng: 105.8542 });
+    const [modalMapReady, setModalMapReady] = useState(false);
+
+    const modalMapContainerRef = useRef<HTMLDivElement>(null);
+    const modalMapRef = useRef<any>(null);
+    const modalMarkerRef = useRef<any>(null);
+
+    // Modal search states
+    const [modalSearch, setModalSearch] = useState("");
+    const [modalSuggestions, setModalSuggestions] = useState<any[]>([]);
+    const [modalLoading, setModalLoading] = useState(false);
+
+    // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
+    const reverseGeocode = async (lat: number, lng: number, updateCallback: (address: string, province: string) => void) => {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`, {
+                headers: { 'Accept-Language': 'vi' }
+            });
+            const data = await response.json();
+            if (data && data.display_name) {
+                const fullAddress = data.display_name;
+                let province = "";
+                if (data.address) {
+                    province = data.address.city || data.address.town || data.address.municipality || data.address.state || "";
+                }
+                updateCallback(fullAddress, province || fullAddress);
+            }
+        } catch (err) {
+            console.error("Reverse geocoding error:", err);
+        }
+    };
+
+    const handleMiniMapSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setMiniMapSearch(val);
+
+        if (val.trim().length < 3) {
+            setMiniMapSuggestions([]);
+            return;
+        }
+
+        setMiniMapLoading(true);
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=vn&limit=5&addressdetails=1`, {
+                headers: { 'Accept-Language': 'vi' }
+            });
+            const data = await response.json();
+            setMiniMapSuggestions(data || []);
+        } catch (err) {
+            console.error("MiniMap OSM search error:", err);
+        } finally {
+            setMiniMapLoading(false);
+        }
+    };
+
+    const handleMiniMapSelect = (item: any) => {
+        const fullAddress = item.display_name;
+        const lat = parseFloat(item.lat);
+        const lng = parseFloat(item.lon);
+        
+        let province = "";
+        if (item.address) {
+            province = item.address.city || item.address.town || item.address.municipality || item.address.state || "";
+        }
+        
+        setShippingInfo(prev => ({
+            ...prev,
+            shipAddress: fullAddress,
+            shipProvince: province || fullAddress,
+        }));
+        
+        setMiniMapSearch(fullAddress);
+        setMiniMapSuggestions([]);
+        setModalCoords({ lat, lng });
+
+        // Update map view
+        if (mapRef.current && markerRef.current) {
+            mapRef.current.setView([lat, lng], 16);
+            markerRef.current.setLatLng([lat, lng]);
+        }
+    };
+
+    const handleModalSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setModalSearch(val);
+
+        if (val.trim().length < 3) {
+            setModalSuggestions([]);
+            return;
+        }
+
+        setModalLoading(true);
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&countrycodes=vn&limit=5&addressdetails=1`, {
+                headers: { 'Accept-Language': 'vi' }
+            });
+            const data = await response.json();
+            setModalSuggestions(data || []);
+        } catch (err) {
+            console.error("Modal OSM search error:", err);
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    const handleModalSelect = (item: any) => {
+        const fullAddress = item.display_name;
+        const lat = parseFloat(item.lat);
+        const lng = parseFloat(item.lon);
+        
+        let province = "";
+        if (item.address) {
+            province = item.address.city || item.address.town || item.address.municipality || item.address.state || "";
+        }
+        
+        setModalAddress(fullAddress);
+        setModalProvince(province || fullAddress);
+        setModalCoords({ lat, lng });
+        setModalSearch(fullAddress);
+        setModalSuggestions([]);
+
+        // Update modal map view
+        if (modalMapRef.current && modalMarkerRef.current) {
+            modalMapRef.current.setView([lat, lng], 16);
+            modalMarkerRef.current.setLatLng([lat, lng]);
+        }
+    };
+
+    const initLeafletMap = useCallback(() => {
+        if (!window.L || !mapContainerRef.current) return;
+
+        try {
+            if (mapRef.current) {
+                mapRef.current.remove();
+                mapRef.current = null;
+            }
+
+            const map = window.L.map(mapContainerRef.current, {
+                center: [modalCoords.lat, modalCoords.lng],
+                zoom: 13,
+                zoomControl: true,
+                attributionControl: false
+            });
+            mapRef.current = map;
+
+            window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            const redIcon = window.L.divIcon({
+                html: `<div style="display: flex; justify-content: center; align-items: center; width: 40px; height: 40px;">
+                    <svg viewBox="0 0 24 24" width="36" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" fill="#EF4444"/>
+                        <circle cx="12" cy="10" r="3" fill="#FFFFFF"/>
+                    </svg>
+                </div>`,
+                className: 'custom-pin',
+                iconSize: [36, 36],
+                iconAnchor: [18, 36]
+            });
+
+            const marker = window.L.marker([modalCoords.lat, modalCoords.lng], {
+                draggable: true,
+                icon: redIcon
+            }).addTo(map);
+            markerRef.current = marker;
+
+            const onDragEnd = async () => {
+                const position = marker.getLatLng();
+                setModalCoords({ lat: position.lat, lng: position.lng });
+                await reverseGeocode(position.lat, position.lng, (address, province) => {
+                    setShippingInfo(prev => ({
+                        ...prev,
+                        shipAddress: address,
+                        shipProvince: province
+                    }));
+                    setMiniMapSearch(address);
+                });
+            };
+
+            marker.on('dragend', onDragEnd);
+
+            map.on('click', async (e: any) => {
+                const { lat, lng } = e.latlng;
+                marker.setLatLng([lat, lng]);
+                setModalCoords({ lat, lng });
+                await reverseGeocode(lat, lng, (address, province) => {
+                    setShippingInfo(prev => ({
+                        ...prev,
+                        shipAddress: address,
+                        shipProvince: province
+                    }));
+                    setMiniMapSearch(address);
+                });
+            });
+
+            setMapReady(true);
+        } catch (err) {
+            console.error("Error initializing Leaflet mini-map:", err);
+        }
+    }, [modalCoords]);
+
+    const initLeafletMapModal = useCallback(() => {
+        if (!window.L || !modalMapContainerRef.current) return;
+
+        try {
+            if (modalMapRef.current) {
+                modalMapRef.current.remove();
+                modalMapRef.current = null;
+            }
+
+            const map = window.L.map(modalMapContainerRef.current, {
+                center: [modalCoords.lat, modalCoords.lng],
+                zoom: 16,
+                zoomControl: true,
+                attributionControl: false
+            });
+            modalMapRef.current = map;
+
+            window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            const redIcon = window.L.divIcon({
+                html: `<div style="display: flex; justify-content: center; align-items: center; width: 40px; height: 40px;">
+                    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C7.58 2 4 5.58 4 10c0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" fill="#EF4444"/>
+                        <circle cx="12" cy="10" r="3" fill="#FFFFFF"/>
+                    </svg>
+                </div>`,
+                className: 'custom-pin-modal',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40]
+            });
+
+            const marker = window.L.marker([modalCoords.lat, modalCoords.lng], {
+                draggable: true,
+                icon: redIcon
+            }).addTo(map);
+            modalMarkerRef.current = marker;
+
+            const onDragEnd = async () => {
+                const position = marker.getLatLng();
+                setModalCoords({ lat: position.lat, lng: position.lng });
+                await reverseGeocode(position.lat, position.lng, (address, province) => {
+                    setModalAddress(address);
+                    setModalProvince(province);
+                    setModalSearch(address);
+                });
+            };
+
+            marker.on('dragend', onDragEnd);
+
+            map.on('click', async (e: any) => {
+                const { lat, lng } = e.latlng;
+                marker.setLatLng([lat, lng]);
+                setModalCoords({ lat, lng });
+                await reverseGeocode(lat, lng, (address, province) => {
+                    setModalAddress(address);
+                    setModalProvince(province);
+                    setModalSearch(address);
+                });
+            });
+
+            setModalMapReady(true);
+        } catch (err) {
+            console.error("Error initializing Leaflet modal map:", err);
+        }
+    }, [modalCoords]);
+
+    const handleGPSLocation = (isModal: boolean) => {
+        if (!navigator.geolocation) {
+            toast.error("Trình duyệt của bạn không hỗ trợ định vị GPS!");
+            return;
+        }
+
+        const toastId = toast.loading("Đang xác định vị trí GPS của bạn...");
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                toast.dismiss(toastId);
+                toast.success("Định vị GPS thành công!");
+
+                setModalCoords({ lat, lng });
+
+                if (isModal) {
+                    if (modalMapRef.current && modalMarkerRef.current) {
+                        modalMapRef.current.setView([lat, lng], 16);
+                        modalMarkerRef.current.setLatLng([lat, lng]);
+                    }
+                    await reverseGeocode(lat, lng, (address, province) => {
+                        setModalAddress(address);
+                        setModalProvince(province);
+                        setModalSearch(address);
+                    });
+                } else {
+                    if (mapRef.current && markerRef.current) {
+                        mapRef.current.setView([lat, lng], 16);
+                        markerRef.current.setLatLng([lat, lng]);
+                    }
+                    await reverseGeocode(lat, lng, (address, province) => {
+                        setShippingInfo(prev => ({
+                            ...prev,
+                            shipAddress: address,
+                            shipProvince: province
+                        }));
+                        setMiniMapSearch(address);
+                    });
+                }
+            },
+            (error) => {
+                toast.dismiss(toastId);
+                console.error("GPS error:", error);
+                if (error.code === 1) {
+                    toast.error("Vui lòng cấp quyền truy cập vị trí trên trình duyệt!");
+                } else {
+                    toast.error("Không thể xác định vị trí GPS. Vui lòng gõ địa chỉ tìm kiếm!");
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    };
+
+    const handleConfirmModalLocation = () => {
+        if (!modalAddress) {
+            toast.error("Vui lòng chọn hoặc định vị một địa điểm trước khi xác nhận!");
+            return;
+        }
+
+        setShippingInfo(prev => ({
+            ...prev,
+            shipAddress: modalAddress,
+            shipProvince: modalProvince || prev.shipProvince,
+        }));
+
+        setMiniMapSearch(modalAddress);
+
+        if (mapRef.current && markerRef.current) {
+            mapRef.current.setView([modalCoords.lat, modalCoords.lng], 16);
+            markerRef.current.setLatLng([modalCoords.lat, modalCoords.lng]);
+        }
+
+        setIsMapModalOpen(false);
+        toast.success("Đã tự động cập nhật địa chỉ từ bản đồ!");
+    };
+
+    // Load Leaflet resources dynamically
+    useEffect(() => {
+        // Inject Leaflet CSS
+        if (!document.getElementById("leaflet-css")) {
+            const link = document.createElement("link");
+            link.id = "leaflet-css";
+            link.rel = "stylesheet";
+            link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+            document.head.appendChild(link);
+        }
+
+        // Inject Leaflet JS
+        const existingScript = document.getElementById("leaflet-js");
+        if (existingScript) {
+            if (window.L) {
+                setLeafletReady(true);
+            } else {
+                const handleLoad = () => setLeafletReady(true);
+                existingScript.addEventListener("load", handleLoad);
+                return () => {
+                    existingScript.removeEventListener("load", handleLoad);
+                };
+            }
+        } else {
+            const script = document.createElement("script");
+            script.id = "leaflet-js";
+            script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+            script.async = true;
+            script.onload = () => {
+                setLeafletReady(true);
+            };
+            script.onerror = () => {
+                console.error("Failed to load Leaflet script.");
+            };
+            document.head.appendChild(script);
+        }
+    }, []);
+
+    // Mini-map initialization hook
+    useEffect(() => {
+        if (leafletReady && !mapReady) {
+            const timer = setTimeout(() => {
+                initLeafletMap();
+            }, 200);
+            return () => clearTimeout(timer);
+        }
+    }, [leafletReady, mapReady, initLeafletMap]);
+
+    // Modal map initialization hook
+    useEffect(() => {
+        if (isMapModalOpen && leafletReady && !modalMapReady) {
+            const timer = setTimeout(() => {
+                initLeafletMapModal();
+            }, 200);
+            return () => clearTimeout(timer);
+        }
+    }, [isMapModalOpen, leafletReady, modalMapReady, initLeafletMapModal]);
+
+    useEffect(() => {
+        if (!isMapModalOpen) {
+            setModalMapReady(false);
+        } else {
+            setModalSearch(modalAddress || shippingInfo.shipAddress);
+        }
+    }, [isMapModalOpen]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setShippingInfo({ ...shippingInfo, [e.target.name]: e.target.value });
@@ -58,9 +540,10 @@ const CheckoutPage = () => {
             const payload = {
                 shipName: shippingInfo.shipName,
                 shipPhone: shippingInfo.shipPhone,
-                shipProvince: `${shippingInfo.shipProvince} - ${shippingInfo.shipDistrict}`,
+                shipProvince: shippingInfo.shipProvince,
                 shipAddress: shippingInfo.shipAddress,
                 paymentMethod,
+                voucherCode: appliedVoucherCode || null,
             };
 
             const response = await axiosClient.post("/order/checkout", payload);
@@ -85,7 +568,7 @@ const CheckoutPage = () => {
                     isOpen: true,
                     url: qrUrl,
                     orderId,
-                    amount: cart?.totalAmount ?? 0,
+                    amount: total,
                 });
                 toast.success("Tạo đơn thành công! Vui lòng quét mã QR để thanh toán.");
 
@@ -119,7 +602,7 @@ const CheckoutPage = () => {
     // ── Tính tiền ─────────────────────────────────────────────────────────────
     const shippingFee = 30000;
     const subTotal = cart?.totalAmount ?? 0;
-    const total = subTotal + shippingFee;
+    const total = subTotal + shippingFee - voucherDiscount;
 
     // ─────────────────────────────────────────────────────────────────────────
 
@@ -198,21 +681,90 @@ const CheckoutPage = () => {
                                 <div>
                                     <input type="tel" name="shipPhone" required value={shippingInfo.shipPhone} onChange={handleInputChange} placeholder="Số điện thoại" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder-gray-400 text-sm" />
                                 </div>
+                                <div className="md:col-span-2 space-y-4">
+                                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-5 text-sm text-blue-900 shadow-sm relative overflow-hidden">
+                                        <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500"></div>
+                                        <p className="font-bold flex items-center gap-2 text-blue-900 text-base">
+                                            <i className="fa-solid fa-map-location-dot text-blue-500"></i>
+                                            Tìm địa chỉ tự động (Bản đồ miễn phí OpenStreetMap)
+                                        </p>
+                                        <p className="mt-1 text-xs text-blue-700 leading-relaxed">
+                                            Hệ thống định vị & tìm địa chỉ tự động. Bạn có thể gõ tìm địa chỉ hoặc di chuyển ghim trên bản đồ dưới đây để tự động điền thông tin:
+                                        </p>
+                                        
+                                        <div className="mt-3 relative">
+                                            <input
+                                                type="text"
+                                                value={miniMapSearch}
+                                                onChange={handleMiniMapSearchChange}
+                                                placeholder={leafletReady ? "Gõ tên đường, địa danh để tìm địa chỉ tự động..." : "Đang tải bản đồ..."}
+                                                className="w-full border border-blue-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder-gray-400 text-sm bg-white text-gray-900"
+                                                disabled={!leafletReady}
+                                            />
+                                            {miniMapLoading && (
+                                                <span className="absolute right-3 top-3.5 text-blue-500">
+                                                    <i className="fa-solid fa-spinner fa-spin"></i>
+                                                </span>
+                                            )}
+                                            
+                                            {miniMapSuggestions.length > 0 && (
+                                                <div className="absolute left-0 right-0 z-[500] bg-white border border-gray-200 rounded-xl shadow-xl mt-1 max-h-60 overflow-y-auto divide-y divide-gray-100">
+                                                    {miniMapSuggestions.map((item, idx) => (
+                                                        <div
+                                                            key={idx}
+                                                            onClick={() => handleMiniMapSelect(item)}
+                                                            className="px-4 py-3 hover:bg-blue-50 text-gray-700 text-xs sm:text-sm cursor-pointer transition-colors flex items-start gap-2"
+                                                        >
+                                                            <i className="fa-solid fa-location-dot text-blue-500 mt-1"></i>
+                                                            <span>{item.display_name}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Mini Map Canvas Container */}
+                                    <div className="relative group rounded-2xl overflow-hidden border border-gray-200 shadow-inner bg-gray-100">
+                                        <div
+                                            ref={mapContainerRef}
+                                            style={{ width: '100%', height: '220px' }}
+                                        />
+                                        {mapReady && (
+                                            <div className="absolute top-3 right-3 flex flex-col gap-2 z-[400]">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (markerRef.current) {
+                                                            const pos = markerRef.current.getLatLng();
+                                                            setModalCoords({ lat: pos.lat, lng: pos.lng });
+                                                        }
+                                                        setIsMapModalOpen(true);
+                                                    }}
+                                                    className="px-3 py-1.5 bg-white hover:bg-gray-50 text-gray-800 text-[11px] font-bold rounded-xl shadow-md border border-gray-100 flex items-center gap-1.5 transition-all duration-200 hover:scale-105 active:scale-95"
+                                                >
+                                                    <i className="fa-solid fa-expand text-blue-500"></i> Xem Bản Đồ Lớn
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleGPSLocation(false)}
+                                                    className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-md flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 border border-blue-500/20"
+                                                    title="Định vị GPS hiện tại"
+                                                >
+                                                    <i className="fa-solid fa-location-crosshairs text-sm"></i>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Địa chỉ đã chọn (hiện ra sau khi chọn từ Maps hoặc nhập thủ công) */}
                                 <div className="md:col-span-2">
-                                    <input type="text" name="shipAddress" required value={shippingInfo.shipAddress} onChange={handleInputChange} placeholder="Địa chỉ chi tiết (Số nhà, đường...)" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder-gray-400 text-sm" />
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Địa chỉ nhận hàng</label>
+                                    <input type="text" name="shipAddress" required value={shippingInfo.shipAddress} onChange={handleInputChange} placeholder="Số nhà, đường, phường/xã..." className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder-gray-400 text-sm" />
                                 </div>
-                                <div>
-                                    <select name="shipProvince" value={shippingInfo.shipProvince} onChange={handleInputChange} className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-700 text-sm">
-                                        <option value="Hà Nội">Hà Nội</option>
-                                        <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                                        <option value="Đà Nẵng">Đà Nẵng</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <select name="shipDistrict" value={shippingInfo.shipDistrict} onChange={handleInputChange} className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-gray-700 text-sm">
-                                        <option value="Quận 1">Quận 1</option>
-                                        <option value="Quận Thanh Xuân">Quận Thanh Xuân</option>
-                                    </select>
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs font-medium text-gray-500 mb-1">Tỉnh / Thành phố</label>
+                                    <input type="text" name="shipProvince" required value={shippingInfo.shipProvince} onChange={handleInputChange} placeholder="Tỉnh / Thành phố (tự động điền khi chọn từ bản đồ)" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder-gray-400 text-sm" />
                                 </div>
                             </div>
                         </div>
@@ -318,7 +870,7 @@ const CheckoutPage = () => {
                                             <div className="relative">
                                                 <div className="w-16 h-16 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center overflow-hidden">
                                                     {item.imageUrl ? (
-                                                        <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-contain" />
+                                                        <img src={resolveApiAssetUrl(item.imageUrl) || '/images/default-shirt.png'} alt={item.productName} className="w-full h-full object-contain" />
                                                     ) : (
                                                         <i className="fa-solid fa-shirt text-gray-300 text-2xl" />
                                                     )}
@@ -339,6 +891,46 @@ const CheckoutPage = () => {
                                 </div>
                             )}
 
+                            {/* Coupon / Voucher Section */}
+                            <div className="border-t border-gray-100 pt-4 mt-4 pb-2">
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mã giảm giá / Voucher</label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Nhập mã voucher..."
+                                        value={voucherCode}
+                                        onChange={(e) => setVoucherCode(e.target.value)}
+                                        className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/10 placeholder-gray-400"
+                                        disabled={!!appliedVoucherCode}
+                                    />
+                                    {appliedVoucherCode ? (
+                                        <button
+                                            type="button"
+                                            onClick={handleRemoveVoucher}
+                                            className="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-red-100 transition-colors"
+                                        >
+                                            Hủy bỏ
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleApplyVoucher}
+                                            disabled={isValidatingVoucher || !voucherCode.trim()}
+                                            className="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                        >
+                                            {isValidatingVoucher && <i className="fa-solid fa-spinner fa-spin"></i>}
+                                            Áp dụng
+                                        </button>
+                                    )}
+                                </div>
+                                {voucherMessage && (
+                                    <p className={`text-xs mt-2 font-medium flex items-center gap-1 ${appliedVoucherCode ? 'text-green-600' : 'text-red-500'}`}>
+                                        <i className={`fa-solid ${appliedVoucherCode ? 'fa-circle-check' : 'fa-triangle-exclamation'}`}></i>
+                                        {voucherMessage}
+                                    </p>
+                                )}
+                            </div>
+
                             {/* Totals */}
                             <div className="border-t border-gray-200 pt-5 space-y-3 mb-5">
                                 <div className="flex justify-between text-sm text-gray-600">
@@ -347,8 +939,25 @@ const CheckoutPage = () => {
                                 </div>
                                 <div className="flex justify-between text-sm text-gray-600">
                                     <span>Phí vận chuyển</span>
-                                    <span className="font-medium text-gray-900">{shippingFee.toLocaleString('vi-VN')}đ</span>
+                                    <span className="font-medium text-gray-900">
+                                        {isFreeShipping ? (
+                                            <span className="line-through text-gray-400 mr-1.5">{shippingFee.toLocaleString('vi-VN')}đ</span>
+                                        ) : null}
+                                        {isFreeShipping ? "Miễn phí" : `${shippingFee.toLocaleString('vi-VN')}đ`}
+                                    </span>
                                 </div>
+                                {voucherDiscount > 0 && !isFreeShipping && (
+                                    <div className="flex justify-between text-sm text-green-600 font-medium">
+                                        <span>Giảm giá (Voucher)</span>
+                                        <span>-{voucherDiscount.toLocaleString('vi-VN')}đ</span>
+                                    </div>
+                                )}
+                                {isFreeShipping && (
+                                    <div className="flex justify-between text-sm text-green-600 font-medium">
+                                        <span>Khuyến mãi vận chuyển</span>
+                                        <span>-{shippingFee.toLocaleString('vi-VN')}đ</span>
+                                    </div>
+                                )}
                             </div>
                             <div className="border-t border-gray-200 pt-5 flex justify-between items-center">
                                 <span className="text-lg font-bold text-gray-900">Tổng cộng</span>
@@ -402,19 +1011,166 @@ const CheckoutPage = () => {
                             onClick={async () => {
                                 await clearCartSilently();
                                 setQrData({ ...qrData, isOpen: false });
+                                toast.success("Đặt hàng thành công! Vui lòng đợi bên shop xác nhận và gói hàng.");
                                 navigate("/orders");
                             }}
                             className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
                         >
                             <i className="fa-solid fa-check"></i> Tôi đã thanh toán xong
                         </button>
+                        
+                        <button
+                            disabled={changingPaymentMethod}
+                            onClick={async () => {
+                                if (!qrData.orderId) return;
+                                setChangingPaymentMethod(true);
+                                try {
+                                    await axiosClient.patch(`/order/${qrData.orderId}/change-payment-method`, {
+                                        paymentMethod: "COD"
+                                    });
+                                    await clearCartSilently();
+                                    setQrData({ ...qrData, isOpen: false });
+                                    toast.success("Đã chuyển đổi phương thức thanh toán sang COD thành công! Vui lòng đợi bên shop xác nhận và gói hàng.");
+                                    navigate("/orders");
+                                } catch (error) {
+                                    toast.error("Không thể tự động chuyển sang COD. Vui lòng chuyển hướng và liên hệ hỗ trợ.");
+                                    await clearCartSilently();
+                                    setQrData({ ...qrData, isOpen: false });
+                                    navigate("/orders");
+                                } finally {
+                                    setChangingPaymentMethod(false);
+                                }
+                            }}
+                            className="mt-3 w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                            {changingPaymentMethod ? (
+                                <i className="fa-solid fa-spinner fa-spin"></i>
+                            ) : (
+                                <i className="fa-solid fa-truck-fast"></i>
+                            )}
+                            {changingPaymentMethod ? "Đang cập nhật..." : "Tôi muốn đổi sang giao COD"}
+                        </button>
 
                         <button
-                            onClick={() => setQrData({ ...qrData, isOpen: false })}
-                            className="mt-3 w-full text-sm text-gray-400 hover:text-gray-600 transition-colors py-2"
+                            disabled={changingPaymentMethod}
+                            onClick={async () => {
+                                await clearCartSilently();
+                                setQrData({ ...qrData, isOpen: false });
+                                toast.success("Đơn hàng đã được lưu! Bạn có thể thanh toán sau.");
+                                navigate("/orders");
+                            }}
+                            className="mt-4 w-full text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors py-2 block text-center disabled:opacity-60"
                         >
                             Thanh toán sau
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Google Maps Selector Modal ── */}
+            {isMapModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-xl w-full flex flex-col max-h-[95vh] overflow-hidden border border-gray-100 relative">
+                        {/* Modal Header */}
+                        <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <i className="fa-solid fa-map-location-dot text-blue-500" />
+                                Chọn vị trí giao hàng trên Bản Đồ
+                            </h3>
+                            <button 
+                                type="button" 
+                                onClick={() => setIsMapModalOpen(false)} 
+                                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                            >
+                                <i className="fa-solid fa-xmark text-lg"></i>
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                            <div className="relative">
+                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">
+                                    <i className="fa-solid fa-magnifying-glass text-blue-400 mr-1" />
+                                    Tìm kiếm địa chỉ nhanh
+                                </label>
+                                <input
+                                    type="text"
+                                    value={modalSearch}
+                                    onChange={handleModalSearchChange}
+                                    placeholder={modalMapReady ? 'Gõ tên đường, địa danh để tìm kiếm...' : 'Đang tải bản đồ...'}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white text-gray-900"
+                                    disabled={!modalMapReady}
+                                />
+                                {modalLoading && (
+                                    <span className="absolute right-3 top-9 text-blue-500">
+                                        <i className="fa-solid fa-spinner fa-spin"></i>
+                                    </span>
+                                )}
+                                
+                                {modalSuggestions.length > 0 && (
+                                    <div className="absolute left-0 right-0 z-[1000] bg-white border border-gray-200 rounded-xl shadow-2xl mt-1 max-h-60 overflow-y-auto divide-y divide-gray-100">
+                                        {modalSuggestions.map((item, idx) => (
+                                            <div
+                                                key={idx}
+                                                onClick={() => handleModalSelect(item)}
+                                                className="px-4 py-3 hover:bg-blue-50 text-gray-700 text-xs sm:text-sm cursor-pointer transition-colors flex items-start gap-2"
+                                            >
+                                                <i className="fa-solid fa-location-dot text-blue-500 mt-1"></i>
+                                                <span>{item.display_name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Map Canvas */}
+                            <div className="relative">
+                                <div
+                                    ref={modalMapContainerRef}
+                                    style={{ width: '100%', height: '320px', borderRadius: '16px', border: '1px solid #e2e8f0', background: '#f1f5f9' }}
+                                />
+                                {modalMapReady && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleGPSLocation(true)}
+                                        className="absolute bottom-4 right-4 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 z-[400] border border-blue-500/20"
+                                        title="Sử dụng GPS hiện tại"
+                                    >
+                                        <i className="fa-solid fa-location-crosshairs text-lg"></i>
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Address Preview Info */}
+                            <div className="bg-gray-50 border border-gray-100 rounded-2xl p-4 space-y-2">
+                                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">📍 Địa chỉ định vị</p>
+                                <p className="text-sm font-semibold text-gray-800 leading-snug">
+                                    {modalAddress || "Vui lòng chọn một điểm hoặc nhập địa chỉ để định vị."}
+                                </p>
+                                {modalProvince && (
+                                    <p className="text-xs text-gray-500 font-medium">Tỉnh/Thành phố: {modalProvince}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">
+                            <button
+                                type="button"
+                                onClick={() => setIsMapModalOpen(false)}
+                                className="px-5 py-2.5 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 font-bold rounded-xl text-sm transition-all shadow-sm"
+                            >
+                                Hủy bỏ
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmModalLocation}
+                                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl text-sm shadow-md shadow-blue-500/10 hover:shadow-blue-500/20 transition-all flex items-center gap-1.5"
+                            >
+                                <i className="fa-solid fa-circle-check"></i>
+                                Xác nhận vị trí
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
