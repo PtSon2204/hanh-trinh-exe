@@ -14,8 +14,8 @@
   white-space: nowrap;
 }
 .alma-nav__title .dot{color:#2563eb;}
-.alma-nav__links{display:flex;gap:1.25rem;align-items:center;flex-wrap:nowrap;overflow:hidden;}
-.alma-nav__link{text-decoration:none;font-size:.82rem;font-weight:500;color:#64748b;transition:color .2s;white-space:nowrap;}
+.alma-nav__links{display:flex;gap:clamp(0.6rem, 1.2vw, 1.25rem);align-items:center;flex-wrap:nowrap;overflow:visible;}
+.alma-nav__link{text-decoration:none;font-size:clamp(0.72rem, 0.85vw, 0.82rem);font-weight:500;color:#64748b;transition:color .2s;white-space:nowrap;}
 .alma-nav__link:hover{color:#0f172a;}
 .alma-nav__link--active{color:#2563eb;font-weight:600;border-bottom:2px solid #2563eb;padding-bottom:2px;}
 .alma-nav__link--design{color:#4f46e5;font-weight:700;}
@@ -141,7 +141,7 @@
     display: grid;
     grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
     align-items: center;
-    gap: clamp(1rem, 2vw, 2.5rem);
+    gap: clamp(0.5rem, 1.5vw, 2rem);
   }
   .alma-nav__brand {
     justify-self: start;

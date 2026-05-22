@@ -8,12 +8,12 @@ import "./StoryPage.css";
 
 // ── Data ──────────────────────────────────────────────────────────────
 const MEMBERS = [
-  { id: 1, name: "Phạm Thế Sơn",    role: "CEO & Co-founder",  emoji: "🚀", desc: "Người đặt nền móng cho ALMA, với đam mê thiết kế và tầm nhìn xa về thời trang học đường." },
-  { id: 2, name: "Nguyễn Văn Minh", role: "CTO & Co-founder",  emoji: "💻", desc: "Kiến trúc sư công nghệ, xây dựng nền tảng thiết kế trực tuyến từ những dòng code đầu tiên." },
-  { id: 3, name: "Trần Thị Lan",    role: "CMO & Co-founder",  emoji: "🎨", desc: "Người kết nối ALMA với hàng nghìn trường học và cộng đồng sinh viên trên cả nước." },
-  { id: 4, name: "Lê Quốc Hùng",   role: "COO & Co-founder",  emoji: "⚙️", desc: "Đảm bảo mỗi chiếc áo đến tay khách hàng đúng hẹn, đúng chất lượng đã cam kết." },
-  { id: 5, name: "Hoàng Thị Mai",  role: "CFO & Co-founder",  emoji: "📊", desc: "Xây dựng mô hình tài chính bền vững, giúp ALMA tăng trưởng đúng hướng và hiệu quả." },
-  { id: 6, name: "Vũ Thanh Tùng",  role: "CPO & Co-founder",  emoji: "✨", desc: "Sáng tạo không ngừng để mỗi tính năng trên ALMA đều đơn giản, thú vị và hữu ích." },
+  { id: 1, name: "Nguyễn Thị Hải Yến",  role: "CEO & Co-founder", avatar: "/images/members/haiyen.png",    desc: "Người đặt nền móng cho ALMA, với đam mê thiết kế và tầm nhìn xa về thời trang học đường." },
+  { id: 2, name: "Bùi Thị Thùy Dương", role: "CTO & Co-founder", avatar: "/images/members/thuyduong.png", desc: "Kiến trúc sư công nghệ, xây dựng nền tảng thiết kế trực tuyến từ những dòng code đầu tiên." },
+  { id: 3, name: "Tăng Lan Anh",        role: "CMO & Co-founder", avatar: "/images/members/lananh.png",    desc: "Người kết nối ALMA với hàng nghìn trường học và cộng đồng sinh viên trên cả nước." },
+  { id: 4, name: "Nguyễn Phúc Lâm",    role: "COO & Co-founder", avatar: "/images/members/phuclam.png",   desc: "Đảm bảo mỗi chiếc áo đến tay khách hàng đúng hẹn, đúng chất lượng đã cam kết." },
+  { id: 5, name: "Phạm Thế Sơn",       role: "CPO & Co-founder", avatar: "/images/members/theson.jpg",    desc: "Xây dựng mô hình tài chính bền vững, giúp ALMA tăng trưởng đúng hướng và hiệu quả." },
+  { id: 6, name: "Nguyễn Bá Sơn",      role: "CFO & Co-founder", avatar: "/images/members/bason.png",     desc: "Sáng tạo không ngừng để mỗi tính năng trên ALMA đều đơn giản, thú vị và hữu ích." },
 ];
 
 const STORY_SECTIONS = [
@@ -169,6 +169,8 @@ function Navbar() {
             <Link to="/" onClick={() => setMobileOpen(false)}>Trang Chủ</Link>
             <Link to="/category" onClick={() => setMobileOpen(false)}>Sản Phẩm</Link>
             <Link to="/Story" onClick={() => setMobileOpen(false)}>Câu chuyện</Link>
+            <Link to="/orders" onClick={() => setMobileOpen(false)}>Đơn hàng</Link>
+            <Link to="/contact" onClick={() => setMobileOpen(false)}>Liên hệ</Link>
             <Link to="/customizer" onClick={() => setMobileOpen(false)}>✨ Thiết Kế Ngay</Link>
             {user ? (
               <>
@@ -245,14 +247,16 @@ function MemberCard({ member, index }: { member: typeof MEMBERS[0]; index: numbe
       <div className="rainbow-ring-wrapper">
         <div className="rainbow-ring-bg" />
         <div className="rainbow-ring-inner">
-          <a href="#" className="member-photo-link" aria-label={member.name}>
+          <div className="member-photo-link" aria-label={member.name}>
             <img
-              src="#"
+              src={member.avatar}
               alt={member.name}
               className="member-photo"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = 'none';
+              }}
             />
-            <div className="member-photo-fallback">{member.emoji}</div>
-          </a>
+          </div>
         </div>
       </div>
 

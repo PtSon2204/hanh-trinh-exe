@@ -41,6 +41,9 @@ export default function Navbar() {
 
   const isHomeActive = currentPath === "/";
   const isProductActive = currentPath.startsWith("/category") || currentPath.startsWith("/products");
+  const isStoryActive = currentPath.startsWith("/Story") || currentPath.startsWith("/story");
+  const isOrderActive = currentPath.startsWith("/orders");
+  const isContactActive = currentPath.startsWith("/contact");
   const isCustomizerActive = currentPath.startsWith("/customizer");
 
   return (
@@ -78,6 +81,24 @@ export default function Navbar() {
               className={`alma-nav__link ${isProductActive ? "alma-nav__link--active" : ""}`}
             >
               Sản Phẩm
+            </Link>
+            <Link
+              to="/Story"
+              className={`alma-nav__link ${isStoryActive ? "alma-nav__link--active" : ""}`}
+            >
+              Câu chuyện
+            </Link>
+            <Link
+              to="/orders"
+              className={`alma-nav__link ${isOrderActive ? "alma-nav__link--active" : ""}`}
+            >
+              Đơn hàng
+            </Link>
+            <Link
+              to="/contact"
+              className={`alma-nav__link ${isContactActive ? "alma-nav__link--active" : ""}`}
+            >
+              Liên hệ
             </Link>
             <Link
               to="/customizer"
@@ -148,6 +169,9 @@ export default function Navbar() {
           <div className="alma-nav__mobile-menu">
             <Link to="/" onClick={() => setMobileOpen(false)}>Trang Chủ</Link>
             <Link to="/category" onClick={() => setMobileOpen(false)}>Sản Phẩm</Link>
+            <Link to="/Story" onClick={() => setMobileOpen(false)}>Câu chuyện</Link>
+            <Link to="/orders" onClick={() => setMobileOpen(false)}>Đơn hàng</Link>
+            <Link to="/contact" onClick={() => setMobileOpen(false)}>Liên hệ</Link>
             <Link to="/customizer" onClick={() => setMobileOpen(false)}>✨ Thiết Kế Ngay</Link>
             {user ? (
               <>
