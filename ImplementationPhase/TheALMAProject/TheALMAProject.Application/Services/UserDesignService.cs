@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -134,10 +134,16 @@ namespace TheALMAProject.Application.Services
                 }
             }
 
-            await _unitOfWork.UserDesignRepo.AddAsync(newDesign);
-            var saved = await _unitOfWork.SaveChangesAsync() > 0;
-
-            return saved ? newDesign.DesignId : null;
+            try
+            {
+                await _unitOfWork.UserDesignRepo.AddAsync(newDesign);
+                var saved = await _unitOfWork.SaveChangesAsync() > 0;
+                return saved ? newDesign.DesignId : null;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Lỗi lưu DB: {ex.Message} | Inner: {ex.InnerException?.Message}");
+            }
         }
     }
 }

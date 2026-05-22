@@ -16,11 +16,17 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 function loadSession(): UserSession | null {
 	try {
 		const token = localStorage.getItem("token");
-		const email = localStorage.getItem("userEmail");
-		const fullName = localStorage.getItem("userFullName");
-		const role = localStorage.getItem("userRole");
-		if (token && email && fullName && role) {
-			return { token, email, fullName, role };
+		// Chỉ cần token là đủ để xác nhận đã đăng nhập.
+		// Các field khác fallback về "" nếu không có (tránh trường hợp BE
+		// không trả về role hoặc trả về null làm loadSession() return null
+		// dù user đã login hợp lệ).
+		if (token) {
+			return {
+				token,
+				email: localStorage.getItem("userEmail") ?? "",
+				fullName: localStorage.getItem("userFullName") ?? "",
+				role: localStorage.getItem("userRole") ?? "",
+			};
 		}
 	} catch {
 		// ignore

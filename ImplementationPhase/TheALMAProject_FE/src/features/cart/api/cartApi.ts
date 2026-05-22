@@ -19,5 +19,11 @@ export const cartApi = {
   removeCartItem: async (cartItemId: number) => {
     const response = await axiosClient.delete(`/Cart/remove-item/${cartItemId}`);
     return response.data;
+  },
+
+  // Xoá toàn bộ giỏ hàng sau khi thanh toán
+  clearCart: async () => {
+    const response = await axiosClient.delete('/Cart/clear');
+    return response.data;
   }
 };
