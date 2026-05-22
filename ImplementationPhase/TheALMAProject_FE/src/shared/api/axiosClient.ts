@@ -31,6 +31,31 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
 export function resolveApiAssetUrl(url: string | null) {
   if (!url) return null;
 
+  // If it's a frontend public asset path or backend seed path starting with /images
+  if (url.startsWith("/images/") || url.startsWith("images/")) {
+    const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+    
+    // Map backend seed university logos to actual high-quality frontend public files
+    if (cleanUrl.startsWith("/images/logos/")) {
+      const fileName = cleanUrl.split("/").pop();
+      if (fileName) {
+        const universityLogoMap: Record<string, string> = {
+          "fpt-logo.png": "/images/Logo_Cac_Truong/logo_Fpt.webp",
+          "vnu-logo.png": "/images/Logo_Cac_Truong/logo_VNU.png",
+          "aof-logo.png": "/images/Logo_Cac_Truong/logo_HVTC.webp",
+          "neu-logo.png": "/images/Logo_Cac_Truong/logo_NEU.webp",
+          "hust-logo.png": "/images/Logo_Cac_Truong/logo_bk.webp",
+          "ftu-logo.png": "/images/Logo_Cac_Truong/logo_NH.webp",
+          "hlu-logo.png": "/images/Logo_Cac_Truong/logo_TL.webp",
+          "tmu-logo.png": "/images/Logo_Cac_Truong/logo_ThangLong.webp",
+        };
+        const mapped = universityLogoMap[fileName];
+        if (mapped) return mapped;
+      }
+    }
+    return cleanUrl;
+  }
+
   return new URL(url, axiosClient.defaults.baseURL).href;
 }
 

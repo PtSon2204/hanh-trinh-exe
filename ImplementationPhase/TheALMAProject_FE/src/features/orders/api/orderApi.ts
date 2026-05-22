@@ -1,6 +1,6 @@
 import axiosClient from '../../../shared/api/axiosClient';
 import type { PagedResult } from '../../../shared/types/pagination';
-import type { OrderResponseDto, OrderQuery } from '../types';
+import type { OrderResponseDto, OrderQuery, OrderDetailResponseDto } from '../types';
 
 export const orderApi = {
   // Hàm lấy danh sách đơn hàng
@@ -12,7 +12,19 @@ export const orderApi = {
 
   // Hàm lấy chi tiết đơn hàng (Dành cho trang sau)
   getOrderDetail: async (orderId: number) => {
-    const response = await axiosClient.get<OrderResponseDto>(`/Order/${orderId}`);
+    const response = await axiosClient.get<OrderDetailResponseDto>(`/Order/${orderId}`);
+    return response.data;
+  },
+
+  // Hàm hủy đơn hàng
+  cancelOrder: async (orderId: number) => {
+    const response = await axiosClient.patch(`/Order/${orderId}/cancel`);
+    return response.data;
+  },
+
+  // Hàm cập nhật địa chỉ giao hàng
+  updateShippingAddress: async (orderId: number, data: { shipName: string; shipPhone: string; shipAddress: string; shipProvince: string }) => {
+    const response = await axiosClient.patch(`/Order/${orderId}/address`, data);
     return response.data;
   }
 };

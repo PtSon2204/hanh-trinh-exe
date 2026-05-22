@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import productApi from '../api/productApi';
+import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
 import type { SearchProduct } from '../../../shared/types/product.types';
 
 interface Props {
@@ -133,9 +134,10 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
                 style={{ animationDelay: `${i * 50}ms` }}
               >
                 <img
-                  src={item.imageUrl || '/images/placeholder-product.png'}
+                  src={resolveApiAssetUrl(item.imageUrl ?? null) || '/images/placeholder-product.png'}
                   alt={item.name}
                   className="search-result__img"
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder-product.png'; }}
                 />
                 <div className="search-result__info">
                   <p className="search-result__name">{item.name}</p>

@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/context/AuthContext";
 import authApi from "../../auth/api/authApi";
 import { toast } from "react-hot-toast";
 import emailjs from "@emailjs/browser";
+import { cartApi } from "../../cart/api/cartApi";
 import "./ContactPage.css";
 
 // ── EmailJS keys (đặt trong .env) ──────────────────────────────────────
@@ -15,6 +16,20 @@ const EJS_KEY      = import.meta.env.VITE_EMAILJS_PUBLIC_KEY  as string;
 function Navbar() {
   const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [cartCount, setCartCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!user) {
+      setCartCount(0);
+      return;
+    }
+    cartApi.getMyCart()
+      .then(cart => {
+        const totalQty = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(totalQty);
+      })
+      .catch(() => {});
+  }, [user]);
 
   const handleLogout = async () => {
     try { await authApi.logout(); } catch { /* ignore */ }
@@ -44,15 +59,44 @@ function Navbar() {
           <div className="alma-nav__actions">
             <Link to="/category" className="alma-nav__icon-btn" aria-label="Search">🔍</Link>
             <Link to="/cart" className="alma-nav__icon-btn alma-nav__cart" aria-label="Cart">
-              🛒<span className="alma-nav__badge">1</span>
+              🛒{cartCount > 0 && <span className="alma-nav__badge">{cartCount}</span>}
             </Link>
             {user ? (
               <div className="alma-nav__user-menu">
-                <Link to="/profile" className="alma-nav__login-btn">👤 {user.fullName.split(" ").pop()}</Link>
-                <button onClick={handleLogout} className="alma-nav__logout-btn" type="button">Đăng xuất</button>
+                <Link to="/profile" className="alma-nav__login-btn">
+                  👤 {user.fullName.split(" ").pop()}
+                </Link>
+                <div className="alma-nav__dropdown">
+                  <Link to="/profile" className="alma-nav__dropdown-item">
+                    👤 Trang cá nhân
+                  </Link>
+                  {user.role === "Admin" || user.role === "Product Manager" ? (
+                    <Link to="/admin" className="alma-nav__dropdown-item">
+                      🛠️ Trang quản trị
+                    </Link>
+                  ) : (
+                    <>
+                      <Link to="/my-designs" className="alma-nav__dropdown-item">
+                        🎨 Lịch sử thiết kế
+                      </Link>
+                      <Link to="/orders" className="alma-nav__dropdown-item">
+                        📦 Đơn hàng
+                      </Link>
+                    </>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="alma-nav__dropdown-item alma-nav__dropdown-item--logout"
+                    type="button"
+                  >
+                    🚪 Đăng xuất
+                  </button>
+                </div>
               </div>
             ) : (
-              <Link to="/login" className="alma-nav__login-btn">👤 Đăng nhập</Link>
+              <Link to="/login" className="alma-nav__login-btn">
+                👤 Đăng nhập
+              </Link>
             )}
           </div>
         </div>
@@ -62,10 +106,28 @@ function Navbar() {
             <Link to="/category" onClick={() => setMobileOpen(false)}>Sản Phẩm</Link>
             <Link to="/contact" onClick={() => setMobileOpen(false)}>Liên hệ</Link>
             <Link to="/customizer" onClick={() => setMobileOpen(false)}>✨ Thiết Kế Ngay</Link>
-            {user
-              ? <button onClick={() => { handleLogout(); setMobileOpen(false); }}>Đăng xuất</button>
-              : <Link to="/login" onClick={() => setMobileOpen(false)}>Đăng nhập</Link>
-            }
+            {user ? (
+              <>
+                <Link to="/profile" onClick={() => setMobileOpen(false)}>👤 Trang cá nhân</Link>
+                {user.role === "Admin" || user.role === "Product Manager" ? (
+                  <Link to="/admin" onClick={() => setMobileOpen(false)}>🛠️ Trang quản trị</Link>
+                ) : (
+                  <>
+                    <Link to="/my-designs" onClick={() => setMobileOpen(false)}>🎨 Lịch sử thiết kế</Link>
+                    <Link to="/orders" onClick={() => setMobileOpen(false)}>📦 Đơn hàng</Link>
+                  </>
+                )}
+                <button
+                  onClick={() => { handleLogout(); setMobileOpen(false); }}
+                  className="alma-nav__logout-btn-mobile"
+                  type="button"
+                >
+                  🚪 Đăng xuất
+                </button>
+              </>
+            ) : (
+              <Link to="/login" onClick={() => setMobileOpen(false)}>👤 Đăng nhập</Link>
+            )}
           </div>
         )}
       </header>

@@ -4,6 +4,7 @@ import { cartApi } from '../api/cartApi';
 import type { CartResponseDto, CartItemDto } from '../types';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../auth/context/AuthContext';
+import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
 
 export default function CartPage() {
     const { user, logout } = useAuth();
@@ -217,7 +218,7 @@ export default function CartPage() {
                                         {/* Product Image */}
                                         <div className="w-32 h-40 bg-gray-50 rounded-xl shrink-0 flex items-center justify-center p-2 relative overflow-hidden border border-gray-200 shadow-inner">
                                             <img
-                                                src={item.imageUrl || '/images/default-shirt.png'}
+                                                src={resolveApiAssetUrl(item.imageUrl) || '/images/default-shirt.png'}
                                                 alt="Mockup"
                                                 className="w-full h-full object-contain mix-blend-multiply"
                                             />

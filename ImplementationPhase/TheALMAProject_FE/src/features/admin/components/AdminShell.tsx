@@ -11,6 +11,7 @@ import {
   faPalette,
   faShirt,
   faTableColumns,
+  faTicket,
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -66,6 +67,7 @@ const navGroups: AdminNavGroup[] = [
         label: "Quản lý sản phẩm",
       },
       { href: "/admin/stickers", icon: faFaceSmile, label: "Quản lý Stickers" },
+      { href: "/admin/vouchers", icon: faTicket, label: "Quản lý Vouchers" },
       { href: "/admin/customers", icon: faUsers, label: "Khách hàng" },
       { href: "/admin/notifications", icon: faBell, label: "Gửi Thông Báo" },
       { href: "/admin/settings", icon: faGear, label: "Cài đặt hệ thống" },

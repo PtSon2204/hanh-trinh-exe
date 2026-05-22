@@ -3,8 +3,9 @@ import { AdminShell } from "../../components/AdminShell";
 
 interface AdminLayoutProps {
   children: ReactNode;
+  activePath?: string;
 }
 
-export function AdminLayout({ children }: AdminLayoutProps) {
-  return <AdminShell activePath="/admin/orders">{children}</AdminShell>;
+export function AdminLayout({ children, activePath = "/admin/orders" }: AdminLayoutProps) {
+  return <AdminShell activePath={activePath}>{children}</AdminShell>;
 }

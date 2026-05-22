@@ -1,6 +1,7 @@
 // src/features/orders/pages/OrderListPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navbar from '../../../shared/components/Navbar';
 import { orderApi } from '../api/orderApi';
 import type { OrderResponseDto } from '../types/index';
 import type { PagedResult } from '../../../shared/types/pagination';
@@ -17,12 +18,20 @@ interface StatusConfig {
 }
 
 const ORDER_STATUS_MAP: Record<string, StatusConfig> = {
-  Processing: {
-    label: 'Đang xử lý',
+  Pending: {
+    label: 'Chờ xác nhận',
     badge: 'bg-amber-100 text-amber-700 border-amber-300 shadow-amber-200/60',
     glow: 'border-l-amber-400',
-    icon: 'fa-hourglass-half',
+    icon: 'fa-clock',
     bg: 'from-amber-50/40 to-transparent',
+    payIcon: 'fa-clock',
+  },
+  Processing: {
+    label: 'Đang xử lý',
+    badge: 'bg-blue-100 text-blue-700 border-blue-300 shadow-blue-200/60',
+    glow: 'border-l-blue-400',
+    icon: 'fa-hourglass-half',
+    bg: 'from-blue-50/40 to-transparent',
     payIcon: 'fa-clock',
   },
   Confirmed: {
@@ -267,39 +276,12 @@ const OrderListPage = () => {
 // ─── PageShell ────────────────────────────────────────────────────────────────
 
 function PageShell({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
   return (
     <div
       className="min-h-screen font-['Outfit'] flex flex-col"
       style={{ background: 'linear-gradient(135deg, #f0f4ff 0%, #faf5ff 50%, #f0fdf4 100%)' }}
     >
-      {/* ── Header ── */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-white/60 shadow-sm shrink-0 sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2.5">
-            <img src="/images/logo.png" alt="ALMA" className="h-9 w-auto object-contain" />
-            <span className="font-extrabold text-xl text-gray-900 tracking-tight hidden sm:block">
-              ALMA<span className="text-blue-600">.</span>
-            </span>
-          </a>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200 px-3 py-2 rounded-xl transition-all"
-            >
-              <i className="fa-solid fa-house text-xs" />
-              <span className="hidden sm:inline">Trang chủ</span>
-            </button>
-            <button
-              onClick={() => navigate('/customizer')}
-              className="flex items-center gap-2 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-4 py-2 rounded-xl shadow-md shadow-blue-500/25 transition-all hover:-translate-y-0.5"
-            >
-              <i className="fa-solid fa-pen-ruler text-xs" />
-              <span className="hidden sm:inline">Thiết kế ngay</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 sm:px-6 py-8">
         {children}
@@ -445,8 +427,9 @@ function OrderCard({ order, index }: OrderCardProps) {
 
 function StatusHint({ status }: { status: string }) {
   const hints: Record<string, { text: string; cls: string }> = {
-    Processing: { text: 'Đơn hàng đang chờ xác nhận từ cửa hàng', cls: 'text-amber-500' },
-    Confirmed: { text: 'Cửa hàng đã xác nhận, chuẩn bị hàng', cls: 'text-sky-500' },
+    Pending: { text: 'Đơn hàng đang chờ xác nhận từ cửa hàng', cls: 'text-amber-500' },
+    Processing: { text: 'Cửa hàng đã xác nhận, đang chuẩn bị hàng', cls: 'text-blue-500' },
+    Confirmed: { text: 'Cửa hàng đã chuẩn bị xong hàng', cls: 'text-sky-500' },
     Shipping: { text: 'Đơn hàng đang trên đường đến bạn', cls: 'text-violet-500' },
     Delivered: { text: 'Đơn hàng đã giao thành công 🎉', cls: 'text-emerald-600' },
     Cancelled: { text: 'Đơn hàng đã bị huỷ', cls: 'text-red-500' },

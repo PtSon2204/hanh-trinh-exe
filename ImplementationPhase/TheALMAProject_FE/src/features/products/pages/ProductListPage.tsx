@@ -11,6 +11,7 @@ import Pagination from '../components/Pagination';
 import SearchOverlay from '../components/SearchOverlay';
 import type { ProductListItem, ProductQuery } from '../../../shared/types/product.types';
 import type { PagedResult } from '../../../shared/types/pagination';
+import { cartApi } from '../../cart/api/cartApi';
 import '../styles/products.css';
 
 const SORT_OPTIONS = [
@@ -22,18 +23,44 @@ const SORT_OPTIONS = [
 
 const PAGE_SIZE = 12;
 
+const SEARCH_FIELDS = [
+  { label: 'Tên sản phẩm', value: 'name' },
+  { label: 'Kiểu dáng', value: 'category' },
+  { label: 'Chất liệu', value: 'material' },
+  { label: 'Trường học', value: 'university' },
+];
+
 export default function ProductListPage() {
   const { user, logout } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [searchField, setSearchField] = useState('name');
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [cartCount, setCartCount] = useState<number>(0);
+
+  // Load cart count
+  useEffect(() => {
+    if (!user) {
+      setCartCount(0);
+      return;
+    }
+    cartApi.getMyCart()
+      .then(cart => {
+        const totalQty = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(totalQty);
+      })
+      .catch(() => {});
+  }, [user]);
 
   // Build query from URL
   const buildQueryFromURL = useCallback((): ProductQuery => {
     return {
+      name: searchParams.get('name') || undefined,
       category: searchParams.get('category') || undefined,
       material: searchParams.get('material') || undefined,
+      university: searchParams.get('university') || undefined,
       minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
       maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
       sortBy: searchParams.get('sortBy') || 'newest',
@@ -51,6 +78,25 @@ export default function ProductListPage() {
   useEffect(() => {
     setQuery(buildQueryFromURL());
   }, [buildQueryFromURL]);
+
+  // Sync query parameters to search input states
+  useEffect(() => {
+    if (query.name) {
+      setSearchField('name');
+      setSearchKeyword(query.name);
+    } else if (query.category) {
+      setSearchField('category');
+      setSearchKeyword(query.category);
+    } else if (query.material) {
+      setSearchField('material');
+      setSearchKeyword(query.material);
+    } else if (query.university) {
+      setSearchField('university');
+      setSearchKeyword(query.university);
+    } else {
+      setSearchKeyword('');
+    }
+  }, [query.name, query.category, query.material, query.university]);
 
   // Fetch products
   useEffect(() => {
@@ -75,8 +121,10 @@ export default function ProductListPage() {
   // Sync query → URL
   const updateQuery = (newQuery: ProductQuery) => {
     const params = new URLSearchParams();
+    if (newQuery.name) params.set('name', newQuery.name);
     if (newQuery.category) params.set('category', newQuery.category);
     if (newQuery.material) params.set('material', newQuery.material);
+    if (newQuery.university) params.set('university', newQuery.university);
     if (newQuery.minPrice != null) params.set('minPrice', String(newQuery.minPrice));
     if (newQuery.maxPrice != null) params.set('maxPrice', String(newQuery.maxPrice));
     if (newQuery.sortBy) params.set('sortBy', newQuery.sortBy);
@@ -97,6 +145,34 @@ export default function ProductListPage() {
   const currentSortIdx = SORT_OPTIONS.findIndex(
     (o) => o.value === (query.sortBy || 'newest') && o.desc === (query.sortDescending ?? false),
   );
+
+  const handleInlineSearch = () => {
+    if (!searchKeyword.trim()) return;
+    const newQuery: ProductQuery = {
+      ...query,
+      name: undefined,
+      category: undefined,
+      material: undefined,
+      university: undefined,
+      pageNumber: 1,
+    };
+    (newQuery as any)[searchField] = searchKeyword.trim();
+    updateQuery(newQuery);
+  };
+
+  const handleClearSearch = () => {
+    setSearchKeyword('');
+    updateQuery({
+      ...query,
+      name: undefined,
+      category: undefined,
+      material: undefined,
+      university: undefined,
+      pageNumber: 1,
+    });
+  };
+
+  const hasInlineSearch = !!query.name || !!query.category || !!query.material || !!query.university;
 
   const handleLogout = async () => {
     try { await authApi.logout(); } catch { /* ignore */ }
@@ -124,15 +200,40 @@ export default function ProductListPage() {
           <div className="alma-nav__actions">
             <button className="alma-nav__icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}>🔍</button>
             <Link to="/cart" className="alma-nav__icon-btn alma-nav__cart" aria-label="Cart">
-              🛒<span className="alma-nav__badge">0</span>
+              🛒{cartCount > 0 && <span className="alma-nav__badge">{cartCount}</span>}
             </Link>
             {user ? (
               <div className="alma-nav__user-menu">
-                <Link to="/profile" className="alma-nav__login-btn">👤 {user.fullName.split(' ').pop()}</Link>
-                <button onClick={handleLogout} className="alma-nav__logout-btn">Đăng xuất</button>
+                <Link to="/profile" className="alma-nav__login-btn">
+                  👤 {user.fullName.split(" ").pop()}
+                </Link>
+                <div className="alma-nav__dropdown">
+                  <Link to="/profile" className="alma-nav__dropdown-item">
+                    👤 Trang cá nhân
+                  </Link>
+                  {user.role !== "Admin" && (
+                    <>
+                      <Link to="/my-designs" className="alma-nav__dropdown-item">
+                        🎨 Lịch sử thiết kế
+                      </Link>
+                      <Link to="/orders" className="alma-nav__dropdown-item">
+                        📦 Đơn hàng
+                      </Link>
+                    </>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="alma-nav__dropdown-item alma-nav__dropdown-item--logout"
+                    type="button"
+                  >
+                    🚪 Đăng xuất
+                  </button>
+                </div>
               </div>
             ) : (
-              <Link to="/login" className="alma-nav__login-btn">👤 Đăng nhập</Link>
+              <Link to="/login" className="alma-nav__login-btn">
+                👤 Đăng nhập
+              </Link>
             )}
           </div>
         </div>
@@ -141,6 +242,26 @@ export default function ProductListPage() {
             <Link to="/" onClick={() => setMobileNavOpen(false)}>Trang Chủ</Link>
             <Link to="/category" onClick={() => setMobileNavOpen(false)}>Sản Phẩm</Link>
             <Link to="/customizer" onClick={() => setMobileNavOpen(false)}>✨ Thiết Kế Ngay</Link>
+            {user ? (
+              <>
+                <Link to="/profile" onClick={() => setMobileNavOpen(false)}>👤 Trang cá nhân</Link>
+                {user.role !== "Admin" && (
+                  <>
+                    <Link to="/my-designs" onClick={() => setMobileNavOpen(false)}>🎨 Lịch sử thiết kế</Link>
+                    <Link to="/orders" onClick={() => setMobileNavOpen(false)}>📦 Đơn hàng</Link>
+                  </>
+                )}
+                <button
+                  onClick={() => { handleLogout(); setMobileNavOpen(false); }}
+                  className="alma-nav__logout-btn-mobile"
+                  type="button"
+                >
+                  🚪 Đăng xuất
+                </button>
+              </>
+            ) : (
+              <Link to="/login" onClick={() => setMobileNavOpen(false)}>👤 Đăng nhập</Link>
+            )}
           </div>
         )}
       </header>
@@ -185,6 +306,39 @@ export default function ProductListPage() {
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Inline search bar */}
+            <div className="plp-search-bar" style={{ marginBottom: '1rem' }}>
+              <select
+                className="plp-search-bar__dropdown"
+                value={searchField}
+                onChange={(e) => setSearchField(e.target.value)}
+                id="search-field-select"
+              >
+                {SEARCH_FIELDS.map((f) => (
+                  <option key={f.value} value={f.value}>{f.label}</option>
+                ))}
+              </select>
+              <div className="plp-search-bar__input-wrap">
+                <input
+                  type="text"
+                  className="plp-search-bar__input"
+                  placeholder={`Tìm theo ${SEARCH_FIELDS.find(f => f.value === searchField)?.label?.toLowerCase()}...`}
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleInlineSearch(); }}
+                  id="inline-search-input"
+                />
+                <button className="plp-search-bar__btn" onClick={handleInlineSearch}>
+                  🔍 Tìm kiếm
+                </button>
+              </div>
+              {hasInlineSearch && (
+                <button className="plp-search-bar__clear" onClick={handleClearSearch}>
+                  ✕ Xoá bộ lọc
+                </button>
+              )}
             </div>
 
             {/* Grid */}

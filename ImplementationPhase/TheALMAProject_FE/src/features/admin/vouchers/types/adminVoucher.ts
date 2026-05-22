@@ -8,6 +8,8 @@ export interface AdminVoucherListDto {
 	voucherId: number;
 	code: string;
 	discountPercent: Decimal;
+	maxDiscount: Decimal;
+	minOrderAmount: Decimal;
 	usageLimit: number;
 	usedCount: number;
 	startDate: IsoDateString;
@@ -16,8 +18,6 @@ export interface AdminVoucherListDto {
 }
 
 export interface AdminVoucherDto extends AdminVoucherListDto {
-	maxDiscount: Decimal;
-	minOrderAmount: Decimal;
 }
 
 export interface AdminCreateVoucherDto {

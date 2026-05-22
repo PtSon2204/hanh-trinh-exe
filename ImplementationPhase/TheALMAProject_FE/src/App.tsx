@@ -13,6 +13,7 @@ import {
 import ErrorPage from "./features/error/pages/ErrorPage";
 import HomePage from "./features/home/pages/HomePage";
 import OrderListPage from "./features/orders/pages/OrderListPage";
+import OrderDetailPage from "./features/orders/pages/OrderDetailPage";
 import { ProductListPage, ProductDetailPage } from './features/products';
 import CartPage from './features/cart/pages/CartPage';
 import CustomizerPage from './features/customizer/pages/CustomizerPage';
@@ -87,9 +88,13 @@ function App() {
 					{/* Protected routes - yêu cầu đăng nhập */}
 					<Route path="/orders" element={
 						<PrivateRoute>
-							<div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', padding: '20px' }}>
-								<OrderListPage />
-							</div>
+							<OrderListPage />
+						</PrivateRoute>
+					} />
+
+					<Route path="/orders/:id" element={
+						<PrivateRoute>
+							<OrderDetailPage />
 						</PrivateRoute>
 					} />
 
