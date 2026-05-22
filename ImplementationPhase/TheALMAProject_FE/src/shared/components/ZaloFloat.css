@@ -1,0 +1,97 @@
+/* ── FLOATING BUTTON ─────────────────────────────────────────────────── */
+.zalo-float {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #0068FF;
+  box-shadow: 0 6px 24px rgba(0, 104, 255, 0.5);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  cursor: pointer;
+
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+  animation: zalo-pop-in .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+.zalo-float:hover {
+  transform: scale(1.12) translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0, 104, 255, 0.55);
+}
+.zalo-float:hover .zalo-float__tooltip { opacity: 1; transform: translateX(-110%) scale(1); }
+
+/* Pop-in entrance */
+@keyframes zalo-pop-in {
+  from { transform: scale(0) rotate(-20deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+
+/* Icon */
+.zalo-float__icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── RIPPLE ──────────────────────────────────────────────────────────── */
+.zalo-float__ripple {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 104, 255, 0.5);
+  animation: zalo-ripple 2s ease-out infinite;
+}
+.zalo-float__ripple--delay { animation-delay: .9s; }
+
+@keyframes zalo-ripple {
+  0%   { transform: scale(1);    opacity: .8; }
+  100% { transform: scale(1.85); opacity: 0;  }
+}
+
+/* ── TOOLTIP ─────────────────────────────────────────────────────────── */
+.zalo-float__tooltip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateX(-104%) translateY(-50%) scale(0.92);
+  transform-origin: right center;
+  white-space: nowrap;
+
+  background: #111827;
+  color: #fff;
+  font-size: .8125rem;
+  font-weight: 600;
+  padding: .45rem .9rem;
+  border-radius: 8px;
+  pointer-events: none;
+
+  opacity: 0;
+  transition: opacity .2s, transform .2s;
+
+  /* Arrow */
+  &::after {
+    content: "";
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-right: none;
+    border-left-color: #111827;
+  }
+}
+
+/* Mobile — hide tooltip, smaller size */
+@media (max-width: 480px) {
+  .zalo-float { width: 50px; height: 50px; bottom: 20px; right: 20px; }
+  .zalo-float__icon { width: 50px; height: 50px; }
+  .zalo-float__tooltip { display: none; }
+}
