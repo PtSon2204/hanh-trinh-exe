@@ -38,6 +38,7 @@ namespace TheALMAProject.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetBaseProductById(int id)
         {
             var result = await _baseProductService.GetBaseProductById(id);
@@ -51,6 +52,7 @@ namespace TheALMAProject.API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> Pagination([FromQuery] BaseProductQuery query)
         {
             var result = await _baseProductService.GetBaseProducts(query);
