@@ -179,8 +179,32 @@
   font-style: italic;
 }
 @media(min-width:1024px){.hero__heading{max-width:650px;}}
-.hero-char{display:inline-block;transition:transform .3s cubic-bezier(.34,1.56,.64,1),color .25s,text-shadow .3s;cursor:default;}
-.hero-space{display:inline-block;}
+.hero-char {
+  display: inline-block;
+  transition: color 0.8s ease, text-shadow 0.8s ease, transform 0.4s ease;
+  cursor: default;
+  will-change: transform, color, text-shadow;
+}
+
+.hero-char.shake-active {
+  transition: color 0.05s ease, text-shadow 0.05s ease, transform 0.15s ease;
+  animation: charJiggle 0.45s ease-in-out infinite;
+}
+
+.hero-space {
+  display: inline-block;
+}
+
+@keyframes charJiggle {
+  0% { transform: scale(1.15) translate(0, 0) rotate(0deg); }
+  20% { transform: scale(1.15) translate(-1px, -2px) rotate(-1.5deg); }
+  40% { transform: scale(1.15) translate(1px, 1px) rotate(1deg); }
+  60% { transform: scale(1.15) translate(-1px, 1px) rotate(-1deg); }
+  80% { transform: scale(1.15) translate(1px, -1px) rotate(1.5deg); }
+  100% { transform: scale(1.15) translate(0, 0) rotate(0deg); }
+}
+
+
 .hero__desc{font-size:1.05rem;color:rgba(209,213,219,.9);line-height:1.7;max-width:560px;margin:0 auto 1.75rem;}
 @media(min-width:1024px){.hero__desc{margin-left:0;}}
 .hero__pills{display:flex;flex-wrap:wrap;gap:.625rem;justify-content:center;margin-bottom:2.5rem;}
@@ -241,6 +265,15 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  overflow: hidden;
+}
+
+/* HeroCanvas — absolute layer clipped inside .hero overflow:hidden */
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
   overflow: hidden;
 }
 
@@ -557,4 +590,74 @@
 }
 .alma-nav__mobile-menu .alma-nav__logout-btn-mobile:hover {
   background: #fef2f2 !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   SHOOTING STARS
+═══════════════════════════════════════════════════════ */
+.shooting-star {
+  position: absolute;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.9) 50%, #fffbe0 80%, rgba(255,255,255,0) 100%);
+  box-shadow: 0 0 6px 2px rgba(255,255,230,.6), 0 0 16px 4px rgba(200,200,255,.3);
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: left center;
+  animation: shootingStar var(--ss-dur, 0.8s) ease-out forwards;
+  transform: rotate(var(--ss-angle, 25deg));
+  z-index: 1;
+}
+@keyframes shootingStar {
+  0%   { opacity: 0;   transform: rotate(var(--ss-angle,25deg)) translateX(-30px) scaleX(0.2); }
+  10%  { opacity: 1; }
+  70%  { opacity: .8; }
+  100% { opacity: 0;   transform: rotate(var(--ss-angle,25deg)) translateX(260px) scaleX(1.3); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   GRADUATION GOOSE FLOCK
+═══════════════════════════════════════════════════════ */
+.goose-unit {
+  position: absolute;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+  z-index: 2;
+}
+
+/* The emoji body waddles left-right */
+.goose-body {
+  display: block;
+  animation: gooseWaddle 0.45s ease-in-out infinite alternate;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,.25));
+  transform-origin: bottom center;
+}
+@keyframes gooseWaddle {
+  0%   { transform: rotate(-8deg) translateY(0px); }
+  100% { transform: rotate(8deg)  translateY(-3px); }
+}
+
+/* Graduation cap sits on top, bobs slightly */
+.goose-cap {
+  display: block;
+  font-size: 0.65em;
+  margin-bottom: -0.55em;
+  order: -1; /* render above the body */
+  animation: gooseCapBob 0.45s ease-in-out infinite alternate;
+  transform-origin: center bottom;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.3));
+}
+@keyframes gooseCapBob {
+  0%   { transform: translateX(-2px) rotate(-5deg); }
+  100% { transform: translateX(2px)  rotate(5deg); }
+}
+
+/* The whole unit marches across the screen */
+@keyframes gooseMarch {
+  from { transform: translateX(0)                        scaleX(var(--goose-flip, 1)); }
+  to   { transform: translateX(var(--goose-end, 2000px)) scaleX(var(--goose-flip, 1)); }
 }
