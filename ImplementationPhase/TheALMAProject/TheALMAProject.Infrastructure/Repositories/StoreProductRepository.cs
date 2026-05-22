@@ -25,10 +25,10 @@ namespace TheALMAProject.Infrastructure.Repositories
                 .AsNoTracking()
                 .AsQueryable();
 
-            // Filter theo tên SP
+            // Filter theo tên SP (không phân biệt hoa thường)
             if (!string.IsNullOrWhiteSpace(query.Name))
             {
-                products = products.Where(x => x.Name.Contains(query.Name));
+                products = products.Where(x => x.Name.ToLower().Contains(query.Name.ToLower()));
             }
 
             if (query.BaseProductId.HasValue)
@@ -51,16 +51,22 @@ namespace TheALMAProject.Infrastructure.Repositories
                 products = products.Where(x => x.IsCustomizable == query.IsCustomizable.Value);
             }
 
-            // UC-08: Filter theo Category (kiểu dáng) từ BaseProduct
-            if (!string.IsNullOrWhiteSpace(query.Category))
+            // Filter theo University (Trường học)
+            if (!string.IsNullOrWhiteSpace(query.University))
             {
-                products = products.Where(x => x.BaseProduct != null && x.BaseProduct.Category == query.Category);
+                products = products.Where(x => x.University != null && x.University.Name.ToLower().Contains(query.University.ToLower()));
             }
 
-            // UC-08: Filter theo Material (chất liệu) từ BaseProduct
+            // UC-08: Filter theo Category (kiểu dáng) từ BaseProduct (không phân biệt hoa thường, partial match)
+            if (!string.IsNullOrWhiteSpace(query.Category))
+            {
+                products = products.Where(x => x.BaseProduct != null && x.BaseProduct.Category.ToLower().Contains(query.Category.ToLower()));
+            }
+
+            // UC-08: Filter theo Material (chất liệu) từ BaseProduct (không phân biệt hoa thường, partial match)
             if (!string.IsNullOrWhiteSpace(query.Material))
             {
-                products = products.Where(x => x.BaseProduct != null && x.BaseProduct.Material.Contains(query.Material));
+                products = products.Where(x => x.BaseProduct != null && x.BaseProduct.Material.ToLower().Contains(query.Material.ToLower()));
             }
 
             // UC-08: Filter khoảng giá

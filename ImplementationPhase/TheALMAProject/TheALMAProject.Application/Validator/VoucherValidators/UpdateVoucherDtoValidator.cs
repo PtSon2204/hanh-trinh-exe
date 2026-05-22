@@ -13,13 +13,13 @@ namespace TheALMAProject.Application.Validator.VoucherValidators
 
             RuleFor(x => x.DiscountPercent)
                 .NotEmpty().WithMessage("Tỉ lệ Discount không để trống")
-                .GreaterThanOrEqualTo(5).WithMessage("Ít nhất giảm 5%")
-                .LessThanOrEqualTo(20).WithMessage("Giảm tối đa 20%");
+                .GreaterThanOrEqualTo(1).WithMessage("Ít nhất giảm 1%")
+                .LessThanOrEqualTo(100).WithMessage("Giảm tối đa 100%");
 
             RuleFor(x => x.MaxDiscount)
                 .NotEmpty().WithMessage("Giảm giá phải có giới hạn")
                 .GreaterThan(0).WithMessage("Giảm giá giới hạn phải lớn hơn 0")
-                .LessThanOrEqualTo(400000).WithMessage("Giảm giá giới hạn chỉ đến 400.000 VND");
+                .LessThanOrEqualTo(50000000).WithMessage("Giảm giá giới hạn chỉ đến 50.000.000 VND");
 
             RuleFor(x => x.MinOrderAmount)
                 .GreaterThanOrEqualTo(0).WithMessage("Giá trị đơn hàng tối thiểu không được âm");

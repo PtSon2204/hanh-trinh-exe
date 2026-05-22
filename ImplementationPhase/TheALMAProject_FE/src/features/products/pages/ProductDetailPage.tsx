@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth/context/AuthContext';
 import authApi from '../../auth/api/authApi';
 import { toast } from 'react-hot-toast';
 import productApi from '../api/productApi';
+import { cartApi } from '../../cart/api/cartApi';
+import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
 import ImageGallery from '../components/ImageGallery';
 import SizeColorPicker from '../components/SizeColorPicker';
 import ReviewSection from '../components/ReviewSection';
@@ -21,9 +23,29 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string>();
-  const [selectedColor, setSelectedColor] = useState<string>();
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartCount, setCartCount] = useState<number>(0);
+  const navigate = useNavigate();
+
+  const fetchCartCount = useCallback(() => {
+    if (!user) {
+      setCartCount(0);
+      return;
+    }
+    cartApi.getMyCart()
+      .then(cart => {
+        const totalQty = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+        setCartCount(totalQty);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    fetchCartCount();
+  }, [fetchCartCount]);
 
   const formatter = new Intl.NumberFormat('vi-VN', {
     style: 'currency',
@@ -43,7 +65,6 @@ export default function ProductDetailPage() {
     setLoading(true);
     setError(null);
     setSelectedSize(undefined);
-    setSelectedColor(undefined);
 
     Promise.all([
       productApi.getProductDetail(productId),
@@ -76,17 +97,44 @@ export default function ProductDetailPage() {
     toast.success('Đã đăng xuất!');
   };
 
-  const handleAddToCart = () => {
-    if (!selectedSize || !selectedColor) {
-      toast.error('Vui lòng chọn size và màu trước khi thêm vào giỏ');
+  const handleAddToCart = async () => {
+    if (!user) {
+      toast.error('Vui lòng đăng nhập trước khi thêm vào giỏ hàng!');
+      navigate('/login');
       return;
     }
-    toast.success(`Đã thêm "${product?.name}" (${selectedSize}, ${selectedColor}) vào giỏ hàng!`);
+    if (!selectedSize) {
+      toast.error('Vui lòng chọn kích cỡ trước khi thêm vào giỏ');
+      return;
+    }
+    if (!product) return;
+    setAddingToCart(true);
+    try {
+      await cartApi.addToCart({
+        productId: product.productId,
+        size: selectedSize,
+        quantity,
+      });
+      toast.success(`Đã thêm "${product.name}" (Size ${selectedSize}) x${quantity} vào giỏ hàng!`);
+      fetchCartCount();
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
+        navigate('/login');
+      } else {
+        const msg = err.response?.data?.message ?? 'Lỗi khi thêm vào giỏ hàng.';
+        toast.error(msg);
+      }
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   // Build gallery images from product data
   const galleryImages = product
-    ? [product.imageUrl, product.frontImageUrl, product.backImageUrl].filter(Boolean) as string[]
+    ? [product.imageUrl, product.frontImageUrl, product.backImageUrl]
+        .map(url => resolveApiAssetUrl(url ?? null))
+        .filter(Boolean) as string[]
     : [];
 
   return (
@@ -109,15 +157,40 @@ export default function ProductDetailPage() {
           <div className="alma-nav__actions">
             <button className="alma-nav__icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}>🔍</button>
             <Link to="/cart" className="alma-nav__icon-btn alma-nav__cart" aria-label="Cart">
-              🛒<span className="alma-nav__badge">0</span>
+              🛒{cartCount > 0 && <span className="alma-nav__badge">{cartCount}</span>}
             </Link>
             {user ? (
               <div className="alma-nav__user-menu">
-                <Link to="/profile" className="alma-nav__login-btn">👤 {user.fullName.split(' ').pop()}</Link>
-                <button onClick={handleLogout} className="alma-nav__logout-btn">Đăng xuất</button>
+                <Link to="/profile" className="alma-nav__login-btn">
+                  👤 {user.fullName.split(" ").pop()}
+                </Link>
+                <div className="alma-nav__dropdown">
+                  <Link to="/profile" className="alma-nav__dropdown-item">
+                    👤 Trang cá nhân
+                  </Link>
+                  {user.role !== "Admin" && (
+                    <>
+                      <Link to="/my-designs" className="alma-nav__dropdown-item">
+                        🎨 Lịch sử thiết kế
+                      </Link>
+                      <Link to="/orders" className="alma-nav__dropdown-item">
+                        📦 Đơn hàng
+                      </Link>
+                    </>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="alma-nav__dropdown-item alma-nav__dropdown-item--logout"
+                    type="button"
+                  >
+                    🚪 Đăng xuất
+                  </button>
+                </div>
               </div>
             ) : (
-              <Link to="/login" className="alma-nav__login-btn">👤 Đăng nhập</Link>
+              <Link to="/login" className="alma-nav__login-btn">
+                👤 Đăng nhập
+              </Link>
             )}
           </div>
         </div>
@@ -126,6 +199,26 @@ export default function ProductDetailPage() {
             <Link to="/" onClick={() => setMobileNavOpen(false)}>Trang Chủ</Link>
             <Link to="/category" onClick={() => setMobileNavOpen(false)}>Sản Phẩm</Link>
             <Link to="/customizer" onClick={() => setMobileNavOpen(false)}>✨ Thiết Kế Ngay</Link>
+            {user ? (
+              <>
+                <Link to="/profile" onClick={() => setMobileNavOpen(false)}>👤 Trang cá nhân</Link>
+                {user.role !== "Admin" && (
+                  <>
+                    <Link to="/my-designs" onClick={() => setMobileNavOpen(false)}>🎨 Lịch sử thiết kế</Link>
+                    <Link to="/orders" onClick={() => setMobileNavOpen(false)}>📦 Đơn hàng</Link>
+                  </>
+                )}
+                <button
+                  onClick={() => { handleLogout(); setMobileNavOpen(false); }}
+                  className="alma-nav__logout-btn-mobile"
+                  type="button"
+                >
+                  🚪 Đăng xuất
+                </button>
+              </>
+            ) : (
+              <Link to="/login" onClick={() => setMobileNavOpen(false)}>👤 Đăng nhập</Link>
+            )}
           </div>
         )}
       </header>
@@ -173,7 +266,7 @@ export default function ProductDetailPage() {
               {product.universityName && (
                 <div className="pdp-uni-badge">
                   {product.universityLogoUrl && (
-                    <img src={product.universityLogoUrl} alt={product.universityName} className="pdp-uni-badge__logo" />
+                    <img src={resolveApiAssetUrl(product.universityLogoUrl || null) || ''} alt={product.universityName} className="pdp-uni-badge__logo" />
                   )}
                   <span>{product.universityName}</span>
                 </div>
@@ -226,20 +319,35 @@ export default function ProductDetailPage() {
                 sizes={product.availableSizes}
                 colors={product.availableColors}
                 selectedSize={selectedSize}
-                selectedColor={selectedColor}
                 onSizeChange={setSelectedSize}
-                onColorChange={setSelectedColor}
               />
+
+              {/* Quantity selector */}
+              <div className="pdp-quantity">
+                <span className="pdp-quantity__label">Số lượng:</span>
+                <div className="pdp-quantity__controls">
+                  <button
+                    className="pdp-quantity__btn"
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                  >−</button>
+                  <span className="pdp-quantity__value">{quantity}</span>
+                  <button
+                    className="pdp-quantity__btn"
+                    onClick={() => setQuantity(q => q + 1)}
+                  >+</button>
+                </div>
+              </div>
 
               {/* CTA */}
               <div className="pdp-actions">
                 <button
                   className="pdp-actions__add-cart"
                   onClick={handleAddToCart}
-                  disabled={!selectedSize || !selectedColor}
+                  disabled={!selectedSize || addingToCart}
                   id="add-to-cart-btn"
                 >
-                  🛒 Thêm vào giỏ hàng
+                  {addingToCart ? '⏳ Đang thêm...' : '🛒 Thêm vào giỏ hàng'}
                 </button>
                 {product.isCustomizable && (
                   <Link to="/customizer" className="pdp-actions__customize">

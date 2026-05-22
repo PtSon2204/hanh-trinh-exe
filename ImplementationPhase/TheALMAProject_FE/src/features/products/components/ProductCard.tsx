@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
 import type { ProductListItem } from '../../../shared/types/product.types';
 
 interface Props {
@@ -33,10 +34,11 @@ export default function ProductCard({ product }: Props) {
     <Link to={`/products/${product.productId}`} className="product-card" id={`product-card-${product.productId}`}>
       <div className="product-card__img-wrap">
         <img
-          src={product.imageUrl || '/images/placeholder-product.png'}
+          src={resolveApiAssetUrl(product.imageUrl ?? null) || '/images/placeholder-product.png'}
           alt={product.name}
           className="product-card__img"
           loading="lazy"
+          onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder-product.png'; }}
         />
         {product.isCustomizable && (
           <span className="product-card__badge product-card__badge--custom">✨ Tuỳ chỉnh</span>

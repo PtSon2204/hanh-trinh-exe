@@ -14,6 +14,8 @@ namespace TheALMAProject.Domain.Queries
 
         public bool? IsCustomizable { get; set; }
 
+        public string? University { get; set; }
+
         // UC-08: Filter theo kiểu dáng (Category) và chất liệu (Material) từ BaseProduct
         public string? Category { get; set; }
 

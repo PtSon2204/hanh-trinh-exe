@@ -38,7 +38,11 @@
             rgba(56, 189, 248, 0.18),
             transparent 28%
         ),
-        radial-gradient(circle at 12% 94%, rgba(52, 211, 153, 0.1), transparent 30%),
+        radial-gradient(
+            circle at 12% 94%,
+            rgba(52, 211, 153, 0.1),
+            transparent 30%
+        ),
         linear-gradient(135deg, #060a12 0%, #0b1220 55%, #0f172a 100%);
     font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
     font-size: 15px;
@@ -1399,9 +1403,9 @@
         grid-template-columns: 1fr;
     }
 
-	.admin-orders-grid {
-		grid-template-columns: 1fr;
-	}
+    .admin-orders-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 900px) {
@@ -1475,9 +1479,9 @@
         grid-template-columns: 1fr;
     }
 
-	.admin-carousel-tabs {
-		grid-template-columns: 1fr;
-	}
+    .admin-carousel-tabs {
+        grid-template-columns: 1fr;
+    }
 
     .admin-product-form {
         grid-template-columns: 1fr;

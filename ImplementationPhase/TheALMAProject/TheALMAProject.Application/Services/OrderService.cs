@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -78,7 +78,7 @@ namespace TheALMAProject.Application.Services
             {
                 appliedVoucher = await _unitOfWork.VoucherRepo.GetByCode(request.VoucherCode);
 
-                if (appliedVoucher == null || appliedVoucher.StartDate > DateTime.UtcNow || appliedVoucher.EndDate < DateTime.UtcNow)
+                if (appliedVoucher == null || !appliedVoucher.IsActive || appliedVoucher.StartDate > DateTime.UtcNow || appliedVoucher.EndDate < DateTime.UtcNow)
                     return new CheckoutResponseDto { IsSuccess = false, Message = "Mã giảm giá không tồn tại hoặc đã hết hạn." };
 
                 if (subTotal < appliedVoucher.MinOrderAmount)
@@ -87,9 +87,16 @@ namespace TheALMAProject.Application.Services
                 if (appliedVoucher.UsedCount >= appliedVoucher.UsageLimit)
                     return new CheckoutResponseDto { IsSuccess = false, Message = "Mã giảm giá đã hết lượt sử dụng." };
 
-                // Tính tiền giảm
-                discountAmount = subTotal * (appliedVoucher.DiscountPercent / 100);
-                if (discountAmount > appliedVoucher.MaxDiscount) discountAmount = appliedVoucher.MaxDiscount; // Không vượt quá mức trần
+                // Tính tiền giảm (Hỗ trợ Freeship nếu mã chứa FREESHIP)
+                if (appliedVoucher.Code.StartsWith("FREESHIP", StringComparison.OrdinalIgnoreCase) || appliedVoucher.Code.Contains("FREESHIP", StringComparison.OrdinalIgnoreCase))
+                {
+                    discountAmount = shippingFee;
+                }
+                else
+                {
+                    discountAmount = subTotal * (appliedVoucher.DiscountPercent / 100);
+                    if (discountAmount > appliedVoucher.MaxDiscount) discountAmount = appliedVoucher.MaxDiscount; // Không vượt quá mức trần
+                }
             }
 
             // 4. Tính Tổng tiền cuối cùng
@@ -200,6 +207,99 @@ namespace TheALMAProject.Application.Services
 
             // Trả về cho COD
             return new CheckoutResponseDto { IsSuccess = true, OrderId = newOrder.OrderId, Message = "Đặt hàng thành công!" };
+        }
+
+        public async Task<bool> ChangePaymentMethodAsync(int userId, int orderId, string paymentMethod)
+        {
+            var order = await _unitOfWork.OrderRepo.GetOrderDetailAsync(orderId, userId);
+            if (order == null || order.OrderStatus != "Pending")
+            {
+                return false;
+            }
+
+            order.PaymentMethod = paymentMethod;
+            _unitOfWork.OrderRepo.UpdateOrder(order);
+            return await _unitOfWork.SaveChangesAsync() > 0;
+        }
+
+        public async Task<VoucherCheckResponseDto> CheckVoucherAsync(int userId, string voucherCode)
+        {
+            var cart = await _unitOfWork.CartRepo.GetCartByUserIdAsync(userId);
+            if (cart == null || !cart.CartItems.Any())
+            {
+                return new VoucherCheckResponseDto { IsValid = false, Message = "Giỏ hàng của bạn đang trống." };
+            }
+
+            decimal subTotal = cart.CartItems.Sum(item => item.UnitPrice * item.Quantity);
+            decimal shippingFee = 30000;
+
+            var voucher = await _unitOfWork.VoucherRepo.GetByCode(voucherCode);
+            if (voucher == null || !voucher.IsActive || voucher.StartDate > DateTime.UtcNow || voucher.EndDate < DateTime.UtcNow)
+            {
+                return new VoucherCheckResponseDto { IsValid = false, Message = "Mã giảm giá không tồn tại hoặc đã hết hạn." };
+            }
+
+            if (subTotal < voucher.MinOrderAmount)
+            {
+                return new VoucherCheckResponseDto { IsValid = false, Message = $"Đơn hàng tối thiểu phải đạt {voucher.MinOrderAmount:N0}đ để dùng mã này." };
+            }
+
+            if (voucher.UsedCount >= voucher.UsageLimit)
+            {
+                return new VoucherCheckResponseDto { IsValid = false, Message = "Mã giảm giá đã hết lượt sử dụng." };
+            }
+
+            decimal discountAmount = 0;
+            bool isFreeShipping = false;
+
+            if (voucher.Code.StartsWith("FREESHIP", StringComparison.OrdinalIgnoreCase) || voucher.Code.Contains("FREESHIP", StringComparison.OrdinalIgnoreCase))
+            {
+                discountAmount = shippingFee;
+                isFreeShipping = true;
+            }
+            else
+            {
+                discountAmount = subTotal * (voucher.DiscountPercent / 100);
+                if (discountAmount > voucher.MaxDiscount) discountAmount = voucher.MaxDiscount;
+            }
+
+            return new VoucherCheckResponseDto
+            {
+                IsValid = true,
+                Message = isFreeShipping ? "Áp dụng mã miễn phí vận chuyển thành công!" : $"Áp dụng mã giảm giá thành công! Giảm {discountAmount:N0}đ.",
+                DiscountAmount = discountAmount,
+                IsFreeShipping = isFreeShipping
+            };
+        }
+
+        public async Task<bool> CancelOrderAsync(int userId, int orderId)
+        {
+            var order = await _unitOfWork.OrderRepo.GetOrderDetailAsync(orderId, userId);
+            if (order == null || order.OrderStatus != "Pending")
+            {
+                return false;
+            }
+
+            order.OrderStatus = "Cancelled";
+            _unitOfWork.OrderRepo.UpdateOrder(order);
+            return await _unitOfWork.SaveChangesAsync() > 0;
+        }
+
+        public async Task<bool> UpdateShippingAddressAsync(int userId, int orderId, UpdateShippingAddressDto request)
+        {
+            var order = await _unitOfWork.OrderRepo.GetOrderDetailAsync(orderId, userId);
+            if (order == null || order.OrderStatus != "Pending")
+            {
+                return false;
+            }
+
+            order.ShipName = request.ShipName;
+            order.ShipPhone = request.ShipPhone;
+            order.ShipAddress = request.ShipAddress;
+            order.ShipProvince = request.ShipProvince;
+
+            _unitOfWork.OrderRepo.UpdateOrder(order);
+            return await _unitOfWork.SaveChangesAsync() > 0;
         }
     }
 }
