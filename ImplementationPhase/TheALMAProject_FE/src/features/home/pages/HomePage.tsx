@@ -250,7 +250,7 @@ function HeroCanvas() {
     const GOOSE_CAP  = "🎓";
 
     const spawnGooseFlock = () => {
-      const w = W(); const h = H();
+      const w = W();
       const flockSize = 4 + Math.floor(Math.random() * 5);
       const fromRight = Math.random() < 0.5;
       const baseY = 10 + Math.random() * 65;
