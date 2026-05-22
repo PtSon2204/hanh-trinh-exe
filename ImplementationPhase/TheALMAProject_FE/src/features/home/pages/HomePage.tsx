@@ -52,11 +52,14 @@ function Navbar() {
             <Link to="/category" className="alma-nav__link">
               Sản Phẩm
             </Link>
-            <Link to="/designs" className="alma-nav__link">
-              Lịch sử thiết kế
+            <Link to="/Story" className="alma-nav__link alma-nav__link--hide-md">
+              Câu chuyện
             </Link>
-            <Link to="/orders" className="alma-nav__link">
+            <Link to="/orders" className="alma-nav__link alma-nav__link--hide-md">
               Đơn hàng
+            </Link>
+            <Link to="/contact" className="alma-nav__link alma-nav__link--hide-md">
+              Liên hệ
             </Link>
             <Link
               to="/customizer"
