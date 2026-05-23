@@ -5,7 +5,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { customizerApi } from '../api/customizerApi';
 import { useAuth } from '../../auth/context/AuthContext';
 import type { BaseProductDto, IconDto } from '../types';
+import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
 import './CustomizerPage.css';
+const hexToNormalizedRgb = (hex: string) => {
+    const cleanHex = hex.startsWith('#') ? hex.slice(1) : hex;
+    if (cleanHex.length !== 6) return { r: 1, g: 1, b: 1 };
+    const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
+    const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
+    const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
+    return { r, g, b };
+};
 
 
 export default function CustomizerPage() {
@@ -41,7 +50,6 @@ export default function CustomizerPage() {
 
 
     // --- States Dữ liệu Thiết kế ---
-    const [shirtColor, setShirtColor] = useState('transparent');
     const [, setLayerTrigger] = useState(0);
     const [historyList, setHistoryList] = useState<any[]>([]);
 
@@ -183,7 +191,8 @@ export default function CustomizerPage() {
     const handleAddIcon = (icon: IconDto) => {
         const ac = getActiveCanvas();
         if (!ac) return;
-        fabric.Image.fromURL(icon.imageUrl, (img) => {
+        const resolvedUrl = resolveApiAssetUrl(icon.imageUrl) || icon.imageUrl;
+        fabric.Image.fromURL(resolvedUrl, (img) => {
             const maxSize = ac.width! * 0.5;
             const scale = maxSize / Math.max(img.width!, img.height!);
             (img as any)._priceAddon = icon.priceAddon; // lưu giá vào object để tính tiền
@@ -364,7 +373,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             name: 'Thiết kế ' + new Date().toLocaleDateString('vi-VN'),
             time: new Date().toLocaleString('vi-VN'),
             thumbnail: canvasDataURL,
-            shirtColor,
+            shirtColor: shirtColorHex,
             canvasJSON: frontJSON,
             backCanvasJSON: backJSON,
             objectCount: frontObjCount + backObjCount,
@@ -386,7 +395,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                 backFabricCanvas.current?.renderAll();
             });
         }
-        setShirtColor(entry.shirtColor || 'transparent');
+        setShirtColorHex(entry.shirtColor || '#FFFFFF');
         setHistoryOpen(false);
         toast.success('Đã tải lại thiết kế!');
     };
@@ -456,10 +465,149 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
     ];
     const [shirtColorHex, setShirtColorHex] = useState('#FFFFFF');
 
+    // --- States for background-removed transparent product images ---
+    const [processedImages, setProcessedImages] = useState<Record<string, string>>({});
+    const [isImageProcessing, setIsImageProcessing] = useState(false);
+
+    // --- Helper function to remove white background using Canvas & Flood-Fill ---
+    const removeBackground = (imgElement: HTMLImageElement, callback: (dataUrl: string) => void) => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 800;
+        let w = imgElement.naturalWidth || imgElement.width;
+        let h = imgElement.naturalHeight || imgElement.height;
+        if (w > maxDim || h > maxDim) {
+            if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+            } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+            }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(imgElement, 0, 0, w, h);
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        const visited = new Uint8Array(w * h);
+        const queue: number[] = [];
+
+        const getPixel = (x: number, y: number) => {
+            const idx = (y * w + x) * 4;
+            return [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
+        };
+
+        const isBackground = (r: number, g: number, b: number, a: number, cr: number, cg: number, cb: number) => {
+            if (a < 10) return true;
+            const dist = Math.sqrt((r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2);
+            return dist < 30; // Optimal tolerance threshold
+        };
+
+        const corners = [
+            [0, 0],
+            [w - 1, 0],
+            [0, h - 1],
+            [w - 1, h - 1]
+        ];
+
+        corners.forEach(([cx, cy]) => {
+            const idx = cy * w + cx;
+            const [r, g, b, a] = getPixel(cx, cy);
+            if (a >= 10 && !visited[idx]) {
+                visited[idx] = 1;
+                queue.push(cx, cy, r, g, b);
+            }
+        });
+
+        let head = 0;
+        while (head < queue.length) {
+            const x = queue[head++];
+            const y = queue[head++];
+            const cr = queue[head++];
+            const cg = queue[head++];
+            const cb = queue[head++];
+
+            const idx = (y * w + x) * 4;
+            data[idx + 3] = 0; // Alpha set to transparent
+
+            const neighbors = [
+                [x + 1, y],
+                [x - 1, y],
+                [x, y + 1],
+                [x, y - 1]
+            ];
+
+            for (let i = 0; i < neighbors.length; i++) {
+                const [nx, ny] = neighbors[i];
+                if (nx >= 0 && nx < w && ny >= 0 && ny < h) {
+                    const nidx = ny * w + nx;
+                    if (!visited[nidx]) {
+                        const [nr, ng, nb, na] = getPixel(nx, ny);
+                        if (isBackground(nr, ng, nb, na, cr, cg, cb)) {
+                            visited[nidx] = 1;
+                            queue.push(nx, ny, cr, cg, cb);
+                        }
+                    }
+                }
+            }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        callback(canvas.toDataURL('image/png'));
+    };
+
+    // --- Active Product Image URL (handles both front and back views) ---
+    const activeProductUrl = viewMode === 'front'
+        ? (resolveApiAssetUrl(selectedProduct?.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg')
+        : (resolveApiAssetUrl(selectedProduct?.backImageUrl) ?? resolveApiAssetUrl(selectedProduct?.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg');
+
+    // --- Automatically process background removal when active URL changes ---
+    useEffect(() => {
+        if (!activeProductUrl) return;
+        if (processedImages[activeProductUrl]) return;
+
+        setIsImageProcessing(true);
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = activeProductUrl;
+        img.onload = () => {
+            removeBackground(img, (dataUrl) => {
+                setProcessedImages(prev => ({
+                    ...prev,
+                    [activeProductUrl]: dataUrl
+                }));
+                setIsImageProcessing(false);
+            });
+        };
+        img.onerror = () => {
+            console.error('Failed to load product image for background removal:', activeProductUrl);
+            setIsImageProcessing(false);
+        };
+    }, [activeProductUrl, processedImages]);
+
     const currentLayers = (getActiveCanvas()?.getObjects() || []);
+
+    const { r, g, b } = hexToNormalizedRgb(shirtColorHex);
 
     return (
         <div className="bg-gray-50 h-screen overflow-hidden flex flex-col font-['Outfit']">
+            {/* SVG Filter để đổi màu áo mà không bị lỗi CORS */}
+            <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }} aria-hidden="true">
+                <defs>
+                    <filter id="shirt-recolor">
+                        <feColorMatrix
+                            type="matrix"
+                            values={`${r} 0 0 0 0
+                                    0 ${g} 0 0 0
+                                    0 0 ${b} 0 0
+                                    0 0 0 1 0`}
+                        />
+                    </filter>
+                </defs>
+            </svg>
             {/* --- NAVBAR --- */}
             <nav className="bg-white border-b px-4 sm:px-6 py-3 flex justify-between items-center shrink-0 shadow-sm z-50 relative h-16">
                 <div className="flex items-center gap-4">
@@ -529,7 +677,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                                                 }`}
                                         >
                                             <img
-                                                src={p.frontImageUrl ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
+                                                src={resolveApiAssetUrl(p.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
                                                 className="w-full aspect-square object-cover bg-white rounded"
                                                 alt={p.name}
                                                 onError={(e) => (e.target as HTMLImageElement).src = '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
@@ -561,7 +709,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                                     ] as import('../types').IconDto[]).map(icon => (
                                         <div key={icon.iconId} onClick={() => handleAddIcon(icon)}
                                             className="relative group cursor-pointer bg-gray-50 border border-gray-200 rounded-lg p-2 hover:border-green-500 hover:shadow-md transition flex flex-col items-center gap-1">
-                                            <img src={icon.imageUrl} className="w-full aspect-square object-contain" alt={icon.name}
+                                            <img src={resolveApiAssetUrl(icon.imageUrl) ?? '/images/placeholder.png'} className="w-full aspect-square object-contain" alt={icon.name}
                                                 onError={(e) => (e.target as HTMLImageElement).src = '/images/placeholder.png'} />
                                             <p className="text-[9px] text-gray-500 truncate w-full text-center">{icon.name}</p>
                                             <span className="text-[9px] font-bold text-green-600">Miễn phí</span>
@@ -587,7 +735,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                                         {icons.map(icon => (
                                             <div key={icon.iconId} onClick={() => handleAddIcon(icon)}
                                                 className="relative group cursor-pointer bg-gray-50 border border-gray-200 rounded-lg p-2 hover:border-blue-500 hover:shadow-md transition flex flex-col items-center gap-1">
-                                                <img src={icon.imageUrl} className="w-full aspect-square object-contain" alt={icon.name}
+                                                <img src={resolveApiAssetUrl(icon.imageUrl) ?? '/images/placeholder.png'} className="w-full aspect-square object-contain" alt={icon.name}
                                                     onError={(e) => (e.target as HTMLImageElement).src = '/images/placeholder.png'} />
                                                 <p className="text-[9px] text-gray-500 truncate w-full text-center">{icon.name}</p>
                                                 {icon.priceAddon > 0 ? (
@@ -769,24 +917,14 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                         <div className="relative w-full max-w-[550px] aspect-[4/5] flex items-center justify-center shirt-container overflow-hidden rounded-xl">
                             {/* Hình nền Áo */}
                             <img
-                                src={selectedProduct?.frontImageUrl ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
+                                src={processedImages[activeProductUrl] ?? activeProductUrl}
                                 alt={selectedProduct?.name ?? 'Phôi áo'}
                                 className="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
                                 draggable="false"
-                            />
-
-                            {/* Lớp tô màu áo (multiply blend - phù hợp với phôi trắng) */}
-                            <div
-                                className="absolute pointer-events-none"
                                 style={{
-                                    width: '85%', height: '100%',
-                                    left: '50%', top: 0,
-                                    transform: 'translateX(-50%)',
-                                    backgroundColor: shirtColorHex === '#FFFFFF' ? 'transparent' : shirtColorHex,
-                                    mixBlendMode: 'multiply',
-                                    opacity: shirtColorHex === '#FFFFFF' ? 0 : 0.78,
-                                    zIndex: 11,
-                                    borderRadius: '8%',
+                                    filter: shirtColorHex === '#FFFFFF' ? 'none' : 'url(#shirt-recolor)',
+                                    opacity: isImageProcessing ? 0.6 : 1,
+                                    transition: 'opacity 0.2s ease',
                                 }}
                             />
 

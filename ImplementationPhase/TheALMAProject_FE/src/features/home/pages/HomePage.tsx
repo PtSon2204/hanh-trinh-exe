@@ -8,28 +8,52 @@ function buildCharSpans(text: string, container: HTMLSpanElement) {
   if (!container) return;
   container.innerHTML = "";
   const words = text.split(" ");
+  
+  // A beautiful selection of Coolors-style vibrant colors
+  const colors = [
+    "#FF1E27", // Vibrant Red
+    "#FF8A00", // Vivid Orange
+    "#FFD600", // Vivid Yellow
+    "#00E676", // Bright Green
+    "#00B0FF", // Bright Blue
+    "#7C4DFF", // Bright Purple
+    "#FF4081", // Bright Pink
+    "#00E5FF", // Neon Cyan
+  ];
+
   words.forEach((word, wordIndex) => {
     const wordSpan = document.createElement("span");
     wordSpan.style.display = "inline-block";
     wordSpan.style.whiteSpace = "nowrap";
+
     word.split("").forEach((char) => {
       const span = document.createElement("span");
       span.className = "hero-char";
       span.textContent = char;
+
+      let timer: ReturnType<typeof setTimeout> | null = null;
+
       span.addEventListener("mouseenter", () => {
-        const hue = Math.floor(Math.random() * 360);
-        span.style.color = `hsl(${hue},85%,65%)`;
-        span.style.textShadow = `0 0 20px hsl(${hue},85%,65%)`;
-        span.style.transform = "scale(1.35) translateY(-6px)";
+        if (timer) clearTimeout(timer);
+
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        span.style.color = randomColor;
+        span.style.textShadow = `0 0 12px ${randomColor}bb, 0 0 24px ${randomColor}66`;
+        span.classList.add("shake-active");
+
+        timer = setTimeout(() => {
+          span.style.color = "";
+          span.style.textShadow = "";
+          span.classList.remove("shake-active");
+        }, 3000);
       });
-      span.addEventListener("mouseleave", () => {
-        span.style.color = "";
-        span.style.textShadow = "";
-        span.style.transform = "";
-      });
+
       wordSpan.appendChild(span);
     });
+
     container.appendChild(wordSpan);
+
+    // Add space after word
     if (wordIndex < words.length - 1) {
       const spaceSpan = document.createElement("span");
       spaceSpan.className = "hero-space";
@@ -39,7 +63,7 @@ function buildCharSpans(text: string, container: HTMLSpanElement) {
   });
 }
 
-// ── Fun Canvas: bubbles + school objects + color streaks ─────────────
+// ── Fun Canvas: bubbles + color streaks (global fixed layer) ──────────
 const SCHOOL_EMOJIS = ["🎒", "🎓", "📚", "✏️", "📐", "🖊️", "📏", "🏫", "🎨", "🔬", "📝", "⚽", "🏆", "🎭", "🎵"];
 const RAINBOW_COLORS = ["#ff4444","#ff8c00","#ffe000","#44dd44","#00bbff","#8844ff","#ff44cc","#ff6699","#00ffcc","#ff7700"];
 
@@ -71,42 +95,12 @@ function FunCanvas() {
         --dur:${dur}s; --delay:${delay}s;
         box-shadow: inset 0 0 ${size*0.4}px rgba(255,255,255,.4);
       `;
+      b.style.pointerEvents = "none";
       container.appendChild(b);
       bubbles.push(b);
-
-      // Pop effect on click-through
-      b.style.pointerEvents = "none";
     }
 
-    // ── 2. Spawn floating school objects ──────────────────────────
-    for (let i = 0; i < 18; i++) {
-      const obj = document.createElement("div");
-      obj.className = "floating-obj";
-      const emoji = SCHOOL_EMOJIS[Math.floor(Math.random() * SCHOOL_EMOJIS.length)];
-      const size = 1.1 + Math.random() * 1.6;
-      const dur = 7 + Math.random() * 9;
-      const delay = Math.random() * 12;
-      const left = 2 + Math.random() * 96;
-      const top = 5 + Math.random() * 85;
-      const driftX = (Math.random() - 0.5) * 120;
-      const driftY = -40 - Math.random() * 80;
-      const driftX2 = (Math.random() - 0.5) * 80;
-      const driftY2 = driftY - 40 - Math.random() * 60;
-      const rot = (Math.random() - 0.5) * 40;
-      const rot2 = (Math.random() - 0.5) * 30;
-      obj.textContent = emoji;
-      obj.style.cssText = `
-        left:${left}%; top:${top}%;
-        --size:${size}rem; --dur:${dur}s; --delay:${delay}s;
-        --driftX:${driftX}px; --driftY:${driftY}px;
-        --driftX2:${driftX2}px; --driftY2:${driftY2}px;
-        --rot:${rot}deg; --rot2:${rot2}deg;
-        font-size:${size}rem;
-      `;
-      container.appendChild(obj);
-    }
-
-    // ── 3. Spawn color streaks randomly ──────────────────────────
+    // ── 2. Spawn color streaks randomly ───────────────────────────
     const spawnStreak = () => {
       const s = document.createElement("div");
       s.className = "color-streak";
@@ -115,33 +109,28 @@ function FunCanvas() {
       const h = 3 + Math.random() * 7;
       const angle = (Math.random() - 0.5) * 60;
       const dur = 0.9 + Math.random() * 1.4;
-      const delay = 0;
       const left = Math.random() * W;
       const top = Math.random() * H;
       s.style.cssText = `
         width:${w}px; height:${h}px;
         left:${left}px; top:${top}px;
         background: linear-gradient(90deg, transparent, ${color}, ${color}bb, transparent);
-        --angle:${angle}deg; --dur:${dur}s; --delay:${delay}s;
+        --angle:${angle}deg; --dur:${dur}s; --delay:0s;
         border-radius: 999px;
       `;
       container.appendChild(s);
-      setTimeout(() => s.remove(), (dur + delay) * 1000 + 100);
+      setTimeout(() => s.remove(), dur * 1000 + 100);
     };
-
-    // Spawn streaks at random intervals
     let streakTimer: ReturnType<typeof setInterval>;
     const scheduleStreak = () => {
       streakTimer = setInterval(() => {
         const count = 1 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < count; i++) {
-          setTimeout(spawnStreak, i * 120);
-        }
+        for (let i = 0; i < count; i++) setTimeout(spawnStreak, i * 120);
       }, 600 + Math.random() * 900);
     };
     scheduleStreak();
 
-    // ── 4. Click anywhere → bubble pop effect ────────────────────
+    // ── 3. Click anywhere → bubble pop effect ─────────────────────
     const handleClick = (e: MouseEvent) => {
       const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
       const size = 20 + Math.random() * 30;
@@ -157,8 +146,6 @@ function FunCanvas() {
       `;
       document.body.appendChild(pop);
       setTimeout(() => pop.remove(), 550);
-
-      // Spawn 3 extra mini pops
       for (let i = 0; i < 4; i++) {
         const mini = document.createElement("div");
         mini.className = "bubble-pop";
@@ -191,6 +178,133 @@ function FunCanvas() {
   return <div ref={canvasRef} className="fun-canvas" aria-hidden="true" />;
 }
 
+// ── Hero Canvas: floating objs + shooting stars + graduation geese ────
+// Absolute-positioned inside <section.hero> so it's clipped by overflow:hidden
+function HeroCanvas() {
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = canvasRef.current;
+    if (!container) return;
+    const rect = () => container.getBoundingClientRect();
+    const W = () => rect().width  || window.innerWidth;
+    const H = () => rect().height || window.innerHeight;
+
+    // ── A. Floating school objects ────────────────────────────────
+    for (let i = 0; i < 18; i++) {
+      const obj = document.createElement("div");
+      obj.className = "floating-obj";
+      const emoji = SCHOOL_EMOJIS[Math.floor(Math.random() * SCHOOL_EMOJIS.length)];
+      const size = 1.1 + Math.random() * 1.6;
+      const dur = 7 + Math.random() * 9;
+      const delay = Math.random() * 12;
+      const left = 2 + Math.random() * 96;
+      const top  = 5 + Math.random() * 85;
+      const driftX  = (Math.random() - 0.5) * 120;
+      const driftY  = -40 - Math.random() * 80;
+      const driftX2 = (Math.random() - 0.5) * 80;
+      const driftY2 = driftY - 40 - Math.random() * 60;
+      const rot  = (Math.random() - 0.5) * 40;
+      const rot2 = (Math.random() - 0.5) * 30;
+      obj.textContent = emoji;
+      obj.style.cssText = `
+        left:${left}%; top:${top}%;
+        --size:${size}rem; --dur:${dur}s; --delay:${delay}s;
+        --driftX:${driftX}px; --driftY:${driftY}px;
+        --driftX2:${driftX2}px; --driftY2:${driftY2}px;
+        --rot:${rot}deg; --rot2:${rot2}deg;
+        font-size:${size}rem;
+      `;
+      container.appendChild(obj);
+    }
+
+    // ── B. Shooting stars ─────────────────────────────────────────
+    const spawnShootingStar = () => {
+      const w = W(); const h = H();
+      const star = document.createElement("div");
+      star.className = "shooting-star";
+      const startX = Math.random() * w * 0.75;
+      const startY = Math.random() * h * 0.55;
+      const angle  = 18 + Math.random() * 28;
+      const length = 110 + Math.random() * 200;
+      const dur    = 0.65 + Math.random() * 0.9;
+      star.style.cssText = `
+        left:${startX}px; top:${startY}px;
+        width:${length}px;
+        --ss-angle:${angle}deg;
+        --ss-dur:${dur}s;
+      `;
+      container.appendChild(star);
+      setTimeout(() => star.remove(), dur * 1000 + 200);
+    };
+    const shootingStarTimer = setInterval(() => {
+      const count = Math.random() < 0.35 ? 2 : 1;
+      for (let i = 0; i < count; i++)
+        setTimeout(spawnShootingStar, i * 350 + Math.random() * 250);
+    }, 1800 + Math.random() * 1800);
+    // kick off one right away
+    setTimeout(spawnShootingStar, 600);
+
+    // ── C. Graduation-cap goose flock every 5 s ───────────────────
+    const GOOSE_BODY = "🦆";
+    const GOOSE_CAP  = "🎓";
+
+    const spawnGooseFlock = () => {
+      const w = W();
+      const flockSize = 4 + Math.floor(Math.random() * 5);
+      const fromRight = Math.random() < 0.5;
+      const baseY = 10 + Math.random() * 65;
+      const scale = 0.85 + Math.random() * 0.7;
+      const dur   = 6 + Math.random() * 4;
+
+      for (let i = 0; i < flockSize; i++) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "goose-unit";
+
+        const cap = document.createElement("span");
+        cap.className = "goose-cap";
+        cap.textContent = GOOSE_CAP;
+
+        const body = document.createElement("span");
+        body.className = "goose-body";
+        body.textContent = GOOSE_BODY;
+
+        wrapper.appendChild(cap);
+        wrapper.appendChild(body);
+
+        const staggerGap = 32 + Math.random() * 20;
+        const staggerY   = (Math.random() - 0.5) * 28;
+        const startX     = fromRight ? w + 80 + i * staggerGap : -(80 + i * staggerGap);
+        const endX       = fromRight ? -(w + 160) : (w + 160);
+        const flipVal    = fromRight ? -1 : 1;
+
+        wrapper.style.cssText = `
+          left:${startX}px;
+          top:calc(${baseY}% + ${staggerY}px);
+          font-size:${scale * 1.7}rem;
+          --goose-end:${endX - startX}px;
+          --goose-flip:${flipVal};
+          --goose-dur:${dur + i * 0.18}s;
+          --goose-delay:${i * 0.14}s;
+          animation: gooseMarch var(--goose-dur) linear var(--goose-delay) forwards;
+        `;
+        container.appendChild(wrapper);
+        setTimeout(() => wrapper.remove(), (dur + flockSize * 0.18 + 1) * 1000);
+      }
+    };
+
+    spawnGooseFlock();
+    const gooseTimer = setInterval(spawnGooseFlock, 5000);
+
+    return () => {
+      clearInterval(shootingStarTimer);
+      clearInterval(gooseTimer);
+    };
+  }, []);
+
+  return <div ref={canvasRef} className="hero-canvas" aria-hidden="true" />;
+}
+
 // ── Hero ──────────────────────────────────────────────────────────────
 function Hero() {
   const line1Ref = useRef<HTMLSpanElement>(null);
@@ -201,8 +315,10 @@ function Hero() {
     if (line2Ref.current) buildCharSpans("thiết kế theo cách của bạn", line2Ref.current);
   }, []);
 
+
   return (
     <section className="hero">
+      <HeroCanvas />
       <div className="hero__bg">
         <img src="/images/hero-bg.png" alt="" className="hero__bg-img" />
         <div className="hero__bg-overlay" />

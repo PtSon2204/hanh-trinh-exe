@@ -64,6 +64,7 @@ export const customizerApi = {
                 name: p.name ?? p.Name,
                 basePrice: p.basePrice ?? p.BasePrice ?? 150000,
                 frontImageUrl: p.frontImageUrl ?? p.FrontImageUrl ?? FALLBACK_BASE_PRODUCT.frontImageUrl,
+                backImageUrl: p.backImageUrl ?? p.BackImageUrl ?? undefined,
                 availableColors: p.availableColors ?? p.AvailableColors ?? '#FFFFFF,#000000',
             }));
         } catch (err) {
