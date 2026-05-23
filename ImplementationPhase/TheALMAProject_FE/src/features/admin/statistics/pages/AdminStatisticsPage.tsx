@@ -139,7 +139,6 @@ function toOrderStatisticQuery(filters: StatisticsFilterState): AdminOrderStatis
 
 function toFinancialQuery(filters: StatisticsFilterState): AdminFinancialReportQuery {
   return {
-    currencyCode: filters.currencyCode.trim() || undefined,
     fromDate: filters.fromDate,
     groupBy: filters.groupBy,
     toDate: filters.toDate,

@@ -1,5 +1,33 @@
-import axiosClient from '../../../shared/api/axiosClient';
-import type { BaseProductDto, IconDto, CreateDesignRequest } from '../types';
+import axiosClient, { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
+import type { BaseProductDto, CreateDesignRequest, IconDto } from '../types';
+
+type PagedResponse<T> = {
+    data?: T[];
+    Data?: T[];
+    items?: T[];
+};
+
+type BaseProductResponse = Partial<BaseProductDto> & {
+    BaseProductId?: number;
+    Name?: string;
+    BasePrice?: number;
+    FrontImageUrl?: string;
+    AvailableColors?: string;
+    isActive?: boolean;
+    IsActive?: boolean;
+};
+
+const readCollection = <T>(payload: unknown): T[] => {
+    if (Array.isArray(payload)) return payload as T[];
+    if (!payload || typeof payload !== 'object') return [];
+
+    const response = payload as PagedResponse<T>;
+    if (Array.isArray(response.data)) return response.data;
+    if (Array.isArray(response.Data)) return response.Data;
+    if (Array.isArray(response.items)) return response.items;
+
+    return [];
+};
 
 // Phôi áo fallback (chỉ dùng khi DB trả về rỗng hoặc lỗi)
 const FALLBACK_BASE_PRODUCT: BaseProductDto = {
@@ -20,19 +48,10 @@ export const customizerApi = {
             const data = res.data;
 
             // BE trả về PagedResult<BaseProductListDto> → { data: [...], pageNumber, pageSize, ... }
-            let products: any[] = [];
-            if (Array.isArray(data)) {
-                products = data;
-            } else if (data?.data && Array.isArray(data.data)) {
-                products = data.data;               // PagedResult.Data (JSON camelCase → data)
-            } else if (data?.Data && Array.isArray(data.Data)) {
-                products = data.Data;               // PascalCase fallback
-            } else if (data?.items && Array.isArray(data.items)) {
-                products = data.items;
-            }
+            const products = readCollection<BaseProductResponse>(data);
 
             // Chỉ lấy những phôi active
-            const active = products.filter((p: any) => p.isActive !== false);
+            const active = products.filter((p) => (p.isActive ?? p.IsActive) !== false);
 
             if (active.length === 0) {
                 console.warn('[customizerApi] DB trả về 0 phôi áo active, dùng fallback.');
@@ -40,7 +59,7 @@ export const customizerApi = {
             }
 
             // Map sang interface FE
-            return active.map((p: any): BaseProductDto => ({
+            return active.map((p): BaseProductDto => ({
                 baseProductId: p.baseProductId ?? p.BaseProductId,
                 name: p.name ?? p.Name,
                 basePrice: p.basePrice ?? p.BasePrice ?? 150000,
@@ -58,9 +77,7 @@ export const customizerApi = {
         try {
             const res = await axiosClient.get('/Icon/all');
             const data = res.data;
-            let icons: IconDto[] = [];
-            if (Array.isArray(data)) icons = data;
-            else if (data?.items && Array.isArray(data.items)) icons = data.items;
+            const icons = readCollection<IconDto>(data);
             
             if (icons.length === 0) {
                 return [
@@ -71,7 +88,10 @@ export const customizerApi = {
                     { iconId: 105, name: "Sticker 5", imageUrl: "/images/stickers/5.png", priceAddon: 5000 }
                 ];
             }
-            return icons;
+            return icons.map((icon) => ({
+                ...icon,
+                imageUrl: resolveApiAssetUrl(icon.imageUrl) ?? icon.imageUrl,
+            }));
         } catch (err) {
             console.error('Không thể tải icons từ server:', err);
             return [

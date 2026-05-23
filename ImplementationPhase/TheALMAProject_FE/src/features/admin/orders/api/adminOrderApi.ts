@@ -1,6 +1,7 @@
 import axiosClient from "../../../../shared/api/axiosClient";
 import type { PagedResult } from "../../../../shared/types/pagination";
 import type {
+	AdminCreateOrderDto,
 	AdminOrderDto,
 	AdminOrderListDto,
 	AdminOrderPrintFileDto,
@@ -26,6 +27,12 @@ export const adminOrderApi = {
 	getOrderById(id: number) {
 		return axiosClient
 			.get<AdminOrderDto>(`/admin/orders/${id}`)
+			.then((res) => res.data);
+	},
+
+	createOrder(body: AdminCreateOrderDto) {
+		return axiosClient
+			.post<AdminOrderDto>("/admin/orders", body)
 			.then((res) => res.data);
 	},
 

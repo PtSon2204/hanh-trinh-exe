@@ -318,37 +318,39 @@ export function AdminIconsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {icons.data.map((icon) => (
-                    <tr key={icon.iconId}>
-                      <td>
-                        <div className="admin-icon-cell">
-                          <span className="admin-icon-thumb">
-                            {resolveApiAssetUrl(icon.imageUrl) ? (
-                              <img src={resolveApiAssetUrl(icon.imageUrl) ?? ""} alt="" />
-                            ) : null}
-                          </span>
-                          <div>
-                            <strong>{icon.name}</strong>
-                            <span>#{icon.iconId}</span>
+                  {icons.data.map((icon) => {
+                    const imageUrl = resolveApiAssetUrl(icon.imageUrl);
+
+                    return (
+                      <tr key={icon.iconId}>
+                        <td>
+                          <div className="admin-icon-cell">
+                            <span className="admin-icon-thumb">
+                              {imageUrl ? <img src={imageUrl} alt={icon.name} /> : null}
+                            </span>
+                            <div>
+                              <strong>{icon.name}</strong>
+                              <span>#{icon.iconId}</span>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td><strong>{formatCurrency(icon.priceAddon)}</strong></td>
-                      <td>{icon.category}</td>
-                      <td>
-                        <span className={`admin-status admin-status--${icon.isActive ? "success" : "danger"}`}>
-                          {icon.isActive ? "Đang bật" : "Tạm tắt"}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="admin-row-actions">
-                          <button type="button" onClick={() => void openIcon(icon.iconId)}>
-                            Chi tiết
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td><strong>{formatCurrency(icon.priceAddon)}</strong></td>
+                        <td>{icon.category}</td>
+                        <td>
+                          <span className={`admin-status admin-status--${icon.isActive ? "success" : "danger"}`}>
+                            {icon.isActive ? "Đang bật" : "Tạm tắt"}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="admin-row-actions">
+                            <button type="button" onClick={() => void openIcon(icon.iconId)}>
+                              Chi tiết
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

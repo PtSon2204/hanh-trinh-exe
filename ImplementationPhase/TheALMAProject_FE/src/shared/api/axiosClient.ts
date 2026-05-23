@@ -34,7 +34,11 @@ export function resolveApiAssetUrl(url: string | null) {
   // If it's a frontend public asset path or backend seed path starting with /images
   if (url.startsWith("/images/") || url.startsWith("images/")) {
     const cleanUrl = url.startsWith("/") ? url : `/${url}`;
-    
+
+    if (cleanUrl.startsWith("/images/icons/")) {
+      return new URL(cleanUrl, axiosClient.defaults.baseURL).href;
+    }
+
     // Map backend seed university logos to actual high-quality frontend public files
     if (cleanUrl.startsWith("/images/logos/")) {
       const fileName = cleanUrl.split("/").pop();

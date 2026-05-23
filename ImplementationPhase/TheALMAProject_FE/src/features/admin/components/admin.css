@@ -453,6 +453,12 @@
     letter-spacing: -0.04em;
 }
 
+.admin-workspace h1,
+.admin-workspace h2,
+.admin-page-title {
+    color: var(--admin-text);
+}
+
 .admin-refresh-button {
     min-height: 42px;
     padding: 0 18px;
@@ -800,6 +806,10 @@
     margin: 0 auto;
 }
 
+.admin-statistics-page {
+    align-content: start;
+}
+
 .admin-orders-grid {
     display: grid;
     grid-template-columns: minmax(0, 1.5fr) minmax(360px, 0.72fr);
@@ -815,6 +825,66 @@
 .admin-orders-carousel {
     min-width: 0;
     min-height: clamp(20rem, 46vh, 46rem);
+}
+
+.admin-statistics-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 6px;
+    border: 1px solid var(--admin-border);
+    border-radius: 16px;
+    background: var(--admin-surface-soft);
+}
+
+.admin-statistics-tab {
+    height: 74px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    border: 0;
+    border-radius: 12px;
+    color: var(--admin-muted);
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    padding: 12px 14px;
+    text-align: left;
+    transition:
+        background 180ms ease,
+        color 180ms ease,
+        box-shadow 180ms ease,
+        transform 180ms ease;
+}
+
+.admin-statistics-tab strong {
+    color: var(--admin-text);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.admin-statistics-tab span {
+    color: inherit;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.admin-statistics-tab:hover {
+    color: var(--admin-text);
+    background: rgba(148, 163, 184, 0.1);
+}
+
+.admin-statistics-tab.is-active {
+    color: #03131f;
+    background: var(--admin-primary);
+    box-shadow: 0 12px 24px rgba(56, 189, 248, 0.2);
+}
+
+.admin-statistics-tab.is-active strong,
+.admin-statistics-tab.is-active span {
+    color: #03131f;
 }
 
 .admin-carousel-tabs {
@@ -1056,15 +1126,16 @@
 }
 
 .admin-icon-thumb {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     display: inline-grid;
-    flex: 0 0 42px;
+    flex: 0 0 48px;
     place-items: center;
     overflow: hidden;
     border: 1px solid var(--admin-border-strong);
     border-radius: 12px;
-    background: var(--admin-surface-soft);
+    background: #ffffff;
+    padding: 4px;
 }
 
 .admin-icon-thumb img {
@@ -1480,6 +1551,10 @@
     }
 
     .admin-carousel-tabs {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-statistics-tabs {
         grid-template-columns: 1fr;
     }
 

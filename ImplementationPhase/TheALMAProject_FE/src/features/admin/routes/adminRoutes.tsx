@@ -3,12 +3,15 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth";
 import { AdminDashboardPage } from "../dashboard/pages/AdminDashboardPage";
 import AdminIconsPage from "../icons/pages/AdminIconsPage";
+import AdminNotificationsPage from "../notifications/pages/AdminNotificationsPage";
 import { AdminLayout } from "../orders/components/AdminLayout";
 import AdminOrdersPage from "../orders/pages/adminOrdersPage";
 import { AdminProductLayout } from "../products/components/AdminProductLayout";
 import AdminBaseProductsPage from "../products/pages/AdminBaseProductsPage";
 import AdminStoreProductsPage from "../products/pages/AdminStoreProductsPage";
-import AdminNotificationsPage from "../notifications/pages/AdminNotificationsPage";
+import AdminStatisticsPage from "../statistics/pages/AdminStatisticsPage";
+import AdminUserDesignsPage from "../user-designs/pages/AdminUserDesignsPage";
+import AdminUsersPage from "../users/pages/AdminUsersPage";
 import { AdminVoucherPage } from "../vouchers/pages/AdminVoucherPage";
 
 const ADMIN_ROLES = new Set(["Admin", "Product Manager"]);
@@ -41,6 +44,16 @@ export function AdminRoutes() {
     <AdminGuard>
       <Routes>
         <Route index element={<AdminDashboardPage />} />
+        <Route path="statistics" element={<AdminStatisticsPage />} />
+        <Route path="designs" element={<AdminUserDesignsPage />} />
+        <Route
+          path="users"
+          element={
+            <AdminLayout activePath="/admin/users">
+              <AdminUsersPage />
+            </AdminLayout>
+          }
+        />
         <Route
           path="orders"
           element={

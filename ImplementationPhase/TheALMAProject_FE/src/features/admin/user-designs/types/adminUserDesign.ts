@@ -1,4 +1,4 @@
-import type { IsoDateString } from "../../../../shared/types/api";
+import type { IsoDateString, PaginationQuery } from "../../../../shared/types/api";
 
 export interface AdminUserDesignListDto {
 	designId: number;
@@ -15,4 +15,10 @@ export interface AdminUserDesignDto extends AdminUserDesignListDto {
 	baseProductId: number;
 	canvasJson: string;
 	printFileUrl: string | null;
+}
+
+export interface AdminUserDesignQuery extends PaginationQuery {}
+
+export interface AdminUserDesignMutationResponse {
+	message: string;
 }

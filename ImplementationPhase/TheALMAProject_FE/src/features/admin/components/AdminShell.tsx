@@ -4,6 +4,7 @@ import {
   faBell,
   faBoxesStacked,
   faCartPlus,
+  faChartLine,
   faFaceSmile,
   faGear,
   faHouse,
@@ -15,9 +16,11 @@ import {
   faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../auth";
 import authApi from "../../auth/api/authApi";
+import { adminOrderApi } from "../orders/api/adminOrderApi";
+import type { AdminOrderStatisticQuery } from "../orders/types/adminOrder";
 import "./admin.css";
 
 type AdminNavItem = {
@@ -38,42 +41,23 @@ interface AdminShellProps {
   searchPlaceholder?: string;
 }
 
-const navGroups: AdminNavGroup[] = [
-  {
-    title: "Quản lý chính",
-    items: [
-      { href: "/admin", icon: faTableColumns, label: "Tổng quan (Dashboard)" },
-      {
-        href: "/admin/orders/new",
-        icon: faCartPlus,
-        label: "Đơn hàng mới",
-        badge: "12",
-      },
-      { href: "/admin/orders", icon: faBoxesStacked, label: "Tất cả Đơn hàng" },
-      { href: "/admin/designs", icon: faPalette, label: "Mẫu thiết kế User" },
-    ],
-  },
-  {
-    title: "Dữ liệu & Cấu hình",
-    items: [
-      {
-        href: "/admin/base-products",
-        icon: faShirt,
-        label: "Quản lý phôi",
-      },
-      {
-        href: "/admin/products",
-        icon: faBoxesStacked,
-        label: "Quản lý sản phẩm",
-      },
-      { href: "/admin/stickers", icon: faFaceSmile, label: "Quản lý Stickers" },
-      { href: "/admin/vouchers", icon: faTicket, label: "Quản lý Vouchers" },
-      { href: "/admin/customers", icon: faUsers, label: "Khách hàng" },
-      { href: "/admin/notifications", icon: faBell, label: "Gửi Thông Báo" },
-      { href: "/admin/settings", icon: faGear, label: "Cài đặt hệ thống" },
-    ],
-  },
-];
+const RECENT_ORDER_DAYS = 7;
+
+function toIsoDate(date: Date) {
+	return date.toISOString().slice(0, 10);
+}
+
+function getRecentOrderQuery(): AdminOrderStatisticQuery {
+	const toDate = new Date();
+	const fromDate = new Date(toDate);
+	fromDate.setDate(toDate.getDate() - (RECENT_ORDER_DAYS - 1));
+
+	return {
+		fromDate: toIsoDate(fromDate),
+		groupBy: "day",
+		toDate: toIsoDate(toDate),
+	};
+}
 
 function formatAdminDate() {
   return new Intl.DateTimeFormat("vi-VN", {
@@ -89,9 +73,75 @@ export function AdminShell({
   activePath = window.location.pathname,
   searchPlaceholder = "Tìm mã đơn hàng, email khách...",
 }: AdminShellProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const [recentOrderCount, setRecentOrderCount] = useState<number | null>(null);
 
-  const { user, logout } = useAuth();
+	const { user, logout } = useAuth();
+
+	useEffect(() => {
+		let ignore = false;
+
+		async function loadRecentOrderCount() {
+			try {
+				const statistics = await adminOrderApi.getStatistics(getRecentOrderQuery());
+				if (!ignore) {
+					setRecentOrderCount(
+						statistics.reduce((total, item) => total + item.orderCount, 0),
+					);
+				}
+			} catch (error) {
+				console.error("Failed to load recent admin order count", error);
+				if (!ignore) setRecentOrderCount(null);
+			}
+		}
+
+		void loadRecentOrderCount();
+
+		return () => {
+			ignore = true;
+		};
+	}, []);
+
+	const navGroups = useMemo<AdminNavGroup[]>(
+		() => [
+			{
+				title: "Quản lý chính",
+				items: [
+					{ href: "/admin", icon: faTableColumns, label: "Tổng quan (Dashboard)" },
+					{ href: "/admin/statistics", icon: faChartLine, label: "Thống kê" },
+					{
+						href: "/admin/orders/new",
+						icon: faCartPlus,
+						label: "Đơn hàng mới",
+						badge: recentOrderCount === null ? undefined : recentOrderCount.toLocaleString("vi-VN"),
+					},
+					{ href: "/admin/orders", icon: faBoxesStacked, label: "Tất cả Đơn hàng" },
+					{ href: "/admin/designs", icon: faPalette, label: "Mẫu thiết kế User" },
+				],
+			},
+			{
+				title: "Dữ liệu & Cấu hình",
+				items: [
+					{
+						href: "/admin/base-products",
+						icon: faShirt,
+						label: "Quản lý phôi",
+					},
+					{
+						href: "/admin/products",
+						icon: faBoxesStacked,
+						label: "Quản lý sản phẩm",
+					},
+					{ href: "/admin/stickers", icon: faFaceSmile, label: "Quản lý Stickers" },
+					{ href: "/admin/vouchers", icon: faTicket, label: "Quản lý Vouchers" },
+					{ href: "/admin/users", icon: faUsers, label: "Người dùng" },
+					{ href: "/admin/notifications", icon: faBell, label: "Gửi Thông Báo" },
+					{ href: "/admin/settings", icon: faGear, label: "Cài đặt hệ thống" },
+				],
+			},
+		],
+		[recentOrderCount],
+	);
 
   const handleLogout = async () => {
     try {
