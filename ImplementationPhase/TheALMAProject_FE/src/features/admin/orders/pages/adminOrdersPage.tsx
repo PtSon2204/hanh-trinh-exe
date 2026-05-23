@@ -40,7 +40,7 @@ type AdminOrdersPanel = "orders" | "statistics" | "printFiles";
 const adminOrdersPanels: Array<{ id: AdminOrdersPanel; label: string }> = [
   { id: "orders", label: "Danh sách đơn hàng" },
   { id: "statistics", label: "Thống kê" },
-  { id: "printFiles", label: "File in đã xuất" },
+  { id: "printFiles", label: "Artwork in đã xuất" },
 ];
 
 function formatCurrency(value: number) {
@@ -223,10 +223,10 @@ export function AdminOrdersPage() {
       setActionMessage(null);
       const files = await adminOrderApi.exportPrintFiles(orderId);
       setPrintFiles(files);
-      setActionMessage("Đã xuất file in cho đơn hàng.");
+      setActionMessage("Đã xuất artwork thiết kế in cho đơn hàng.");
     } catch (err) {
       console.error("Failed to export admin order print files", err);
-      setActionError("Không thể xuất file in cho đơn hàng.");
+      setActionError("Không thể xuất artwork thiết kế in cho đơn hàng.");
     } finally {
       setExportingOrderId(null);
     }
@@ -423,7 +423,7 @@ export function AdminOrdersPage() {
                               >
                                 {exportingOrderId === order.orderId
                                   ? "Đang xuất..."
-                                  : "Xuất file"}
+                                  : "Xuất artwork"}
                               </button>
                             </div>
                           </td>
@@ -551,8 +551,8 @@ export function AdminOrdersPage() {
             <div className="admin-carousel-panel" role="tabpanel">
               <div className="admin-panel__header admin-orders-toolbar">
                 <div>
-                  <h2>File in đã xuất</h2>
-                  <span>Danh sách file sau khi xuất từ đơn hàng</span>
+                  <h2>Artwork thiết kế in đã xuất</h2>
+                  <span>PNG thiết kế custom dùng cho sản xuất, không phải hoá đơn/PDF</span>
                 </div>
               </div>
               {printFiles.length > 0 ? (
@@ -579,7 +579,7 @@ export function AdminOrdersPage() {
                 </ul>
               ) : (
                 <div className="admin-empty-state">
-                  Chọn một đơn hàng rồi bấm Xuất file để hiển thị file in.
+                  Chọn một đơn hàng rồi bấm Xuất artwork để hiển thị PNG thiết kế in.
                 </div>
               )}
             </div>
@@ -697,7 +697,7 @@ export function AdminOrdersPage() {
                   >
                     {exportingOrderId === selectedOrder.orderId
                       ? "Đang xuất..."
-                      : "Xuất file in"}
+                      : "Xuất artwork in"}
                   </button>
                 </div>
 

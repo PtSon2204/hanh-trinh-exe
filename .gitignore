@@ -424,6 +424,7 @@ FodyWeavers.xsd
 .sisyphus/
 thoughts/
 bruno-temp/
+.playwright-mcp/
 
 # Bỏ qua các file chứa mật khẩu/chuỗi kết nối thật
 appsettings.Development.json

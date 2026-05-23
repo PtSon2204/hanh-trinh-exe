@@ -46,6 +46,29 @@ export interface AdminUpdateOrderStatusDto {
 	paymentStatus: PaymentStatus;
 }
 
+export interface AdminCreateOrderItemDto {
+	productId: number | null;
+	designId: number | null;
+	size: string;
+	quantity: number;
+	unitPrice: Decimal;
+}
+
+export interface AdminCreateOrderDto {
+	userId: number;
+	shipName: string;
+	shipPhone: string;
+	shipAddress: string;
+	shipProvince: string;
+	shippingFee: Decimal;
+	discountAmount: Decimal;
+	voucherId: number | null;
+	paymentMethod: string;
+	paymentStatus: PaymentStatus;
+	orderStatus: OrderStatus;
+	items: AdminCreateOrderItemDto[];
+}
+
 export interface AdminOrderStatusUpdateResponse {
 	message: string;
 }

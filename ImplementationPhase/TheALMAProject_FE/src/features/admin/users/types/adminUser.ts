@@ -34,7 +34,16 @@ export interface AdminAssignRoleDto {
 	role: UserRole;
 }
 
+export interface AdminUserMutationResponse {
+	message: string;
+	data?: AdminUserDto | null;
+	avatarUrl?: string | null;
+}
+
 export interface AdminUserQuery extends PaginationQuery {
+	email?: string;
+	fullName?: string;
 	role?: UserRole;
 	isActive?: boolean;
+	phone?: string;
 }
