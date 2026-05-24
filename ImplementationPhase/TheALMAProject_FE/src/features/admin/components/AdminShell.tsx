@@ -44,19 +44,19 @@ interface AdminShellProps {
 const RECENT_ORDER_DAYS = 7;
 
 function toIsoDate(date: Date) {
-	return date.toISOString().slice(0, 10);
+  return date.toISOString().slice(0, 10);
 }
 
 function getRecentOrderQuery(): AdminOrderStatisticQuery {
-	const toDate = new Date();
-	const fromDate = new Date(toDate);
-	fromDate.setDate(toDate.getDate() - (RECENT_ORDER_DAYS - 1));
+  const toDate = new Date();
+  const fromDate = new Date(toDate);
+  fromDate.setDate(toDate.getDate() - (RECENT_ORDER_DAYS - 1));
 
-	return {
-		fromDate: toIsoDate(fromDate),
-		groupBy: "day",
-		toDate: toIsoDate(toDate),
-	};
+  return {
+    fromDate: toIsoDate(fromDate),
+    groupBy: "day",
+    toDate: toIsoDate(toDate),
+  };
 }
 
 function formatAdminDate() {
@@ -73,75 +73,104 @@ export function AdminShell({
   activePath = window.location.pathname,
   searchPlaceholder = "Tìm mã đơn hàng, email khách...",
 }: AdminShellProps) {
-	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const [recentOrderCount, setRecentOrderCount] = useState<number | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [recentOrderCount, setRecentOrderCount] = useState<number | null>(null);
 
-	const { user, logout } = useAuth();
+  const { user, logout } = useAuth();
 
-	useEffect(() => {
-		let ignore = false;
+  useEffect(() => {
+    let ignore = false;
 
-		async function loadRecentOrderCount() {
-			try {
-				const statistics = await adminOrderApi.getStatistics(getRecentOrderQuery());
-				if (!ignore) {
-					setRecentOrderCount(
-						statistics.reduce((total, item) => total + item.orderCount, 0),
-					);
-				}
-			} catch (error) {
-				console.error("Failed to load recent admin order count", error);
-				if (!ignore) setRecentOrderCount(null);
-			}
-		}
+    async function loadRecentOrderCount() {
+      try {
+        const statistics = await adminOrderApi.getStatistics(
+          getRecentOrderQuery(),
+        );
+        if (!ignore) {
+          setRecentOrderCount(
+            statistics.reduce((total, item) => total + item.orderCount, 0),
+          );
+        }
+      } catch (error) {
+        console.error("Failed to load recent admin order count", error);
+        if (!ignore) setRecentOrderCount(null);
+      }
+    }
 
-		void loadRecentOrderCount();
+    void loadRecentOrderCount();
 
-		return () => {
-			ignore = true;
-		};
-	}, []);
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
-	const navGroups = useMemo<AdminNavGroup[]>(
-		() => [
-			{
-				title: "Quản lý chính",
-				items: [
-					{ href: "/admin", icon: faTableColumns, label: "Tổng quan (Dashboard)" },
-					{ href: "/admin/statistics", icon: faChartLine, label: "Thống kê" },
-					{
-						href: "/admin/orders/new",
-						icon: faCartPlus,
-						label: "Đơn hàng mới",
-						badge: recentOrderCount === null ? undefined : recentOrderCount.toLocaleString("vi-VN"),
-					},
-					{ href: "/admin/orders", icon: faBoxesStacked, label: "Tất cả Đơn hàng" },
-					{ href: "/admin/designs", icon: faPalette, label: "Mẫu thiết kế User" },
-				],
-			},
-			{
-				title: "Dữ liệu & Cấu hình",
-				items: [
-					{
-						href: "/admin/base-products",
-						icon: faShirt,
-						label: "Quản lý phôi",
-					},
-					{
-						href: "/admin/products",
-						icon: faBoxesStacked,
-						label: "Quản lý sản phẩm",
-					},
-					{ href: "/admin/stickers", icon: faFaceSmile, label: "Quản lý Stickers" },
-					{ href: "/admin/vouchers", icon: faTicket, label: "Quản lý Vouchers" },
-					{ href: "/admin/users", icon: faUsers, label: "Người dùng" },
-					{ href: "/admin/notifications", icon: faBell, label: "Gửi Thông Báo" },
-					{ href: "/admin/settings", icon: faGear, label: "Cài đặt hệ thống" },
-				],
-			},
-		],
-		[recentOrderCount],
-	);
+  const navGroups = useMemo<AdminNavGroup[]>(
+    () => [
+      {
+        title: "Quản lý chính",
+        items: [
+          {
+            href: "/admin",
+            icon: faTableColumns,
+            label: "Tổng quan (Dashboard)",
+          },
+          { href: "/admin/statistics", icon: faChartLine, label: "Thống kê" },
+          {
+            href: "/admin/orders/new",
+            icon: faCartPlus,
+            label: "Đơn hàng mới",
+            badge:
+              recentOrderCount === null
+                ? undefined
+                : recentOrderCount.toLocaleString("vi-VN"),
+          },
+          {
+            href: "/admin/orders",
+            icon: faBoxesStacked,
+            label: "Tất cả Đơn hàng",
+          },
+          {
+            href: "/admin/designs",
+            icon: faPalette,
+            label: "Mẫu thiết kế User",
+          },
+        ],
+      },
+      {
+        title: "Dữ liệu & Cấu hình",
+        items: [
+          {
+            href: "/admin/base-products",
+            icon: faShirt,
+            label: "Quản lý phôi",
+          },
+          {
+            href: "/admin/products",
+            icon: faBoxesStacked,
+            label: "Quản lý sản phẩm",
+          },
+          {
+            href: "/admin/stickers",
+            icon: faFaceSmile,
+            label: "Quản lý Stickers",
+          },
+          {
+            href: "/admin/vouchers",
+            icon: faTicket,
+            label: "Quản lý Vouchers",
+          },
+          { href: "/admin/users", icon: faUsers, label: "Người dùng" },
+          {
+            href: "/admin/notifications",
+            icon: faBell,
+            label: "Gửi Thông Báo",
+          },
+          { href: "/admin/settings", icon: faGear, label: "Cài đặt hệ thống" },
+        ],
+      },
+    ],
+    [recentOrderCount],
+  );
 
   const handleLogout = async () => {
     try {
@@ -152,9 +181,9 @@ export function AdminShell({
     logout();
   };
 
-	const profileName = user?.fullName?.trim() || "Mama mia";
-	const initials = profileName
-		.split(" ")
+  const profileName = user?.fullName?.trim() || "Mama mia";
+  const initials = profileName
+    .split(" ")
     .map((w) => w[0])
     .slice(-2)
     .join("")
@@ -234,14 +263,22 @@ export function AdminShell({
               {initials}
             </span>
             <span className="admin-profile__meta">
-				<strong>{profileName}</strong>
+              <strong>{profileName}</strong>
             </span>
           </a>
           <div className="admin-profile__actions">
-            <a href="/" className="admin-profile__action" onClick={closeSidebar}>
+            <a
+              href="/"
+              className="admin-profile__action"
+              onClick={closeSidebar}
+            >
               <FontAwesomeIcon icon={faHouse} /> Về trang chủ
             </a>
-            <a href="/" onClick={handleLogout} className="admin-profile__action">
+            <a
+              href="/"
+              onClick={handleLogout}
+              className="admin-profile__action"
+            >
               <FontAwesomeIcon icon={faArrowRightFromBracket} /> Đăng xuất
             </a>
           </div>
@@ -267,7 +304,7 @@ export function AdminShell({
           </div>
 
           <div className="admin-topbar__right">
-            <button
+            {/*<button
               className="admin-notification"
               type="button"
               aria-label="Thông báo mới"
@@ -275,7 +312,7 @@ export function AdminShell({
               <FontAwesomeIcon icon={faBell} />
               <span className="admin-notification__dot" />
             </button>
-            <span className="admin-topbar__divider" aria-hidden="true" />
+            <span className="admin-topbar__divider" aria-hidden="true" />*/}
             <time className="admin-date" dateTime={new Date().toISOString()}>
               {formatAdminDate()}
             </time>

@@ -126,7 +126,16 @@ namespace TheALMAProject.API
             app.UseCors("AllowReactApp");
 
             // Phục vụ file tĩnh (avatar, images) từ wwwroot
-            app.UseStaticFiles();
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = ctx =>
+                {
+                    ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+                    // Alternatively, for tighter security, only allow your specific frontend URL:
+                    // ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "http://localhost:5173");
+                    ctx.Context.Response.Headers.Append("Access-Control-Allow-Methods", "GET, OPTIONS");
+                }
+            });
 
             // =====================================================
             // QUAN TRỌNG: Thứ tự middleware

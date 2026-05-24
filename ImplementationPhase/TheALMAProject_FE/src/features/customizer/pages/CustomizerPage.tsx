@@ -4,18 +4,116 @@ import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { customizerApi } from '../api/customizerApi';
 import { useAuth } from '../../auth/context/AuthContext';
-import type { BaseProductDto, IconDto } from '../types';
+import type { BaseProductDto, IconDto, PrintAreaRect } from '../types';
 import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
 import './CustomizerPage.css';
-const hexToNormalizedRgb = (hex: string) => {
-    const cleanHex = hex.startsWith('#') ? hex.slice(1) : hex;
-    if (cleanHex.length !== 6) return { r: 1, g: 1, b: 1 };
-    const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
-    const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
-    const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
-    return { r, g, b };
+
+type CanvasSide = 'front' | 'back';
+
+type CanvasBounds = {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
 };
 
+type FabricTransformEvent = fabric.IEvent & {
+    transform?: {
+        target?: fabric.Object;
+    };
+};
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const getFabricEventTarget = (event: FabricTransformEvent) => event.target ?? event.transform?.target;
+
+const getPrintAreaOverlayStyle = (rect: PrintAreaRect | undefined) => {
+    if (!rect || rect.width <= 0 || rect.height <= 0) {
+        return { left: '0%', top: '0%', width: '100%', height: '100%' };
+    }
+
+    const x = clamp(rect.x, 0, 1);
+    const y = clamp(rect.y, 0, 1);
+    return {
+        left: `${x * 100}%`,
+        top: `${y * 100}%`,
+        width: `${clamp(rect.width, 0, 1 - x) * 100}%`,
+        height: `${clamp(rect.height, 0, 1 - y) * 100}%`,
+    };
+};
+
+const getCanvasFallbackBounds = (canvas: fabric.Canvas): CanvasBounds => ({
+    left: 0,
+    top: 0,
+    width: canvas.getWidth(),
+    height: canvas.getHeight(),
+});
+
+const getCanvasPrintBounds = (rect: PrintAreaRect | undefined, canvas: fabric.Canvas): CanvasBounds => {
+    const fallback = getCanvasFallbackBounds(canvas);
+    if (!rect || rect.width <= 0 || rect.height <= 0) return fallback;
+
+    const canvasWidth = canvas.getWidth();
+    const canvasHeight = canvas.getHeight();
+    const normalized = rect.x >= 0 && rect.x <= 1 && rect.y >= 0 && rect.y <= 1 && rect.width > 0 && rect.width <= 1 && rect.height > 0 && rect.height <= 1;
+
+    const rawBounds = normalized
+        ? {
+            left: rect.x * canvasWidth,
+            top: rect.y * canvasHeight,
+            width: rect.width * canvasWidth,
+            height: rect.height * canvasHeight,
+        }
+        : {
+            left: rect.x,
+            top: rect.y,
+            width: rect.width,
+            height: rect.height,
+        };
+
+    const left = clamp(rawBounds.left, 0, canvasWidth);
+    const top = clamp(rawBounds.top, 0, canvasHeight);
+    return {
+        left,
+        top,
+        width: clamp(rawBounds.width, 1, canvasWidth - left || 1),
+        height: clamp(rawBounds.height, 1, canvasHeight - top || 1),
+    };
+};
+
+const clampObjectToBounds = (obj: fabric.Object | undefined, bounds: CanvasBounds, canvas: fabric.Canvas) => {
+    if (!obj) return;
+    obj.setCoords();
+    const box = obj.getBoundingRect(true, true);
+    const maxLeft = bounds.left + bounds.width - box.width;
+    const maxTop = bounds.top + bounds.height - box.height;
+    const targetLeft = clamp(box.left, bounds.left, Math.max(bounds.left, maxLeft));
+    const targetTop = clamp(box.top, bounds.top, Math.max(bounds.top, maxTop));
+    const deltaLeft = targetLeft - box.left;
+    const deltaTop = targetTop - box.top;
+
+    if (deltaLeft !== 0 || deltaTop !== 0) {
+        obj.set({
+            left: (obj.left ?? 0) + deltaLeft,
+            top: (obj.top ?? 0) + deltaTop,
+        });
+        obj.setCoords();
+        canvas.requestRenderAll();
+    }
+};
+
+const clampObjectScaleToBounds = (obj: fabric.Object | undefined, bounds: CanvasBounds, canvas: fabric.Canvas) => {
+    if (!obj) return;
+    obj.setCoords();
+    const box = obj.getBoundingRect(true, true);
+    if (box.width > bounds.width || box.height > bounds.height) {
+        const scaleLimit = Math.min(bounds.width / box.width, bounds.height / box.height);
+        obj.scaleX = (obj.scaleX ?? 1) * scaleLimit;
+        obj.scaleY = (obj.scaleY ?? 1) * scaleLimit;
+        obj.setCoords();
+    }
+    clampObjectToBounds(obj, bounds, canvas);
+};
 
 export default function CustomizerPage() {
     const navigate = useNavigate(); 
@@ -47,6 +145,7 @@ export default function CustomizerPage() {
     const [baseProductsLoading, setBaseProductsLoading] = useState(true);
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
     const selectedProduct = baseProducts.find(p => p.baseProductId === selectedProductId) ?? baseProducts[0];
+    const printAreaRef = useRef<BaseProductDto['printArea']>(null);
 
 
     // --- States Dữ liệu Thiết kế ---
@@ -79,12 +178,47 @@ export default function CustomizerPage() {
     const getActiveCanvas = () =>
         viewMode === 'front' ? fabricCanvas.current : backFabricCanvas.current;
 
+    const getPrintAreaForSide = (side: CanvasSide) => printAreaRef.current?.[side];
+
+    const constrainObject = (side: CanvasSide, obj: fabric.Object | undefined, canvas: fabric.Canvas, isScaling = false) => {
+        const bounds = getCanvasPrintBounds(getPrintAreaForSide(side), canvas);
+        if (isScaling) {
+            clampObjectScaleToBounds(obj, bounds, canvas);
+            return;
+        }
+        clampObjectToBounds(obj, bounds, canvas);
+    };
+
     // 1. Khởi tạo Fabric.js Canvas (Front + Back)
     useEffect(() => {
         if (!canvasRef.current || !wrapperRef.current) return;
         if (!backCanvasRef.current || !backWrapperRef.current) return;
 
         const updateLayers = () => setLayerTrigger(prev => prev + 1);
+        const constrainFrontMove = (event: FabricTransformEvent) => {
+            if (fabricCanvas.current) {
+                const bounds = getCanvasPrintBounds(printAreaRef.current?.front, fabricCanvas.current);
+                clampObjectToBounds(getFabricEventTarget(event), bounds, fabricCanvas.current);
+            }
+        };
+        const constrainFrontScale = (event: FabricTransformEvent) => {
+            if (fabricCanvas.current) {
+                const bounds = getCanvasPrintBounds(printAreaRef.current?.front, fabricCanvas.current);
+                clampObjectScaleToBounds(getFabricEventTarget(event), bounds, fabricCanvas.current);
+            }
+        };
+        const constrainBackMove = (event: FabricTransformEvent) => {
+            if (backFabricCanvas.current) {
+                const bounds = getCanvasPrintBounds(printAreaRef.current?.back, backFabricCanvas.current);
+                clampObjectToBounds(getFabricEventTarget(event), bounds, backFabricCanvas.current);
+            }
+        };
+        const constrainBackScale = (event: FabricTransformEvent) => {
+            if (backFabricCanvas.current) {
+                const bounds = getCanvasPrintBounds(printAreaRef.current?.back, backFabricCanvas.current);
+                clampObjectScaleToBounds(getFabricEventTarget(event), bounds, backFabricCanvas.current);
+            }
+        };
 
         // ── FRONT canvas ──
         const w = wrapperRef.current.offsetWidth;
@@ -106,6 +240,10 @@ export default function CustomizerPage() {
         fabricCanvas.current.on('object:added', updateLayers);
         fabricCanvas.current.on('object:removed', updateLayers);
         fabricCanvas.current.on('object:modified', updateLayers);
+        fabricCanvas.current.on('object:moving', constrainFrontMove);
+        fabricCanvas.current.on('object:scaling', constrainFrontScale);
+        fabricCanvas.current.on('object:rotating', constrainFrontScale);
+        fabricCanvas.current.on('object:modified', constrainFrontMove);
 
         // ── BACK canvas ──
         const bw = backWrapperRef.current.offsetWidth;
@@ -117,6 +255,10 @@ export default function CustomizerPage() {
         backFabricCanvas.current.on('object:added', updateLayers);
         backFabricCanvas.current.on('object:removed', updateLayers);
         backFabricCanvas.current.on('object:modified', updateLayers);
+        backFabricCanvas.current.on('object:moving', constrainBackMove);
+        backFabricCanvas.current.on('object:scaling', constrainBackScale);
+        backFabricCanvas.current.on('object:rotating', constrainBackScale);
+        backFabricCanvas.current.on('object:modified', constrainBackMove);
 
         updateLayers();
 
@@ -124,7 +266,7 @@ export default function CustomizerPage() {
         try {
             const saved = JSON.parse(localStorage.getItem('alma_design_history') || '[]');
             setHistoryList(saved);
-        } catch (e) { }
+        } catch { }
 
         // Handle Resize
         const handleResize = () => {
@@ -147,6 +289,20 @@ export default function CustomizerPage() {
             backFabricCanvas.current?.dispose();
         };
     }, []);
+
+    useEffect(() => {
+        printAreaRef.current = selectedProduct?.printArea ?? null;
+        const frontCanvas = fabricCanvas.current;
+        const backCanvas = backFabricCanvas.current;
+        frontCanvas?.getObjects().forEach(obj => {
+            const bounds = getCanvasPrintBounds(printAreaRef.current?.front, frontCanvas);
+            clampObjectScaleToBounds(obj, bounds, frontCanvas);
+        });
+        backCanvas?.getObjects().forEach(obj => {
+            const bounds = getCanvasPrintBounds(printAreaRef.current?.back, backCanvas);
+            clampObjectScaleToBounds(obj, bounds, backCanvas);
+        });
+    }, [selectedProduct?.printArea]);
 
     // Load icons từ DB khi mount
     useEffect(() => {
@@ -185,6 +341,7 @@ export default function CustomizerPage() {
         });
         ac.add(text);
         ac.setActiveObject(text);
+        constrainObject(viewMode, text, ac, true);
     };
 
     // 3. Thêm Icon/Sticker lên canvas (track iconId)
@@ -206,6 +363,7 @@ export default function CustomizerPage() {
             });
             ac.add(img);
             ac.setActiveObject(img);
+            constrainObject(viewMode, img, ac, true);
             setUsedIconIds(prev => prev.includes(icon.iconId) ? prev : [...prev, icon.iconId]);
         }, { crossOrigin: 'anonymous' });
     };
@@ -221,7 +379,7 @@ export default function CustomizerPage() {
 
         switch (action) {
             case 'flip': obj.set('flipY', !obj.flipY); break;
-            case 'center': obj.set({ left: ac.width! / 2, originX: 'center' }); break;
+            case 'center': obj.set({ left: ac.width! / 2, originX: 'center' }); constrainObject(viewMode, obj, ac); break;
             case 'down': ac.sendBackwards(obj); break;
             case 'up': ac.bringForward(obj); break;
             case 'delete': ac.remove(obj); break;
@@ -230,6 +388,8 @@ export default function CustomizerPage() {
                     cloned.set({ left: obj.left! + 20, top: obj.top! + 20 });
                     ac.add(cloned);
                     ac.setActiveObject(cloned);
+                    constrainObject(viewMode, cloned, ac, true);
+                    ac.renderAll();
                 });
                 break;
         }
@@ -589,25 +749,11 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
     }, [activeProductUrl, processedImages]);
 
     const currentLayers = (getActiveCanvas()?.getObjects() || []);
-
-    const { r, g, b } = hexToNormalizedRgb(shirtColorHex);
+    const shirtMaskUrl = processedImages[activeProductUrl];
+    const activePrintAreaStyle = getPrintAreaOverlayStyle(selectedProduct?.printArea?.[viewMode]);
 
     return (
         <div className="bg-gray-50 h-screen overflow-hidden flex flex-col font-['Outfit']">
-            {/* SVG Filter để đổi màu áo mà không bị lỗi CORS */}
-            <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }} aria-hidden="true">
-                <defs>
-                    <filter id="shirt-recolor">
-                        <feColorMatrix
-                            type="matrix"
-                            values={`${r} 0 0 0 0
-                                    0 ${g} 0 0 0
-                                    0 0 ${b} 0 0
-                                    0 0 0 1 0`}
-                        />
-                    </filter>
-                </defs>
-            </svg>
             {/* --- NAVBAR --- */}
             <nav className="bg-white border-b px-4 sm:px-6 py-3 flex justify-between items-center shrink-0 shadow-sm z-50 relative h-16">
                 <div className="flex items-center gap-4">
@@ -865,6 +1011,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                                                             });
                                                             ac.add(textObj);
                                                             ac.setActiveObject(textObj);
+                                                            constrainObject(viewMode, textObj, ac, true);
                                                         }}
                                                         className="text-left px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs text-gray-700 hover:border-purple-400 hover:bg-purple-50 transition font-medium flex justify-between items-center group"
                                                     >
@@ -915,6 +1062,25 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                     <div className="flex-1 relative flex items-center justify-center p-4 mt-10 md:mt-0">
                         {/* Khu vực Mô phỏng Áo (Cực kỳ quan trọng) */}
                         <div className="relative w-full max-w-[550px] aspect-[4/5] flex items-center justify-center shirt-container overflow-hidden rounded-xl">
+                            {shirtColorHex !== '#FFFFFF' && shirtMaskUrl ? (
+                                <div
+                                    className="absolute w-[85%] h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[11] pointer-events-none select-none"
+                                    style={{
+                                        backgroundColor: shirtColorHex,
+                                        maskImage: `url(${shirtMaskUrl})`,
+                                        maskPosition: 'center',
+                                        maskRepeat: 'no-repeat',
+                                        maskSize: 'contain',
+                                        mixBlendMode: 'multiply',
+                                        opacity: 0.72,
+                                        transition: 'background-color 0.2s ease, opacity 0.2s ease',
+                                        WebkitMaskImage: `url(${shirtMaskUrl})`,
+                                        WebkitMaskPosition: 'center',
+                                        WebkitMaskRepeat: 'no-repeat',
+                                        WebkitMaskSize: 'contain',
+                                    }}
+                                />
+                            ) : null}
                             {/* Hình nền Áo */}
                             <img
                                 src={processedImages[activeProductUrl] ?? activeProductUrl}
@@ -922,7 +1088,6 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                                 className="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
                                 draggable="false"
                                 style={{
-                                    filter: shirtColorHex === '#FFFFFF' ? 'none' : 'url(#shirt-recolor)',
                                     opacity: isImageProcessing ? 0.6 : 1,
                                     transition: 'opacity 0.2s ease',
                                 }}
@@ -931,24 +1096,32 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                             {/* Khung vẽ Fabric.js - MẶT TRƯỚC */}
                             <div
                                 ref={wrapperRef}
-                                className="absolute w-[60%] h-[65%] top-[18%] left-[20%] z-20 border-2 border-dashed border-gray-400/40 rounded-md"
+                                className="absolute w-[60%] h-[65%] top-[18%] left-[20%] z-20 border-2 border-transparent"
                                 style={{
                                     visibility: viewMode === 'front' ? 'visible' : 'hidden',
                                     pointerEvents: viewMode === 'front' ? 'auto' : 'none',
                                 }}
                             >
                                 <canvas ref={canvasRef}></canvas>
+                                <div
+                                    className="absolute z-30 pointer-events-none rounded-md border-2 border-dashed border-sky-400/80 bg-sky-100/10 shadow-[0_0_0_9999px_rgba(15,23,42,0.03)]"
+                                    style={activePrintAreaStyle}
+                                />
                             </div>
                             {/* Khung vẽ Fabric.js - MẶT SAU */}
                             <div
                                 ref={backWrapperRef}
-                                className="absolute w-[60%] h-[65%] top-[18%] left-[20%] z-20 border-2 border-dashed border-blue-400/40 rounded-md"
+                                className="absolute w-[60%] h-[65%] top-[18%] left-[20%] z-20 border-2 border-transparent"
                                 style={{
                                     visibility: viewMode === 'back' ? 'visible' : 'hidden',
                                     pointerEvents: viewMode === 'back' ? 'auto' : 'none',
                                 }}
                             >
                                 <canvas ref={backCanvasRef}></canvas>
+                                <div
+                                    className="absolute z-30 pointer-events-none rounded-md border-2 border-dashed border-sky-400/80 bg-sky-100/10 shadow-[0_0_0_9999px_rgba(15,23,42,0.03)]"
+                                    style={activePrintAreaStyle}
+                                />
                             </div>
                         </div>
 
