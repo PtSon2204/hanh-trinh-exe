@@ -219,7 +219,10 @@ namespace TheALMAProject.Infrastructure.Data
                             UserId = customer.UserId,
                             BaseProductId = baseProduct.BaseProductId,
                             CanvasJson = "{\"objects\": []}",
+                            FrontCanvasJson = "{\"objects\": []}",
+                            BackCanvasJson = "{\"objects\": []}",
                             PreviewImageUrl = "https://placehold.co/400x400/png?text=Mock+Design",
+                            FrontPreviewImageUrl = "https://placehold.co/400x400/png?text=Mock+Design",
                             DesignName = "My Awesome Design 1",
                             IsOrdered = false,
                             CreatedAt = DateTime.Now
@@ -229,7 +232,10 @@ namespace TheALMAProject.Infrastructure.Data
                             UserId = customer.UserId,
                             BaseProductId = baseProduct.BaseProductId,
                             CanvasJson = "{\"objects\": [{\"type\": \"text\", \"text\": \"FPT Rocks\"}]}",
+                            FrontCanvasJson = "{\"objects\": [{\"type\": \"text\", \"text\": \"FPT Rocks\"}]}",
+                            BackCanvasJson = "{\"objects\": []}",
                             PreviewImageUrl = "https://placehold.co/400x400/png?text=FPT+Rocks",
+                            FrontPreviewImageUrl = "https://placehold.co/400x400/png?text=FPT+Rocks",
                             DesignName = "FPT Rocks Shirt",
                             IsOrdered = true,
                             CreatedAt = DateTime.Now.AddDays(-1)

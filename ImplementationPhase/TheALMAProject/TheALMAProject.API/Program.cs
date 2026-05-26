@@ -131,8 +131,7 @@ namespace TheALMAProject.API
                 OnPrepareResponse = ctx =>
                 {
                     ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
-                    // Alternatively, for tighter security, only allow your specific frontend URL:
-                    // ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "http://localhost:5173");
+                    // Alternatively, for tighter security, only allow your specific frontend URL: ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "actualfrontendurl");
                     ctx.Context.Response.Headers.Append("Access-Control-Allow-Methods", "GET, OPTIONS");
                 }
             });

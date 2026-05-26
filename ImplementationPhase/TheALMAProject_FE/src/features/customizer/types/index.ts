@@ -31,7 +31,11 @@ export interface IconDto {
 export interface CreateDesignRequest {
     baseProductId: number;
     canvasJson: string;
+    frontCanvasJson?: string | null;
+    backCanvasJson?: string | null;
     previewImageUrl?: string;
+    frontPreviewImageUrl?: string | null;
+    backPreviewImageUrl?: string | null;
     iconIds: number[];
     fontIds: number[];
 }

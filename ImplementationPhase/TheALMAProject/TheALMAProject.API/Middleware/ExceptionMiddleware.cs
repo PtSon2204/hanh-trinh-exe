@@ -1,4 +1,6 @@
-﻿namespace TheALMAProject.API.Middleware
+﻿using TheALMAProject.Application.Exceptions;
+
+namespace TheALMAProject.API.Middleware
 {
     public class ExceptionMiddleware
     {
@@ -14,6 +16,14 @@
             try
             {
                 await _next(context);
+            }
+            catch (AppHttpException ex)
+            {
+                context.Response.StatusCode = ex.StatusCode;
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    message = ex.Message
+                });
             }
             catch (Exception ex)
             {

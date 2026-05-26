@@ -13,9 +13,28 @@ export interface AdminOrderItemDto {
 	designId: number | null;
 	itemName: string;
 	imageUrl: string | null;
+	previewImageUrl: string | null;
+	frontPreviewImageUrl: string | null;
+	backPreviewImageUrl: string | null;
+	canvasJson: string | null;
+	frontCanvasJson: string | null;
+	backCanvasJson: string | null;
+	printAreaJson: string | null;
+	productFrontImageUrl: string | null;
+	productBackImageUrl: string | null;
 	size: string;
 	quantity: number;
 	unitPrice: Decimal;
+}
+
+export interface AdminOrderFabricPrintFileItemDto {
+	orderItemId: number;
+	artworkPngDataUrl: string;
+	placementGuidePngDataUrl: string;
+}
+
+export interface AdminOrderFabricPrintFileUploadDto {
+	items: AdminOrderFabricPrintFileItemDto[];
 }
 
 export interface AdminOrderListDto {
@@ -82,6 +101,7 @@ export interface AdminOrderPrintFileDto {
 	size: string;
 	quantity: number;
 	printFileUrl: string;
+	placementGuideUrl: string;
 }
 
 export interface AdminOrderStatisticDto {

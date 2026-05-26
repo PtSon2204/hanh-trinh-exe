@@ -31,6 +31,11 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
 export function resolveApiAssetUrl(url: string | null) {
   if (!url) return null;
 
+  if (url.startsWith("/uploads/") || url.startsWith("uploads/")) {
+    const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+    return new URL(cleanUrl, axiosClient.defaults.baseURL).href;
+  }
+
   // If it's a frontend public asset path or backend seed path starting with /images
   if (url.startsWith("/images/") || url.startsWith("images/")) {
     const cleanUrl = url.startsWith("/") ? url : `/${url}`;

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace TheALMAProject.Infrastructure.Models;
+﻿namespace TheALMAProject.Infrastructure.Models;
 
 public partial class UserDesign
 {
@@ -13,9 +10,19 @@ public partial class UserDesign
 
     public string CanvasJson { get; set; } = null!;
 
+    public string? FrontCanvasJson { get; set; }
+
+    public string? BackCanvasJson { get; set; }
+
     public string? PreviewImageUrl { get; set; }
 
+    public string? FrontPreviewImageUrl { get; set; }
+
+    public string? BackPreviewImageUrl { get; set; }
+
     public string? PrintFileUrl { get; set; }
+
+    public string? PlacementGuideUrl { get; set; }
 
     public string? DesignName { get; set; }
 

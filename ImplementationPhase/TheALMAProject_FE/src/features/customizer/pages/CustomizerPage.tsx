@@ -115,6 +115,36 @@ const clampObjectScaleToBounds = (obj: fabric.Object | undefined, bounds: Canvas
     clampObjectToBounds(obj, bounds, canvas);
 };
 
+const DEFAULT_BASE_PRICE = 150000;
+const PRODUCT_PREVIEW_WIDTH = 800;
+const PRODUCT_PREVIEW_HEIGHT = 1000;
+
+const loadPreviewImage = (url: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Không thể tải ảnh preview: ${url}`));
+    img.src = url;
+});
+
+const drawContainedImage = (
+    ctx: CanvasRenderingContext2D,
+    image: HTMLImageElement,
+    boxLeft: number,
+    boxTop: number,
+    boxWidth: number,
+    boxHeight: number,
+) => {
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    const scale = Math.min(boxWidth / sourceWidth, boxHeight / sourceHeight);
+    const width = sourceWidth * scale;
+    const height = sourceHeight * scale;
+    const left = boxLeft + (boxWidth - width) / 2;
+    const top = boxTop + (boxHeight - height) / 2;
+    ctx.drawImage(image, left, top, width, height);
+};
+
 export default function CustomizerPage() {
     const navigate = useNavigate(); 
     const { user } = useAuth();
@@ -179,6 +209,67 @@ export default function CustomizerPage() {
         viewMode === 'front' ? fabricCanvas.current : backFabricCanvas.current;
 
     const getPrintAreaForSide = (side: CanvasSide) => printAreaRef.current?.[side];
+
+    const getProductUrlForSide = (side: CanvasSide) => {
+        const sourceUrl = side === 'front'
+            ? selectedProduct?.frontImageUrl
+            : selectedProduct?.backImageUrl ?? selectedProduct?.frontImageUrl;
+        return resolveApiAssetUrl(sourceUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg';
+    };
+
+    const createCompositePreview = async (side: CanvasSide) => {
+        const designCanvas = side === 'front' ? fabricCanvas.current : backFabricCanvas.current;
+        if (!designCanvas) return '';
+
+        designCanvas.discardActiveObject();
+        designCanvas.renderAll();
+
+        const productUrl = getProductUrlForSide(side);
+        const shirtImage = await loadPreviewImage(processedImages[productUrl] ?? productUrl);
+        const outputCanvas = document.createElement('canvas');
+        outputCanvas.width = PRODUCT_PREVIEW_WIDTH;
+        outputCanvas.height = PRODUCT_PREVIEW_HEIGHT;
+        const ctx = outputCanvas.getContext('2d');
+        if (!ctx) return designCanvas.toDataURL({ format: 'png', multiplier: 0.5 });
+
+        ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+        const shirtBox = {
+            left: PRODUCT_PREVIEW_WIDTH * 0.075,
+            top: 0,
+            width: PRODUCT_PREVIEW_WIDTH * 0.85,
+            height: PRODUCT_PREVIEW_HEIGHT,
+        };
+
+        if (shirtColorHex !== '#FFFFFF') {
+            ctx.save();
+            drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+            ctx.globalCompositeOperation = 'source-in';
+            ctx.fillStyle = shirtColorHex;
+            ctx.fillRect(shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+            ctx.restore();
+        }
+
+        drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+
+        const designUrl = designCanvas.toDataURL({ format: 'png', multiplier: 1 });
+        const designImage = await loadPreviewImage(designUrl);
+        ctx.drawImage(
+            designImage,
+            PRODUCT_PREVIEW_WIDTH * 0.2,
+            PRODUCT_PREVIEW_HEIGHT * 0.18,
+            PRODUCT_PREVIEW_WIDTH * 0.6,
+            PRODUCT_PREVIEW_HEIGHT * 0.65,
+        );
+
+        return outputCanvas.toDataURL('image/png');
+    };
+
+    const createSidePreviewImages = async () => {
+        const frontPreviewImageUrl = await createCompositePreview('front');
+        const backPreviewImageUrl = await createCompositePreview('back');
+
+        return { frontPreviewImageUrl, backPreviewImageUrl };
+    };
 
     const constrainObject = (side: CanvasSide, obj: fabric.Object | undefined, canvas: fabric.Canvas, isScaling = false) => {
         const bounds = getCanvasPrintBounds(getPrintAreaForSide(side), canvas);
@@ -498,7 +589,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
     };
 
     // 6. Tính giá đơn (1 áo)
-    const BASE_PRICE = 180000;
+    const basePrice = selectedProduct?.basePrice ?? DEFAULT_BASE_PRICE;
     // Tính tổng priceAddon của icons đang trên canvas (cả front + back)
     const getIconTotalPrice = () => {
         let total = 0;
@@ -514,34 +605,40 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
     const frontObjCount = fabricCanvas.current ? fabricCanvas.current.getObjects().length : 0;
     const backObjCount = backFabricCanvas.current ? backFabricCanvas.current.getObjects().length : 0;
 
-    const unitPrice = BASE_PRICE + iconTotalPrice;
+    const unitPrice = basePrice + iconTotalPrice;
     const totalQtyModal = Object.values(sizeQty).reduce((a, b) => a + b, 0);
     const totalPrice = unitPrice * totalQtyModal;
 
     // 7. Lưu Thiết Kế vào LocalStorage
-    const handleSaveDesign = () => {
+    const handleSaveDesign = async () => {
         if (!fabricCanvas.current) return;
-        fabricCanvas.current.discardActiveObject();
-        fabricCanvas.current.renderAll();
-        backFabricCanvas.current?.discardActiveObject();
-        backFabricCanvas.current?.renderAll();
-        const canvasDataURL = fabricCanvas.current.toDataURL({ format: 'png', multiplier: 0.5 });
-        const frontJSON = fabricCanvas.current.toJSON(['id', 'selectable']);
-        const backJSON = backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] };
-        const newEntry = {
-            id: Date.now(),
-            name: 'Thiết kế ' + new Date().toLocaleDateString('vi-VN'),
-            time: new Date().toLocaleString('vi-VN'),
-            thumbnail: canvasDataURL,
-            shirtColor: shirtColorHex,
-            canvasJSON: frontJSON,
-            backCanvasJSON: backJSON,
-            objectCount: frontObjCount + backObjCount,
-        };
-        const updatedHistory = [newEntry, ...historyList].slice(0, 20);
-        setHistoryList(updatedHistory);
-        localStorage.setItem('alma_design_history', JSON.stringify(updatedHistory));
-        toast.success('Đã lưu thiết kế thành công!');
+        try {
+            fabricCanvas.current.discardActiveObject();
+            fabricCanvas.current.renderAll();
+            backFabricCanvas.current?.discardActiveObject();
+            backFabricCanvas.current?.renderAll();
+            const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
+            const canvasDataURL = fabricCanvas.current.getObjects().length > 0 ? frontPreviewImageUrl : backPreviewImageUrl;
+            const frontJSON = fabricCanvas.current.toJSON(['id', 'selectable']);
+            const backJSON = backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] };
+            const newEntry = {
+                id: Date.now(),
+                name: 'Thiết kế ' + new Date().toLocaleDateString('vi-VN'),
+                time: new Date().toLocaleString('vi-VN'),
+                thumbnail: canvasDataURL,
+                shirtColor: shirtColorHex,
+                canvasJSON: frontJSON,
+                backCanvasJSON: backJSON,
+                objectCount: frontObjCount + backObjCount,
+            };
+            const updatedHistory = [newEntry, ...historyList].slice(0, 20);
+            setHistoryList(updatedHistory);
+            localStorage.setItem('alma_design_history', JSON.stringify(updatedHistory));
+            toast.success('Đã lưu thiết kế thành công!');
+        } catch (err) {
+            console.error('Không thể tạo preview thiết kế:', err);
+            toast.error('Không thể tạo preview thiết kế. Vui lòng thử lại.');
+        }
     };
 
     // 8. Tải lại thiết kế từ Lịch sử
@@ -586,10 +683,22 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             fabricCanvas.current.renderAll();
             backFabricCanvas.current?.discardActiveObject();
             backFabricCanvas.current?.renderAll();
-            const previewDataUrl = fabricCanvas.current.toDataURL({ format: 'png', multiplier: 0.5 });
-            const canvasJSON = JSON.stringify(fabricCanvas.current.toJSON(['id', 'selectable']));
+            const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
+            const previewDataUrl = fabricCanvas.current.getObjects().length > 0 ? frontPreviewImageUrl : backPreviewImageUrl;
+            const frontCanvasJson = JSON.stringify(fabricCanvas.current.toJSON(['id', 'selectable']));
+            const backCanvasJson = JSON.stringify(backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] });
             await customizerApi.saveAndAddMultiSize(
-                { baseProductId: selectedProduct?.baseProductId ?? 1, canvasJson: canvasJSON, previewImageUrl: previewDataUrl, iconIds: usedIconIds, fontIds: [] },
+                {
+                    baseProductId: selectedProduct?.baseProductId ?? 1,
+                    canvasJson: frontCanvasJson,
+                    frontCanvasJson,
+                    backCanvasJson,
+                    previewImageUrl: previewDataUrl,
+                    frontPreviewImageUrl,
+                    backPreviewImageUrl,
+                    iconIds: usedIconIds,
+                    fontIds: []
+                },
                 sizeQty
             );
             const summary = Object.entries(sizeQty).filter(([, q]) => q > 0).map(([s, q]) => `${s}×${q}`).join(', ');
@@ -721,8 +830,8 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
 
     // --- Active Product Image URL (handles both front and back views) ---
     const activeProductUrl = viewMode === 'front'
-        ? (resolveApiAssetUrl(selectedProduct?.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg')
-        : (resolveApiAssetUrl(selectedProduct?.backImageUrl) ?? resolveApiAssetUrl(selectedProduct?.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg');
+        ? getProductUrlForSide('front')
+        : getProductUrlForSide('back');
 
     // --- Automatically process background removal when active URL changes ---
     useEffect(() => {

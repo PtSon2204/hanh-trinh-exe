@@ -9,8 +9,10 @@ import {
   faGear,
   faHouse,
   faMagnifyingGlass,
+  faMoon,
   faPalette,
   faShirt,
+  faSun,
   faTableColumns,
   faTicket,
   faUsers,
@@ -42,6 +44,18 @@ interface AdminShellProps {
 }
 
 const RECENT_ORDER_DAYS = 7;
+const ADMIN_THEME_STORAGE_KEY = "adminTheme";
+
+type AdminTheme = "dark" | "light";
+
+function getInitialAdminTheme(): AdminTheme {
+  const storedTheme = localStorage.getItem(ADMIN_THEME_STORAGE_KEY);
+  if (storedTheme === "dark" || storedTheme === "light") return storedTheme;
+
+  return window.matchMedia("(prefers-color-scheme: light)").matches
+    ? "light"
+    : "dark";
+}
 
 function toIsoDate(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -75,6 +89,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [recentOrderCount, setRecentOrderCount] = useState<number | null>(null);
+  const [theme, setTheme] = useState<AdminTheme>(getInitialAdminTheme);
 
   const { user, logout } = useAuth();
 
@@ -103,6 +118,10 @@ export function AdminShell({
       ignore = true;
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem(ADMIN_THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   const navGroups = useMemo<AdminNavGroup[]>(
     () => [
@@ -190,9 +209,10 @@ export function AdminShell({
     .toUpperCase();
 
   const closeSidebar = () => setSidebarOpen(false);
+  const nextTheme = theme === "dark" ? "light" : "dark";
 
   return (
-    <div className="admin-shell">
+    <div className="admin-shell" data-admin-theme={theme}>
       <button
         className={`admin-backdrop ${sidebarOpen ? "is-visible" : ""}`}
         type="button"
@@ -304,6 +324,22 @@ export function AdminShell({
           </div>
 
           <div className="admin-topbar__right">
+            <button
+              className="admin-theme-toggle"
+              type="button"
+              aria-label={`Chuyển sang ${nextTheme === "dark" ? "giao diện tối" : "giao diện sáng"}`}
+              aria-pressed={theme === "light"}
+              onClick={() => setTheme(nextTheme)}
+            >
+              <span className="admin-theme-toggle__track" aria-hidden="true">
+                <span className="admin-theme-toggle__thumb">
+                  <FontAwesomeIcon icon={theme === "dark" ? faMoon : faSun} />
+                </span>
+              </span>
+              <span className="admin-theme-toggle__label">
+                {theme === "dark" ? "Tối" : "Sáng"}
+              </span>
+            </button>
             {/*<button
               className="admin-notification"
               type="button"
