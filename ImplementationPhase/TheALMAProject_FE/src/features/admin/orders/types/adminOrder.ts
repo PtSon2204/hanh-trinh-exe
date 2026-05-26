@@ -58,6 +58,9 @@ export interface AdminOrderDto extends AdminOrderListDto {
 	shipAddress: string;
 	shipProvince: string;
 	items: AdminOrderItemDto[];
+	refundBankName: string | null;
+	refundAccountNumber: string | null;
+	refundAccountName: string | null;
 }
 
 export interface AdminUpdateOrderStatusDto {

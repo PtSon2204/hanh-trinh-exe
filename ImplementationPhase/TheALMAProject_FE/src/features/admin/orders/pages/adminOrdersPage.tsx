@@ -37,7 +37,7 @@ const orderStatusOptions = [
   "Cancelled",
 ];
 
-const paymentStatusOptions = ["Pending", "Paid", "Failed", "Refunded"];
+const paymentStatusOptions = ["Pending", "Paid", "Failed", "RefundPending", "Refunded"];
 
 type AdminOrdersPanel = "orders" | "statistics" | "printFiles";
 
@@ -1072,6 +1072,22 @@ export function AdminOrdersPage() {
                     <dd>{formatCurrency(selectedOrder.totalAmount)}</dd>
                   </div>
                 </dl>
+
+                {selectedOrder.refundAccountNumber && (
+                  <div className="bg-red-50 p-4 rounded-xl border border-red-200 mt-4 text-left" style={{ gridColumn: "span 2" }}>
+                    <p className="text-red-700 font-extrabold text-xs uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                      <i className="fa-solid fa-building-columns"></i> Thông tin hoàn tiền (Khách hủy đơn)
+                    </p>
+                    <ul className="text-xs text-red-600 space-y-1.5 list-none pl-0">
+                      <li><strong>Ngân hàng:</strong> {selectedOrder.refundBankName}</li>
+                      <li><strong>Số tài khoản:</strong> {selectedOrder.refundAccountNumber}</li>
+                      <li><strong>Chủ tài khoản:</strong> {selectedOrder.refundAccountName}</li>
+                    </ul>
+                    <p className="text-[10px] text-red-500 mt-3 italic leading-normal">
+                      * Vui lòng chuyển khoản hoàn tiền cho khách theo thông tin trên, sau đó chuyển trạng thái thanh toán sang "Refunded" để hoàn tất.
+                    </p>
+                  </div>
+                )}
 
                 <div className="admin-status-form">
                   <label>

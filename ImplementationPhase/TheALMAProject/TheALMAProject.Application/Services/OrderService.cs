@@ -272,15 +272,32 @@ namespace TheALMAProject.Application.Services
             };
         }
 
-        public async Task<bool> CancelOrderAsync(int userId, int orderId)
+        public async Task<bool> CancelOrderAsync(int userId, int orderId, string? bankName = null, string? accountNumber = null, string? accountName = null)
         {
             var order = await _unitOfWork.OrderRepo.GetOrderDetailAsync(orderId, userId);
-            if (order == null || order.OrderStatus != "Pending")
+            if (order == null)
+            {
+                return false;
+            }
+
+            // Cho phép hủy nếu đơn chờ xác nhận (Pending) HOẶC đơn đang xử lý (Processing) nhưng đã thanh toán trước (Paid)
+            bool canCancel = order.OrderStatus == "Pending" || (order.OrderStatus == "Processing" && order.PaymentStatus == "Paid");
+            if (!canCancel)
             {
                 return false;
             }
 
             order.OrderStatus = "Cancelled";
+
+            // Nếu đơn đã thanh toán trước, chuyển trạng thái sang Chờ hoàn tiền và lưu thông tin tài khoản hoàn trả
+            if (order.PaymentStatus == "Paid")
+            {
+                order.PaymentStatus = "RefundPending";
+                order.RefundBankName = bankName;
+                order.RefundAccountNumber = accountNumber;
+                order.RefundAccountName = accountName;
+            }
+
             _unitOfWork.OrderRepo.UpdateOrder(order);
             return await _unitOfWork.SaveChangesAsync() > 0;
         }

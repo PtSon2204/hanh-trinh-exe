@@ -17,8 +17,8 @@ export const orderApi = {
   },
 
   // Hàm hủy đơn hàng
-  cancelOrder: async (orderId: number) => {
-    const response = await axiosClient.patch(`/Order/${orderId}/cancel`);
+  cancelOrder: async (orderId: number, refundData?: { refundBankName?: string; refundAccountNumber?: string; refundAccountName?: string }) => {
+    const response = await axiosClient.patch(`/Order/${orderId}/cancel`, refundData);
     return response.data;
   },
 

@@ -19,5 +19,10 @@ namespace TheALMAProject.Application.DTOs.AdminOrderDtos
         public string OrderStatus { get; set; } = null!;
         public DateTime? CreatedAt { get; set; }
         public IEnumerable<AdminOrderItemDto> Items { get; set; } = new List<AdminOrderItemDto>();
+
+        // Thông tin hoàn tiền (nếu có)
+        public string? RefundBankName { get; set; }
+        public string? RefundAccountNumber { get; set; }
+        public string? RefundAccountName { get; set; }
     }
 }
