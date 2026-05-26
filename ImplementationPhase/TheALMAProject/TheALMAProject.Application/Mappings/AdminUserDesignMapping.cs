@@ -14,7 +14,9 @@ namespace TheALMAProject.Application.Mappings
 
             CreateMap<UserDesign, AdminUserDesignDto>()
                 .ForMember(dest => dest.UserEmail, opt => opt.MapFrom(src => src.User.Email))
-                .ForMember(dest => dest.BaseProductName, opt => opt.MapFrom(src => src.BaseProduct.Name));
+                .ForMember(dest => dest.BaseProductName, opt => opt.MapFrom(src => src.BaseProduct.Name))
+                .ForMember(dest => dest.CanvasJson, opt => opt.MapFrom(src => src.FrontCanvasJson ?? src.CanvasJson))
+                .ForMember(dest => dest.FrontCanvasJson, opt => opt.MapFrom(src => src.FrontCanvasJson ?? src.CanvasJson));
         }
     }
 }

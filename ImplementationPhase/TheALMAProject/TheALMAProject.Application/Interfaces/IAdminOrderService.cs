@@ -10,6 +10,7 @@ namespace TheALMAProject.Application.Interfaces
         Task<AdminOrderDto?> GetOrderById(int id);
         Task<IEnumerable<AdminOrderStatisticDto>> GetOrderStatistics(AdminOrderStatisticQuery query);
         Task<IEnumerable<AdminOrderPrintFileDto>> ExportPrintFiles(int id);
+        Task<IEnumerable<AdminOrderPrintFileDto>> SaveFabricPrintFiles(int id, AdminOrderFabricPrintFileUploadDto dto);
         Task UpdateOrderStatus(int id, AdminUpdateOrderStatusDto dto);
     }
 }

@@ -3,6 +3,7 @@ import type { PagedResult } from "../../../../shared/types/pagination";
 import type {
 	AdminCreateOrderDto,
 	AdminOrderDto,
+	AdminOrderFabricPrintFileUploadDto,
 	AdminOrderListDto,
 	AdminOrderPrintFileDto,
 	AdminOrderStatisticDto,
@@ -51,6 +52,12 @@ export const adminOrderApi = {
 	exportPrintFiles(orderId: number) {
 		return axiosClient
 			.post<AdminOrderPrintFileDto[]>(`/admin/orders/${orderId}/print-files`)
+			.then((res) => res.data);
+	},
+
+	saveFabricPrintFiles(orderId: number, body: AdminOrderFabricPrintFileUploadDto) {
+		return axiosClient
+			.post<AdminOrderPrintFileDto[]>(`/admin/orders/${orderId}/fabric-print-files`, body)
 			.then((res) => res.data);
 	},
 };

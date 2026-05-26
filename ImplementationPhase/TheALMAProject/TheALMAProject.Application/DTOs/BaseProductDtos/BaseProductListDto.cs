@@ -12,6 +12,8 @@ namespace TheALMAProject.Application.DTOs.BaseProductDtos
 
         public string? BackImageUrl { get; set; }
 
+        public string? PrintAreaJson { get; set; }
+
         public string Category { get; set; } = null!;
 
         public string Material { get; set; } = null!;
