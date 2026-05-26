@@ -165,6 +165,10 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.ShipProvince).HasMaxLength(100);
             entity.Property(e => e.ShippingFee).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RefundBankName).HasMaxLength(100);
+            entity.Property(e => e.RefundAccountNumber).HasMaxLength(50);
+            entity.Property(e => e.RefundAccountName).HasMaxLength(100);
+
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)

@@ -46,6 +46,8 @@ const CheckoutPage = () => {
         amount: 0,
     });
 
+    const [isPaid, setIsPaid] = useState(false);
+
     const [changingPaymentMethod, setChangingPaymentMethod] = useState(false);
 
     // ── Voucher states & handlers ─────────────────────────────────────────────
@@ -672,13 +674,31 @@ const CheckoutPage = () => {
                     orderId,
                     amount: total,
                 });
+                setIsPaid(false);
                 toast.success("Tạo đơn thành công! Vui lòng quét mã QR để thanh toán.");
 
             } else {
-                // COD — clear cart rồi navigate
-                await clearCartSilently();
-                toast.success("Đặt hàng thành công! Đang chuyển đến trang theo dõi...");
-                navigate("/orders");
+                const orderId = result?.orderId ?? result?.OrderId ?? null;
+                
+                // Xóa giỏ hàng âm thầm dưới nền (không block UI/UX của modal)
+                clearCartSilently();
+
+                // Mở Modal đặt hàng thành công với hiệu ứng xe tải giao hàng
+                setQrData({
+                    isOpen: true,
+                    url: "", // url rỗng = COD (dùng để phân biệt hiển thị)
+                    orderId,
+                    amount: total,
+                });
+                setIsPaid(true);
+                toast.success("Đặt hàng COD thành công! Đơn hàng của bạn đã được ghi nhận.");
+
+                // Tự động chuyển hướng sau 4 giây để người dùng thấy rõ animation xe tải
+                setTimeout(() => {
+                    setQrData(prev => ({ ...prev, isOpen: false }));
+                    setIsPaid(false);
+                    navigate("/orders");
+                }, 4000);
             }
         } catch (error: any) {
             const msg = error.response?.data?.message
@@ -699,7 +719,61 @@ const CheckoutPage = () => {
             // Nếu BE chưa có /Cart/clear thì bỏ qua, không crash app
             console.warn("[Checkout] clearCart endpoint chưa có hoặc bị lỗi.");
         }
+
+        // Khôi phục lại các sản phẩm KHÔNG được chọn từ localStorage sau khi thanh toán thành công
+        const backup = localStorage.getItem("cart_unchecked_backup");
+        if (backup) {
+            try {
+                const itemsToRestore = JSON.parse(backup);
+                for (const item of itemsToRestore) {
+                    await cartApi.addToCart(item);
+                }
+            } catch (err) {
+                console.error("Lỗi khi khôi phục các sản phẩm giỏ hàng chưa mua:", err);
+            } finally {
+                localStorage.removeItem("cart_unchecked_backup");
+            }
+        }
     };
+
+    // Tự động kiểm tra trạng thái thanh toán đơn hàng VietQR (polling mỗi 3s)
+    useEffect(() => {
+        if (!qrData.isOpen || !qrData.orderId) return;
+
+        let isMounted = true;
+        const intervalId = setInterval(async () => {
+            try {
+                const response = await axiosClient.get(`/Order/${qrData.orderId}`);
+                const raw = response.data;
+                const detail = raw?.data ?? raw;
+                const status = detail?.paymentStatus ?? detail?.PaymentStatus;
+                
+                if (detail && status === "Paid" && isMounted) {
+                    clearInterval(intervalId);
+                    await clearCartSilently();
+                    setIsPaid(true);
+                    toast.success("Thanh toán thành công! Đơn hàng của bạn đang được xử lý.");
+                    
+                    // Tự động chuyển hướng sang danh sách đơn hàng sau 3 giây để mang lại trải nghiệm mượt mà
+                    setTimeout(() => {
+                        if (isMounted) {
+                            setQrData(prev => ({ ...prev, isOpen: false }));
+                            setIsPaid(false);
+                            navigate("/orders");
+                        }
+                    }, 3000);
+                }
+            } catch (err) {
+                console.error("Lỗi khi kiểm tra trạng thái thanh toán tự động:", err);
+            }
+        }, 3000);
+
+        return () => {
+            isMounted = false;
+            clearInterval(intervalId);
+        };
+    }, [qrData.isOpen, qrData.orderId, navigate]);
+
 
     // ── Tính tiền ─────────────────────────────────────────────────────────────
     const shippingFee = 30000;
@@ -1077,94 +1151,203 @@ const CheckoutPage = () => {
             {qrData.isOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
                     <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center relative border border-gray-100">
+                        {isPaid ? (
+                            // SUCCESS SCREEN (Shopee-style shipping truck animation) — hiện cho cả COD và VietQR
+                            <div>
+                                <div className="mb-4">
+                                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 shadow-inner ${
+                                        qrData.url ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'
+                                    }`}>
+                                        {qrData.url ? (
+                                            <i className="fa-solid fa-circle-check text-5xl text-blue-500"></i>
+                                        ) : (
+                                            <i className="fa-solid fa-truck-fast text-5xl text-orange-500"></i>
+                                        )}
+                                    </div>
+                                    <h3 className="text-2xl font-extrabold text-gray-900">
+                                        {qrData.url ? "Thanh toán thành công!" : "Đặt hàng thành công! 🎉"}
+                                    </h3>
+                                    <p className="text-gray-500 text-sm mt-1">
+                                        {qrData.url
+                                            ? "Đơn hàng của bạn đã được xác nhận và đang chuẩn bị"
+                                            : "Đơn COD của bạn đã được ghi nhận — chúng tôi sẽ liên hệ sớm!"}
+                                    </p>
+                                </div>
 
-                        <div className="mb-4">
-                            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <i className="fa-solid fa-qrcode text-3xl text-blue-600"></i>
+                                {/* Shopee-style moving truck animation — hiện cho cả COD lẫn VietQR */}
+                                <div className={`relative w-full h-20 rounded-2xl overflow-hidden flex items-center mb-6 border ${
+                                    qrData.url
+                                        ? 'bg-blue-50/60 border-blue-100'
+                                        : 'bg-orange-50/60 border-orange-100'
+                                }`}>
+                                    <style dangerouslySetInnerHTML={{__html: `
+                                        @keyframes roadMoving {
+                                            0% { background-position-x: 0px; }
+                                            100% { background-position-x: -40px; }
+                                        }
+                                        @keyframes truckBounce {
+                                            0%, 100% { transform: translateY(0); }
+                                            50% { transform: translateY(-4px); }
+                                        }
+                                        @keyframes truckMove {
+                                            0% { left: -25%; }
+                                            100% { left: 115%; }
+                                        }
+                                        .animate-road {
+                                            background-image: linear-gradient(90deg, #cbd5e1 50%, transparent 50%);
+                                            background-size: 20px 2px;
+                                            animation: roadMoving 0.8s linear infinite;
+                                        }
+                                        .animate-truck-bounce {
+                                            animation: truckBounce 0.5s ease-in-out infinite;
+                                        }
+                                        .animate-truck-slide {
+                                            position: absolute;
+                                            bottom: 12px;
+                                            animation: truckMove 3.5s linear infinite;
+                                        }
+                                    `}} />
+                                    {/* Road — dashed moving line */}
+                                    <div className="absolute bottom-4 left-0 right-0 h-0.5 animate-road bg-repeat-x"></div>
+                                    {/* Moving Truck icon */}
+                                    <div className="animate-truck-slide animate-truck-bounce">
+                                        <i className={`fa-solid fa-truck-fast text-3xl drop-shadow-sm ${
+                                            qrData.url ? 'text-blue-500' : 'text-orange-500'
+                                        }`}></i>
+                                    </div>
+                                    {/* Status badge */}
+                                    <span className={`absolute top-2 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                        qrData.url
+                                            ? 'text-blue-600 bg-blue-100/80'
+                                            : 'text-orange-600 bg-orange-100/80'
+                                    }`}>
+                                        {qrData.url ? 'Đang chuẩn bị hàng...' : 'Đang chuẩn bị giao hàng COD...'}
+                                    </span>
+                                </div>
+
+                                <div className="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100 text-left space-y-2">
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>Mã đơn hàng:</span>
+                                        <span className="font-bold text-gray-800">#{qrData.orderId}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>Phương thức:</span>
+                                        <span className="font-semibold text-gray-800">
+                                            {qrData.url ? "Chuyển khoản VietQR" : "Thanh toán khi nhận hàng (COD)"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                        <span>Trạng thái đơn hàng:</span>
+                                        <span className="font-bold text-blue-600">
+                                            {qrData.url ? "Đang chuẩn bị hàng" : "Chờ xác nhận & chuẩn bị giao"}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        setQrData({ ...qrData, isOpen: false });
+                                        setIsPaid(false);
+                                        navigate("/orders");
+                                    }}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 text-sm sm:text-base"
+                                >
+                                    <i className="fa-solid fa-arrow-left-long"></i> Quay lại danh sách đơn hàng
+                                </button>
                             </div>
-                            <h3 className="text-2xl font-extrabold text-gray-900">Quét mã thanh toán</h3>
-                            <p className="text-gray-500 text-sm mt-1">Mở ứng dụng ngân hàng để quét mã</p>
-                        </div>
+                        ) : (
+                            // REGULAR QR CODE SCREEN (Removed 'Tôi đã thanh toán xong' button)
+                            <div>
+                                <div className="mb-4">
+                                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        <i className="fa-solid fa-qrcode text-3xl text-blue-600"></i>
+                                    </div>
+                                    <h3 className="text-2xl font-extrabold text-gray-900">Quét mã thanh toán</h3>
+                                    <p className="text-gray-500 text-sm mt-1">Mở ứng dụng ngân hàng để quét mã</p>
+                                </div>
 
-                        {/* QR Image */}
-                        <div className="bg-white p-3 rounded-2xl inline-block mb-6 border-2 border-gray-100 shadow-sm">
-                            <img
-                                src={qrData.url}
-                                alt="VietQR Payment"
-                                className="w-64 h-64 object-contain rounded-xl"
-                                onError={(e) => {
-                                    // Fallback nếu ảnh lỗi
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                            />
-                        </div>
+                                {/* QR Image */}
+                                <div className="bg-white p-3 rounded-2xl inline-block mb-6 border-2 border-gray-100 shadow-sm">
+                                    <img
+                                        src={qrData.url}
+                                        alt="VietQR Payment"
+                                        className="w-64 h-64 object-contain rounded-xl"
+                                        onError={(e) => {
+                                            // Fallback nếu ảnh lỗi
+                                            (e.target as HTMLImageElement).style.display = 'none';
+                                        }}
+                                    />
+                                </div>
 
-                        <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                            <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
-                            <p className="text-2xl font-black text-blue-600">{qrData.amount.toLocaleString('vi-VN')} VNĐ</p>
-                            <p className="text-xs text-red-500 italic mt-2">* Vui lòng không sửa nội dung chuyển khoản</p>
-                        </div>
+                                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                                    <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
+                                    <p className="text-2xl font-black text-blue-600">{qrData.amount.toLocaleString('vi-VN')} VNĐ</p>
+                                    <p className="text-xs text-red-500 italic mt-2">* Hệ thống tự động chuyển trang khi nhận được tiền</p>
+                                </div>
 
-                        {qrData.orderId && (
-                            <p className="text-xs text-gray-400 mb-4">Mã đơn: #{qrData.orderId}</p>
+                                {qrData.orderId && (
+                                    <p className="text-xs text-gray-400 mb-4">Mã đơn: #{qrData.orderId}</p>
+                                )}
+
+                                <button
+                                    disabled={changingPaymentMethod}
+                                    onClick={async () => {
+                                        if (!qrData.orderId) return;
+                                        setChangingPaymentMethod(true);
+                                        try {
+                                            await axiosClient.patch(`/order/${qrData.orderId}/change-payment-method`, {
+                                                paymentMethod: "COD"
+                                            });
+                                            await clearCartSilently();
+                                            toast.success("Đã chuyển sang COD thành công! Vui lòng đợi bên shop xác nhận và gói hàng.");
+                                            // Hiện màn xe tải giao hàng thay vì navigate ngay
+                                            setQrData(prev => ({ ...prev, url: "" }));
+                                            setIsPaid(true);
+                                            // Tự động chuyển trang sau 4 giây
+                                            setTimeout(() => {
+                                                setQrData(prev => ({ ...prev, isOpen: false }));
+                                                setIsPaid(false);
+                                                navigate("/orders");
+                                            }, 4000);
+                                        } catch (error) {
+                                            toast.error("Không thể tự động chuyển sang COD. Vui lòng liên hệ hỗ trợ.");
+                                            await clearCartSilently();
+                                            // Vẫn hiện màn xe tải kể cả khi lỗi (đơn đã tạo)
+                                            setQrData(prev => ({ ...prev, url: "" }));
+                                            setIsPaid(true);
+                                            setTimeout(() => {
+                                                setQrData(prev => ({ ...prev, isOpen: false }));
+                                                setIsPaid(false);
+                                                navigate("/orders");
+                                            }, 4000);
+                                        } finally {
+                                            setChangingPaymentMethod(false);
+                                        }
+                                    }}
+                                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                >
+                                    {changingPaymentMethod ? (
+                                        <i className="fa-solid fa-spinner fa-spin"></i>
+                                    ) : (
+                                        <i className="fa-solid fa-truck-fast"></i>
+                                    )}
+                                    {changingPaymentMethod ? "Đang cập nhật..." : "Tôi muốn đổi sang giao COD"}
+                                </button>
+
+                                <button
+                                    disabled={changingPaymentMethod}
+                                    onClick={async () => {
+                                        await clearCartSilently();
+                                        setQrData({ ...qrData, isOpen: false });
+                                        toast.success("Đơn hàng đã được lưu! Bạn có thể thanh toán sau.");
+                                        navigate("/orders");
+                                    }}
+                                    className="mt-4 w-full text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors py-2 block text-center disabled:opacity-60"
+                                >
+                                    Thanh toán sau
+                                </button>
+                            </div>
                         )}
-
-                        <button
-                            onClick={async () => {
-                                await clearCartSilently();
-                                setQrData({ ...qrData, isOpen: false });
-                                toast.success("Đặt hàng thành công! Vui lòng đợi bên shop xác nhận và gói hàng.");
-                                navigate("/orders");
-                            }}
-                            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md"
-                        >
-                            <i className="fa-solid fa-check"></i> Tôi đã thanh toán xong
-                        </button>
-                        
-                        <button
-                            disabled={changingPaymentMethod}
-                            onClick={async () => {
-                                if (!qrData.orderId) return;
-                                setChangingPaymentMethod(true);
-                                try {
-                                    await axiosClient.patch(`/order/${qrData.orderId}/change-payment-method`, {
-                                        paymentMethod: "COD"
-                                    });
-                                    await clearCartSilently();
-                                    setQrData({ ...qrData, isOpen: false });
-                                    toast.success("Đã chuyển đổi phương thức thanh toán sang COD thành công! Vui lòng đợi bên shop xác nhận và gói hàng.");
-                                    navigate("/orders");
-                                } catch (error) {
-                                    toast.error("Không thể tự động chuyển sang COD. Vui lòng chuyển hướng và liên hệ hỗ trợ.");
-                                    await clearCartSilently();
-                                    setQrData({ ...qrData, isOpen: false });
-                                    navigate("/orders");
-                                } finally {
-                                    setChangingPaymentMethod(false);
-                                }
-                            }}
-                            className="mt-3 w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                            {changingPaymentMethod ? (
-                                <i className="fa-solid fa-spinner fa-spin"></i>
-                            ) : (
-                                <i className="fa-solid fa-truck-fast"></i>
-                            )}
-                            {changingPaymentMethod ? "Đang cập nhật..." : "Tôi muốn đổi sang giao COD"}
-                        </button>
-
-                        <button
-                            disabled={changingPaymentMethod}
-                            onClick={async () => {
-                                await clearCartSilently();
-                                setQrData({ ...qrData, isOpen: false });
-                                toast.success("Đơn hàng đã được lưu! Bạn có thể thanh toán sau.");
-                                navigate("/orders");
-                            }}
-                            className="mt-4 w-full text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors py-2 block text-center disabled:opacity-60"
-                        >
-                            Thanh toán sau
-                        </button>
                     </div>
                 </div>
             )}

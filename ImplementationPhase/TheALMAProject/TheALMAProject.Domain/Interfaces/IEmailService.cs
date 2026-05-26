@@ -28,5 +28,10 @@ namespace TheALMAProject.Domain.Interfaces
         /// UC-06: Gửi email thông báo đơn hàng mới cho Admin/Order Manager
         /// </summary>
         Task SendNewOrderNotificationAsync(string toEmail, string orderCode, decimal totalAmount);
+
+        /// <summary>
+        /// Gửi email thông báo hoàn tiền đơn hàng bị hủy cho khách hàng
+        /// </summary>
+        Task SendRefundNotificationAsync(string toEmail, string customerName, string orderCode, decimal amount);
     }
 }

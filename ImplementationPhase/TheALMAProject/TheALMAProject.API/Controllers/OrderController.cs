@@ -125,7 +125,7 @@ namespace TheALMAProject.API.Controllers
 
         [Authorize]
         [HttpPatch("{orderId}/cancel")]
-        public async Task<IActionResult> CancelOrder(int orderId)
+        public async Task<IActionResult> CancelOrder(int orderId, [FromBody] CancelOrderRequest? request)
         {
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -134,11 +134,17 @@ namespace TheALMAProject.API.Controllers
                 return Unauthorized(new { message = "Không xác định được danh tính. Vui lòng đăng nhập lại." });
             }
 
-            var success = await _orderService.CancelOrderAsync(currentUserId, orderId);
+            var success = await _orderService.CancelOrderAsync(
+                currentUserId, 
+                orderId, 
+                request?.RefundBankName, 
+                request?.RefundAccountNumber, 
+                request?.RefundAccountName
+            );
 
             if (!success)
             {
-                return BadRequest(new { message = "Không thể hủy đơn hàng. Đơn hàng không tồn tại, đã được xử lý hoặc không thuộc quyền sở hữu của bạn." });
+                return BadRequest(new { message = "Không thể hủy đơn hàng. Đơn hàng không tồn tại, đã được giao/hủy hoặc không thuộc quyền sở hữu của bạn." });
             }
 
             return Ok(new { isSuccess = true, message = "Đã hủy đơn hàng thành công." });

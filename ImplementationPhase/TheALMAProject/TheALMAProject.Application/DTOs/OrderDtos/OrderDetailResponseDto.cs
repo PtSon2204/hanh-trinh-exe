@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -31,5 +31,10 @@ namespace TheALMAProject.Application.DTOs.OrderDtos
 
         // Danh sách sản phẩm
         public List<OrderItemResponseDto> Items { get; set; } = new List<OrderItemResponseDto>();
+
+        // Thông tin hoàn tiền (nếu có)
+        public string? RefundBankName { get; set; }
+        public string? RefundAccountNumber { get; set; }
+        public string? RefundAccountName { get; set; }
     }
 }

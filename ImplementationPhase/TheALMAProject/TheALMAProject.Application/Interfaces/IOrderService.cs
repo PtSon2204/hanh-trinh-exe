@@ -16,7 +16,7 @@ namespace TheALMAProject.Application.Interfaces
         Task<CheckoutResponseDto> CheckoutAsync(int userId, CheckoutRequestDto request);
         Task<bool> ChangePaymentMethodAsync(int userId, int orderId, string paymentMethod);
         Task<VoucherCheckResponseDto> CheckVoucherAsync(int userId, string voucherCode);
-        Task<bool> CancelOrderAsync(int userId, int orderId);
+        Task<bool> CancelOrderAsync(int userId, int orderId, string? bankName = null, string? accountNumber = null, string? accountName = null);
         Task<bool> UpdateShippingAddressAsync(int userId, int orderId, UpdateShippingAddressDto request);
     }
 }

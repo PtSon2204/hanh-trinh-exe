@@ -80,6 +80,7 @@ const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string; icon: s
     Paid: { label: 'Đã thanh toán', color: 'text-emerald-600', icon: 'fa-circle-check' },
     Failed: { label: 'Thất bại', color: 'text-red-500', icon: 'fa-xmark-circle' },
     Refunded: { label: 'Đã hoàn tiền', color: 'text-slate-500', icon: 'fa-rotate-left' },
+    RefundPending: { label: 'Chờ hoàn tiền', color: 'text-amber-500', icon: 'fa-hourglass' },
 };
 
 export default function OrderDetailPage() {
@@ -96,6 +97,14 @@ export default function OrderDetailPage() {
         shipPhone: '',
         shipAddress: '',
         shipProvince: '',
+    });
+
+    // Modal state for refund cancel order
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [refundForm, setRefundForm] = useState({
+        bankName: '',
+        accountNumber: '',
+        accountName: '',
     });
 
     const fetchDetail = useCallback(async () => {
@@ -125,6 +134,13 @@ export default function OrderDetailPage() {
     // Handle cancel order
     const handleCancelOrder = async () => {
         if (!order) return;
+
+        // Nếu đơn đã thanh toán trước (Paid), mở Modal điền tài khoản ngân hàng để hoàn tiền
+        if (order.paymentStatus === 'Paid') {
+            setIsCancelModalOpen(true);
+            return;
+        }
+
         const confirmCancel = window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?');
         if (!confirmCancel) return;
 
@@ -132,6 +148,32 @@ export default function OrderDetailPage() {
         try {
             await orderApi.cancelOrder(order.orderId);
             toast.success('Hủy đơn hàng thành công!');
+            fetchDetail();
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Không thể hủy đơn hàng.');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleConfirmRefundCancel = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!order) return;
+
+        if (!refundForm.bankName.trim() || !refundForm.accountNumber.trim() || !refundForm.accountName.trim()) {
+            toast.error('Vui lòng nhập đầy đủ thông tin tài khoản hoàn tiền.');
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            await orderApi.cancelOrder(order.orderId, {
+                refundBankName: refundForm.bankName,
+                refundAccountNumber: refundForm.accountNumber,
+                refundAccountName: refundForm.accountName
+            });
+            toast.success('Đã yêu cầu hủy đơn và hoàn tiền thành công! Vui lòng đợi Admin xử lý.');
+            setIsCancelModalOpen(false);
             fetchDetail();
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Không thể hủy đơn hàng.');
@@ -619,15 +661,17 @@ export default function OrderDetailPage() {
                         <i className={`fa-solid ${sc.icon}`} />
                         {sc.label}
                     </span>
-                    {order.orderStatus === 'Pending' && (
+                    {(order.orderStatus === 'Pending' || (order.orderStatus === 'Processing' && order.paymentStatus === 'Paid')) && (
                         <>
-                            <button
-                                onClick={() => setIsEditModalOpen(true)}
-                                className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5"
-                            >
-                                <i className="fa-solid fa-pen-to-square" />
-                                Thay đổi địa chỉ
-                            </button>
+                            {order.orderStatus === 'Pending' && (
+                                <button
+                                    onClick={() => setIsEditModalOpen(true)}
+                                    className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-1.5"
+                                >
+                                    <i className="fa-solid fa-pen-to-square" />
+                                    Thay đổi địa chỉ
+                                </button>
+                            )}
                             <button
                                 onClick={handleCancelOrder}
                                 disabled={actionLoading}
@@ -952,6 +996,105 @@ export default function OrderDetailPage() {
                                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm shadow-md transition-all disabled:opacity-50"
                                 >
                                     {actionLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Refund Pending Callout Card */}
+            {order.refundAccountNumber && (
+                <div className={`rounded-2xl p-6 border shadow-sm ${order.paymentStatus === 'Refunded' 
+                    ? 'bg-emerald-50/50 border-emerald-200 text-emerald-800' 
+                    : 'bg-amber-50/50 border-amber-200 text-amber-800'}`}>
+                    <div className="flex gap-4 items-start">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${order.paymentStatus === 'Refunded' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                            <i className={`fa-solid ${order.paymentStatus === 'Refunded' ? 'fa-circle-check' : 'fa-clock'} text-lg`} />
+                        </div>
+                        <div className="space-y-1">
+                            <h4 className="font-extrabold text-sm uppercase tracking-wide">
+                                {order.paymentStatus === 'Refunded' ? 'Đã hoàn tiền thành công' : 'Yêu cầu hoàn tiền đang chờ duyệt'}
+                            </h4>
+                            <p className="text-xs opacity-90 leading-relaxed">
+                                {order.paymentStatus === 'Refunded' 
+                                    ? 'Cửa hàng đã chuyển tiền hoàn lại tài khoản ngân hàng của bạn. Vui lòng kiểm tra tài khoản.' 
+                                    : 'Bạn đã yêu cầu hủy đơn hàng. Số tiền sẽ được Admin kiểm tra và chuyển khoản hoàn lại theo tài khoản sau:'}
+                            </p>
+                            <ul className="text-xs mt-3 space-y-1 list-disc pl-4 opacity-90 font-medium">
+                                <li><strong>Ngân hàng:</strong> {order.refundBankName}</li>
+                                <li><strong>Số tài khoản:</strong> {order.refundAccountNumber}</li>
+                                <li><strong>Chủ tài khoản:</strong> {order.refundAccountName}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ── Cancel & Refund Request Modal ── */}
+            {isCancelModalOpen && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full relative border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+                        
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500">
+                                <i className="fa-solid fa-circle-exclamation text-3xl"></i>
+                            </div>
+                            <h3 className="text-2xl font-black text-gray-900">Yêu cầu hoàn tiền</h3>
+                            <p className="text-gray-500 text-sm mt-1">Đơn hàng này đã được thanh toán. Vui lòng nhập tài khoản ngân hàng để nhận tiền hoàn trả.</p>
+                        </div>
+
+                        <form onSubmit={handleConfirmRefundCancel} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Tên ngân hàng</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ví dụ: MB Bank, Vietcombank..."
+                                    value={refundForm.bankName}
+                                    onChange={(e) => setRefundForm({ ...refundForm, bankName: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Số tài khoản</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Nhập số tài khoản ngân hàng"
+                                    value={refundForm.accountNumber}
+                                    onChange={(e) => setRefundForm({ ...refundForm, accountNumber: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-gray-500 uppercase mb-1.5">Tên chủ tài khoản</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Tên viết hoa không dấu"
+                                    value={refundForm.accountName}
+                                    onChange={(e) => setRefundForm({ ...refundForm, accountName: e.target.value })}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 pt-4 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCancelModalOpen(false)}
+                                    className="w-1/2 bg-white hover:bg-gray-50 text-gray-600 border border-gray-200 font-bold py-3 rounded-xl text-sm transition-all text-center"
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={actionLoading}
+                                    className="w-1/2 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white font-bold py-3 rounded-xl text-sm shadow-md transition-all disabled:opacity-50"
+                                >
+                                    {actionLoading ? 'Đang hủy...' : 'Hủy & hoàn tiền'}
                                 </button>
                             </div>
                         </form>

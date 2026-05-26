@@ -39,6 +39,7 @@ function App() {
 			<BrowserRouter>
 				<Toaster
 					position="top-right"
+					containerStyle={{ zIndex: 99999 }}
 					toastOptions={{
 						style: {
 							fontFamily: "'Outfit', sans-serif",
@@ -63,11 +64,7 @@ function App() {
 					<Route path="/profile" element={<ProfilePage />} />
 					<Route path="/error" element={<ErrorPage />} />
 					{/* Cart route */}
-					<Route path="/cart" element={
-						<div style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', paddingBottom: '40px' }}>
-							<CartPage />
-						</div>
-					} />
+					<Route path="/cart" element={<CartPage />} />
 
 					{/* Design route */}
 					<Route path="/customizer" element={<CustomizerPage />} />
