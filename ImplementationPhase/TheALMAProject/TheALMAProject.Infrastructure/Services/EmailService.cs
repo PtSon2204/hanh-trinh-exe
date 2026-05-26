@@ -146,6 +146,33 @@ namespace TheALMAProject.Infrastructure.Services
         }
 
         /// <summary>
+        /// Gửi email thông báo hoàn tiền đơn hàng bị hủy cho khách hàng
+        /// </summary>
+        public Task SendRefundNotificationAsync(string toEmail, string customerName, string orderCode, decimal amount)
+        {
+            var subject = $"ALMA - Thông báo hoàn tiền đơn hàng #{orderCode}";
+            var body = $@"
+                <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
+                    <div style='background: linear-gradient(135deg, #10b981, #059669); padding: 30px; text-align: center; border-radius: 12px 12px 0 0;'>
+                        <h1 style='color: white; margin: 0;'>💸 Đã hoàn tiền thành công!</h1>
+                    </div>
+                    <div style='padding: 30px; background: #f8fafc; border: 1px solid #e2e8f0;'>
+                        <p>Xin chào <strong>{customerName}</strong>,</p>
+                        <p>Chúng tôi đã thực hiện hoàn tiền thành công cho đơn hàng bị hủy <strong>#{orderCode}</strong> của bạn.</p>
+                        <div style='background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 20px 0;'>
+                            <p style='margin: 5px 0;'>📦 Mã đơn hàng: <strong style='color: #2563eb;'>{orderCode}</strong></p>
+                            <p style='margin: 5px 0;'>💰 Số tiền hoàn trả: <strong style='color: #10b981; font-size: 18px;'>{amount:N0} VNĐ</strong></p>
+                            <p style='margin: 5px 0; color: #64748b; font-size: 14px;'>Phương thức hoàn tiền: Chuyển khoản ngân hàng</p>
+                        </div>
+                        <p>Vui lòng kiểm tra tài khoản ngân hàng của bạn trong vòng 1-3 ngày làm việc. Nếu có bất kỳ thắc mắc nào, vui lòng phản hồi email này.</p>
+                        <p style='color: #64748b; font-size: 14px; margin-top: 30px;'>— Đội ngũ ALMA Custom Threads</p>
+                    </div>
+                </div>";
+
+            return SendEmailAsync(toEmail, subject, body);
+        }
+
+        /// <summary>
         /// Loại bỏ HTML tags để log text thuần ra console cho dễ đọc.
         /// </summary>
         private static string StripHtml(string html)

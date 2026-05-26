@@ -38,6 +38,9 @@ export interface OrderDetailResponseDto extends OrderResponseDto {
   voucherCode: string | null;
   voucherDiscountPercent: Decimal | null;
   items: OrderItemResponseDto[];
+  refundBankName: string | null;
+  refundAccountNumber: string | null;
+  refundAccountName: string | null;
 }
 
 export interface CheckoutRequestDto {

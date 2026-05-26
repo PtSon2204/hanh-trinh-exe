@@ -16,13 +16,20 @@ namespace TheALMAProject.Application.Services
         private readonly IMapper _mapper;
         private readonly IFileStorageService _fileStorageService;
         private readonly IPrintFileRenderer _printFileRenderer;
+        private readonly IEmailService _emailService;
 
-        public AdminOrderService(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService fileStorageService, IPrintFileRenderer printFileRenderer)
+        public AdminOrderService(
+            IUnitOfWork unitOfWork, 
+            IMapper mapper, 
+            IFileStorageService fileStorageService, 
+            IPrintFileRenderer printFileRenderer,
+            IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _fileStorageService = fileStorageService;
             _printFileRenderer = printFileRenderer;
+            _emailService = emailService;
         }
 
         public async Task<PagedResult<AdminOrderListDto>> GetOrders(PaginationParams query)
@@ -152,11 +159,26 @@ namespace TheALMAProject.Application.Services
                 throw new AppHttpException(StatusCodes.Status404NotFound, "Order not found");
             }
 
+            bool wasRefunded = order.PaymentStatus == "Refunded";
+
             order.OrderStatus = dto.OrderStatus;
             order.PaymentStatus = dto.PaymentStatus;
 
             _unitOfWork.OrderRepo.UpdateOrder(order);
             await _unitOfWork.SaveChangesAsync();
+
+            // Nếu trạng thái thanh toán chuyển sang Refunded (đã hoàn tiền)
+            if (!wasRefunded && order.PaymentStatus == "Refunded")
+            {
+                try
+                {
+                    await _emailService.SendRefundNotificationAsync(order.User.Email, order.User.FullName, order.OrderCode, order.TotalAmount);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Admin Refund Email Error]: Lỗi gửi email thông báo hoàn tiền: {ex.Message}");
+                }
+            }
         }
 
         private static string NormalizeGroupBy(string? groupBy)
