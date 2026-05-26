@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using TheALMAProject.Application.DTOs.UserDesignDtos;
+using TheALMAProject.Application.Exceptions;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Interfaces;
@@ -260,13 +261,13 @@ namespace TheALMAProject.Application.Services
             var separatorIndex = previewImageUrl.IndexOf(',');
             if (separatorIndex < 0)
             {
-                throw new Exception("Preview image data is invalid");
+                throw new AppHttpException(StatusCodes.Status400BadRequest, "Preview image data is invalid");
             }
 
             var metadata = previewImageUrl[..separatorIndex];
             if (!metadata.EndsWith(";base64", StringComparison.OrdinalIgnoreCase))
             {
-                throw new Exception("Preview image must be base64 encoded");
+                throw new AppHttpException(StatusCodes.Status400BadRequest, "Preview image must be base64 encoded");
             }
 
             var contentType = metadata["data:".Length..^";base64".Length].ToLowerInvariant();
@@ -276,14 +277,14 @@ namespace TheALMAProject.Application.Services
                 "image/jpeg" => ".jpg",
                 "image/webp" => ".webp",
                 "image/gif" => ".gif",
-                _ => throw new Exception("Unsupported preview image type")
+                _ => throw new AppHttpException(StatusCodes.Status400BadRequest, "Unsupported preview image type")
             };
 
             var base64Data = previewImageUrl[(separatorIndex + 1)..];
             var maximumEncodedLength = ((MaxPreviewImageBytes + 2) / 3) * 4;
             if (base64Data.Length > maximumEncodedLength)
             {
-                throw new Exception("Preview image must be 5MB or smaller");
+                throw new AppHttpException(StatusCodes.Status400BadRequest, "Preview image must be 5MB or smaller");
             }
 
             byte[] imageBytes;
@@ -293,17 +294,17 @@ namespace TheALMAProject.Application.Services
             }
             catch (FormatException)
             {
-                throw new Exception("Preview image data is invalid");
+                throw new AppHttpException(StatusCodes.Status400BadRequest, "Preview image data is invalid");
             }
 
             if (imageBytes.Length > MaxPreviewImageBytes)
             {
-                throw new Exception("Preview image must be 5MB or smaller");
+                throw new AppHttpException(StatusCodes.Status400BadRequest, "Preview image must be 5MB or smaller");
             }
 
             if (!HasExpectedImageSignature(imageBytes, contentType))
             {
-                throw new Exception("Preview image data is invalid");
+                throw new AppHttpException(StatusCodes.Status400BadRequest, "Preview image data is invalid");
             }
 
             await using var stream = new MemoryStream(imageBytes);

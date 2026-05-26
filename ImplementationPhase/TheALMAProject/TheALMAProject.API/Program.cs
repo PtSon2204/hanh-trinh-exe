@@ -1,7 +1,6 @@
 using TheALMAProject.Infrastructure;
 using TheALMAProject.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 using TheALMAProject.API.Extensions;
 using TheALMAProject.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -126,15 +125,7 @@ namespace TheALMAProject.API
             app.UseCors("AllowReactApp");
 
             // Phục vụ file tĩnh (avatar, images) từ wwwroot
-            app.UseStaticFiles(new StaticFileOptions
-            {
-                OnPrepareResponse = ctx =>
-                {
-                    ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
-                    // Alternatively, for tighter security, only allow your specific frontend URL: ctx.Context.Response.Headers.Append("Access-Control-Allow-Origin", "actualfrontendurl");
-                    ctx.Context.Response.Headers.Append("Access-Control-Allow-Methods", "GET, OPTIONS");
-                }
-            });
+            app.UseStaticFiles();
 
             // =====================================================
             // QUAN TRỌNG: Thứ tự middleware

@@ -127,13 +127,47 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object";
+}
+
+function isPrintAreaRect(value: unknown): value is PrintAreaRect {
+  if (!isRecord(value)) return false;
+
+  const { x, y, width, height } = value;
+  return (
+    typeof x === "number" &&
+    Number.isFinite(x) &&
+    typeof y === "number" &&
+    Number.isFinite(y) &&
+    typeof width === "number" &&
+    Number.isFinite(width) &&
+    width > 0 &&
+    typeof height === "number" &&
+    Number.isFinite(height) &&
+    height > 0
+  );
+}
+
 function parsePrintArea(printAreaJson: string | null): ProductPrintArea | null {
   if (!printAreaJson) return null;
 
   try {
     const parsed: unknown = JSON.parse(printAreaJson);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed as ProductPrintArea;
+    if (!isRecord(parsed)) return null;
+
+    const printArea: ProductPrintArea = {};
+    if (parsed.front !== undefined) {
+      if (!isPrintAreaRect(parsed.front)) return null;
+      printArea.front = parsed.front;
+    }
+
+    if (parsed.back !== undefined) {
+      if (!isPrintAreaRect(parsed.back)) return null;
+      printArea.back = parsed.back;
+    }
+
+    return printArea;
   } catch {
     return null;
   }

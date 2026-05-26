@@ -129,9 +129,10 @@ namespace TheALMAProject.Application.Services
                 var fileNamePrefix = $"order-{order.OrderId}-item-{item.OrderItemId}-design-{design.DesignId}";
 
                 design.PrintFileUrl = await SaveGeneratedPngAsync(pngBytes, $"{fileNamePrefix}-artwork.png", "uploads/print-files");
-                design.PlacementGuideUrl = string.IsNullOrWhiteSpace(design.PreviewImageUrl)
-                    ? await SaveGeneratedPngAsync(_printFileRenderer.GenerateOrderItemPlacementGuidePng(order, item, design), $"{fileNamePrefix}-guide.png", "uploads/placement-guides")
-                    : design.PreviewImageUrl;
+                design.PlacementGuideUrl = await SaveGeneratedPngAsync(
+                    _printFileRenderer.GenerateOrderItemPlacementGuidePng(order, item, design),
+                    $"{fileNamePrefix}-guide.png",
+                    "uploads/placement-guides");
 
                 result.Add(new AdminOrderPrintFileDto
                 {
@@ -243,6 +244,7 @@ namespace TheALMAProject.Application.Services
             await using var stream = new MemoryStream(pngBytes);
             var formFile = new FormFile(stream, 0, pngBytes.Length, "file", fileName)
             {
+                Headers = new HeaderDictionary(),
                 ContentType = "image/png"
             };
 
