@@ -1,10 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using TheALMAProject.Infrastructure.Data;
 
 #nullable disable
 
 namespace TheALMAProject.Infrastructure.Migrations
 {
     /// <inheritdoc />
+    [DbContext(typeof(ApplicationDbContext))]
     [Migration("20260525090000_AddUserDesignSidePreviewUrls")]
     public partial class AddUserDesignSidePreviewUrls : Migration
     {
