@@ -135,10 +135,15 @@ const CheckoutPage = () => {
     // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
     // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
     const reverseGeocode = async (lat: number, lng: number, updateCallback: (address: string, province: string) => void) => {
+        // Thử Nominatim trước
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&email=son.bafpt@gmail.com`, {
-                headers: { 'Accept-Language': 'vi' }
+                headers: { 'Accept-Language': 'vi' },
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.display_name) {
@@ -151,12 +156,21 @@ const CheckoutPage = () => {
                     return;
                 }
             }
-        } catch (err) {
-            console.warn("Primary reverse geocoding failed, trying Photon fallback:", err);
+        } catch (err: any) {
+            console.warn("Nominatim reverse geocoding failed:", err?.name === 'AbortError' ? 'Timeout' : err);
         }
 
+        // Đợi 1 giây trước khi thử fallback (tránh rate limit)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Fallback: dùng Photon
         try {
-            const response = await fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const response = await fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
             if (response.ok) {
                 const geojson = await response.json();
                 if (geojson && Array.isArray(geojson.features) && geojson.features.length > 0) {
@@ -177,10 +191,11 @@ const CheckoutPage = () => {
                     const province = props.city || props.town || props.state || "";
                     
                     updateCallback(fullAddress, province || fullAddress);
+                    return;
                 }
             }
-        } catch (err) {
-            console.error("All reverse geocoding options failed:", err);
+        } catch (err: any) {
+            console.error("Photon reverse geocoding also failed:", err?.name === 'AbortError' ? 'Timeout' : err);
         }
     };
 
@@ -499,28 +514,61 @@ const CheckoutPage = () => {
 
                 setModalCoords({ lat, lng });
 
+                // Luôn cập nhật bản đồ trước (không phụ thuộc reverse geocode)
                 if (isModal) {
                     if (modalMapRef.current && modalMarkerRef.current) {
                         modalMapRef.current.setView([lat, lng], 16);
                         modalMarkerRef.current.setLatLng([lat, lng]);
                     }
-                    await reverseGeocode(lat, lng, (address, province) => {
-                        setModalAddress(address);
-                        setModalProvince(province);
-                        setModalSearch(address);
-                    });
                 } else {
                     if (mapRef.current && markerRef.current) {
                         mapRef.current.setView([lat, lng], 16);
                         markerRef.current.setLatLng([lat, lng]);
                     }
-                    await reverseGeocode(lat, lng, (address, province) => {
+                }
+
+                // Thử reverse geocode để lấy địa chỉ text
+                const geocodeToastId = toast.loading("Đang lấy thông tin địa chỉ...");
+                let geocodeSuccess = false;
+
+                const updateAddress = (address: string, province: string) => {
+                    geocodeSuccess = true;
+                    if (isModal) {
+                        setModalAddress(address);
+                        setModalProvince(province);
+                        setModalSearch(address);
+                    } else {
                         setShippingInfo(prev => ({
                             ...prev,
                             shipAddress: address,
                             shipProvince: province
                         }));
                         setMiniMapSearch(address);
+                    }
+                };
+
+                // Thử reverse geocode (đã có fallback Nominatim → Photon bên trong)
+                await reverseGeocode(lat, lng, updateAddress);
+
+                toast.dismiss(geocodeToastId);
+                if (geocodeSuccess) {
+                    toast.success("Đã tìm được địa chỉ!");
+                } else {
+                    // Nếu cả 2 API đều thất bại → điền tọa độ vào địa chỉ để user biết vị trí
+                    const coordsText = `Vị trí GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    if (isModal) {
+                        setModalAddress(coordsText);
+                        setModalSearch(coordsText);
+                    } else {
+                        setShippingInfo(prev => ({
+                            ...prev,
+                            shipAddress: coordsText,
+                        }));
+                        setMiniMapSearch(coordsText);
+                    }
+                    toast("Đã định vị trên bản đồ! Bạn có thể nhập địa chỉ chi tiết bằng tay hoặc kéo ghim trên bản đồ.", {
+                        icon: "📍",
+                        duration: 5000,
                     });
                 }
             },
@@ -529,11 +577,15 @@ const CheckoutPage = () => {
                 console.error("GPS error:", error);
                 if (error.code === 1) {
                     toast.error("Vui lòng cấp quyền truy cập vị trí trên trình duyệt!");
+                } else if (error.code === 2) {
+                    toast.error("Không thể xác định vị trí. Hãy thử dùng ô tìm kiếm để nhập địa chỉ.");
+                } else if (error.code === 3) {
+                    toast.error("Hết thời gian chờ định vị. Hãy thử lại hoặc tìm kiếm địa chỉ.");
                 } else {
                     toast.error("Không thể xác định vị trí GPS. Vui lòng gõ địa chỉ tìm kiếm!");
                 }
             },
-            { enableHighAccuracy: true, timeout: 10000 }
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
         );
     };
 

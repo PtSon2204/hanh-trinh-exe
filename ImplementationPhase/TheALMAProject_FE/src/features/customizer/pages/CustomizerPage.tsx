@@ -416,6 +416,97 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
         setCartModalOpen(true);
     };
 
+    // Helper: Tạo ảnh composite (áo + thiết kế) để hiển thị trong giỏ hàng
+    const generateCompositePreview = (): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            if (!fabricCanvas.current) {
+                reject(new Error('Canvas not available'));
+                return;
+            }
+
+            const COMPOSITE_W = 400;
+            const COMPOSITE_H = 500;
+
+            // Lấy ảnh áo đã xử lý (bỏ nền) hoặc ảnh gốc
+            const shirtImgSrc = processedImages[activeProductUrl] ?? activeProductUrl;
+
+            const shirtImg = new Image();
+            shirtImg.crossOrigin = 'anonymous';
+            shirtImg.src = shirtImgSrc;
+
+            shirtImg.onload = () => {
+                try {
+                    const offscreen = document.createElement('canvas');
+                    offscreen.width = COMPOSITE_W;
+                    offscreen.height = COMPOSITE_H;
+                    const ctx = offscreen.getContext('2d');
+                    if (!ctx) { reject(new Error('Cannot get 2d context')); return; }
+
+                    // Nền trắng
+                    ctx.fillStyle = '#f9fafb';
+                    ctx.fillRect(0, 0, COMPOSITE_W, COMPOSITE_H);
+
+                    // --- Vẽ áo (chiếm ~85% chiều rộng, căn giữa) ---
+                    const shirtDrawW = COMPOSITE_W * 0.85;
+                    const shirtAspect = shirtImg.naturalHeight / shirtImg.naturalWidth;
+                    const shirtDrawH = shirtDrawW * shirtAspect;
+                    const shirtX = (COMPOSITE_W - shirtDrawW) / 2;
+                    const shirtY = (COMPOSITE_H - shirtDrawH) / 2;
+
+                    // Nếu áo có màu (không trắng) → tô màu áo bằng cách vẽ tạm lên canvas phụ rồi blend
+                    if (shirtColorHex !== '#FFFFFF') {
+                        // Vẽ áo lên canvas phụ để áp dụng color multiply
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = COMPOSITE_W;
+                        tempCanvas.height = COMPOSITE_H;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        if (tempCtx) {
+                            tempCtx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            // Áp dụng màu qua globalCompositeOperation
+                            tempCtx.globalCompositeOperation = 'multiply';
+                            tempCtx.fillStyle = shirtColorHex;
+                            tempCtx.fillRect(shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            // Giữ alpha từ ảnh gốc
+                            tempCtx.globalCompositeOperation = 'destination-in';
+                            tempCtx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            ctx.drawImage(tempCanvas, 0, 0);
+                        }
+                    } else {
+                        ctx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                    }
+
+                    // --- Vẽ thiết kế (canvas Fabric) lên vùng tương ứng ---
+                    // Vùng thiết kế trên áo: 60% width, 65% height, tại top 18%, left 20% (tương đối so với khung áo)
+                    const designAreaX = shirtX + shirtDrawW * 0.20;
+                    const designAreaY = shirtY + shirtDrawH * 0.18;
+                    const designAreaW = shirtDrawW * 0.60;
+                    const designAreaH = shirtDrawH * 0.65;
+
+                    // Export design từ Fabric canvas
+                    const designDataUrl = fabricCanvas.current!.toDataURL({ format: 'png', multiplier: 1 });
+                    const designImg = new Image();
+                    designImg.src = designDataUrl;
+                    designImg.onload = () => {
+                        ctx.drawImage(designImg, designAreaX, designAreaY, designAreaW, designAreaH);
+                        resolve(offscreen.toDataURL('image/png', 0.85));
+                    };
+                    designImg.onerror = () => {
+                        // Nếu không load được design, vẫn trả về ảnh áo
+                        resolve(offscreen.toDataURL('image/png', 0.85));
+                    };
+                } catch (e) {
+                    reject(e);
+                }
+            };
+
+            shirtImg.onerror = () => {
+                // Fallback: nếu không load được ảnh áo, dùng canvas gốc
+                const fallback = fabricCanvas.current!.toDataURL({ format: 'png', multiplier: 0.5 });
+                resolve(fallback);
+            };
+        });
+    };
+
     const handleConfirmAddToCart = async () => {
         if (!fabricCanvas.current) return;
         const hasAny = Object.values(sizeQty).some(q => q > 0);
@@ -426,7 +517,9 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             fabricCanvas.current.renderAll();
             backFabricCanvas.current?.discardActiveObject();
             backFabricCanvas.current?.renderAll();
-            const previewDataUrl = fabricCanvas.current.toDataURL({ format: 'png', multiplier: 0.5 });
+
+            // Tạo ảnh composite (áo + thiết kế) thay vì chỉ ảnh canvas design
+            const previewDataUrl = await generateCompositePreview();
             const canvasJSON = JSON.stringify(fabricCanvas.current.toJSON(['id', 'selectable']));
             await customizerApi.saveAndAddMultiSize(
                 { baseProductId: selectedProduct?.baseProductId ?? 1, canvasJson: canvasJSON, previewImageUrl: previewDataUrl, iconIds: usedIconIds, fontIds: [] },
