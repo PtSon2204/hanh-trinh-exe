@@ -5,6 +5,7 @@ import { AdminDashboardPage } from "../dashboard/pages/AdminDashboardPage";
 import AdminIconsPage from "../icons/pages/AdminIconsPage";
 import AdminNotificationsPage from "../notifications/pages/AdminNotificationsPage";
 import { AdminLayout } from "../orders/components/AdminLayout";
+import AdminNewOrderPage from "../orders/pages/AdminNewOrderPage";
 import AdminOrdersPage from "../orders/pages/adminOrdersPage";
 import { AdminProductLayout } from "../products/components/AdminProductLayout";
 import AdminBaseProductsPage from "../products/pages/AdminBaseProductsPage";
@@ -62,6 +63,7 @@ export function AdminRoutes() {
             </AdminLayout>
           }
         />
+        <Route path="orders/new" element={<AdminNewOrderPage />} />
         <Route
           path="vouchers"
           element={

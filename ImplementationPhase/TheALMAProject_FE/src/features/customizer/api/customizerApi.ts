@@ -1,5 +1,5 @@
 import axiosClient, { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
-import type { BaseProductDto, CreateDesignRequest, IconDto } from '../types';
+import type { BaseProductDto, CreateDesignRequest, IconDto, PrintAreaRect, ProductPrintArea } from '../types';
 
 type PagedResponse<T> = {
     data?: T[];
@@ -12,9 +12,33 @@ type BaseProductResponse = Partial<BaseProductDto> & {
     Name?: string;
     BasePrice?: number;
     FrontImageUrl?: string;
+    BackImageUrl?: string;
     AvailableColors?: string;
+    PrintAreaJson?: string | null;
+    printAreaJson?: string | null;
     isActive?: boolean;
     IsActive?: boolean;
+};
+
+const isPrintAreaRect = (value: unknown): value is PrintAreaRect => {
+    if (!value || typeof value !== 'object') return false;
+    const rect = value as Record<string, unknown>;
+    return ['x', 'y', 'width', 'height'].every((key) => typeof rect[key] === 'number' && Number.isFinite(rect[key]));
+};
+
+const parsePrintAreaJson = (json?: string | null): ProductPrintArea | null => {
+    if (!json) return null;
+    try {
+        const parsed: unknown = JSON.parse(json);
+        if (!parsed || typeof parsed !== 'object') return null;
+        const source = parsed as Record<string, unknown>;
+        const front = isPrintAreaRect(source.front) ? source.front : undefined;
+        const back = isPrintAreaRect(source.back) ? source.back : undefined;
+        if (!front && !back) return null;
+        return { front, back };
+    } catch {
+        return null;
+    }
 };
 
 const readCollection = <T>(payload: unknown): T[] => {
@@ -29,13 +53,39 @@ const readCollection = <T>(payload: unknown): T[] => {
     return [];
 };
 
+const mapBaseProduct = (p: BaseProductResponse): BaseProductDto => {
+    const printAreaJson = p.printAreaJson ?? p.PrintAreaJson ?? null;
+    return {
+        baseProductId: p.baseProductId ?? p.BaseProductId,
+        name: p.name ?? p.Name,
+        basePrice: p.basePrice ?? p.BasePrice ?? 150000,
+        frontImageUrl: p.frontImageUrl ?? p.FrontImageUrl ?? FALLBACK_BASE_PRODUCT.frontImageUrl,
+        backImageUrl: p.backImageUrl ?? p.BackImageUrl ?? undefined,
+        availableColors: p.availableColors ?? p.AvailableColors ?? '#FFFFFF,#000000',
+        printAreaJson,
+        printArea: parsePrintAreaJson(printAreaJson),
+    };
+};
+
+const loadBaseProductDetail = async (productId: number): Promise<BaseProductResponse | null> => {
+    try {
+        const res = await axiosClient.get(`/Admin/BaseProduct/${productId}`);
+        return res.data as BaseProductResponse;
+    } catch (err) {
+        console.warn(`[customizerApi] Không thể tải chi tiết phôi áo ${productId}:`, err);
+        return null;
+    }
+};
+
 // Phôi áo fallback (chỉ dùng khi DB trả về rỗng hoặc lỗi)
 const FALLBACK_BASE_PRODUCT: BaseProductDto = {
     baseProductId: 1,
     name: "Áo Phông",
     basePrice: 150000,
     frontImageUrl: "/images/Phoi_ao/áo cộc tay ko cổ.jpg",
-    availableColors: "#FFFFFF,#000000,#9ca3af,#f9a8d4,#dbeafe,#4ade80,#c084fc,#fde047,#f97316,#dc2626"
+    availableColors: "#FFFFFF,#000000,#9ca3af,#f9a8d4,#dbeafe,#4ade80,#c084fc,#fde047,#f97316,#dc2626",
+    printAreaJson: null,
+    printArea: null,
 };
 
 export const customizerApi = {
@@ -58,15 +108,16 @@ export const customizerApi = {
                 return [FALLBACK_BASE_PRODUCT];
             }
 
-            // Map sang interface FE
-            return active.map((p): BaseProductDto => ({
-                baseProductId: p.baseProductId ?? p.BaseProductId,
-                name: p.name ?? p.Name,
-                basePrice: p.basePrice ?? p.BasePrice ?? 150000,
-                frontImageUrl: p.frontImageUrl ?? p.FrontImageUrl ?? FALLBACK_BASE_PRODUCT.frontImageUrl,
-                backImageUrl: p.backImageUrl ?? p.BackImageUrl ?? undefined,
-                availableColors: p.availableColors ?? p.AvailableColors ?? '#FFFFFF,#000000',
+            // BE list cũ có thể chưa trả printAreaJson, nên hydrate từ detail endpoint.
+            const productsWithPrintArea = await Promise.all(active.map(async (p) => {
+                const product = mapBaseProduct(p);
+                if (product.printAreaJson || !product.baseProductId) return product;
+
+                const detail = await loadBaseProductDetail(product.baseProductId);
+                return detail ? mapBaseProduct({ ...p, ...detail }) : product;
             }));
+
+            return productsWithPrintArea;
         } catch (err) {
             console.error('[customizerApi] Không thể tải phôi áo từ DB:', err);
             return [FALLBACK_BASE_PRODUCT];

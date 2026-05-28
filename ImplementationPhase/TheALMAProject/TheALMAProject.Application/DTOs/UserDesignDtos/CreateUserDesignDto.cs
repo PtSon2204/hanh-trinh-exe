@@ -10,7 +10,11 @@ namespace TheALMAProject.Application.DTOs.UserDesignDtos
     {
         public int BaseProductId { get; set; } 
         public string CanvasJson { get; set; } = null!; 
+        public string? FrontCanvasJson { get; set; }
+        public string? BackCanvasJson { get; set; }
         public string? PreviewImageUrl { get; set; } 
+        public string? FrontPreviewImageUrl { get; set; }
+        public string? BackPreviewImageUrl { get; set; }
         public string? PrintFileUrl { get; set; } 
         public string? DesignName { get; set; } 
 

@@ -52,6 +52,13 @@ namespace TheALMAProject.API.Controllers.Admin
             return Ok(result);
         }
 
+        [HttpPost("{id:int}/fabric-print-files")]
+        public async Task<IActionResult> SaveFabricPrintFiles(int id, [FromBody] AdminOrderFabricPrintFileUploadDto dto)
+        {
+            var result = await _adminOrderService.SaveFabricPrintFiles(id, dto);
+            return Ok(result);
+        }
+
         [HttpPut("{id:int}/status")]
         public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] AdminUpdateOrderStatusDto dto)
         {

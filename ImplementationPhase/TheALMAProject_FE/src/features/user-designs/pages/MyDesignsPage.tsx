@@ -284,7 +284,7 @@ interface DesignCardProps {
 }
 
 function DesignCard({ design, onDelete, onEdit, onAddToCart }: DesignCardProps) {
-  const previewUrl = resolveApiAssetUrl(design.previewImageUrl);
+  const previewUrl = resolveApiAssetUrl(design.frontPreviewImageUrl ?? design.previewImageUrl);
 
   const formattedDate = design.createdAt
     ? new Date(design.createdAt).toLocaleDateString('vi-VN', {

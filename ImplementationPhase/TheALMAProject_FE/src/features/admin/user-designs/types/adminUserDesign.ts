@@ -4,6 +4,8 @@ export interface AdminUserDesignListDto {
 	designId: number;
 	designName: string | null;
 	previewImageUrl: string | null;
+	frontPreviewImageUrl: string | null;
+	backPreviewImageUrl: string | null;
 	isOrdered: boolean;
 	createdAt: IsoDateString | null;
 	userEmail: string;
@@ -14,6 +16,8 @@ export interface AdminUserDesignDto extends AdminUserDesignListDto {
 	userId: number;
 	baseProductId: number;
 	canvasJson: string;
+	frontCanvasJson: string | null;
+	backCanvasJson: string | null;
 	printFileUrl: string | null;
 }
 
