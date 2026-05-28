@@ -14,6 +14,8 @@ namespace TheALMAProject.Application.Mappings
         public UserDesignMapping()
         {
             CreateMap<UserDesign, UserDesignResponseDto>()
+                .ForMember(dest => dest.CanvasJson, opt => opt.MapFrom(src => src.FrontCanvasJson ?? src.CanvasJson))
+                .ForMember(dest => dest.FrontCanvasJson, opt => opt.MapFrom(src => src.FrontCanvasJson ?? src.CanvasJson))
                 .ForMember(dest => dest.TotalEstimatedPrice, opt => opt.MapFrom(src =>
                     src.BaseProduct.BasePrice +
                     (src.Icons != null ? src.Icons.Sum(i => i.PriceAddon) : 0) +

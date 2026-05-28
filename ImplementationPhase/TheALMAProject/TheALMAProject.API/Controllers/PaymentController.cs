@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TheALMAProject.Application.DTOs.OrderDtos;
@@ -16,17 +16,19 @@ namespace TheALMAProject.API.Controllers
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
-        private readonly IVietQrService _vietQrService; // 1. Khai báo service VietQR
+        private readonly IVietQrService _vietQrService;
+        private readonly IEmailService _emailService;
 
-        // 2. Tiêm IVietQrService vào constructor
         public PaymentController(
             IUnitOfWork unitOfWork,
             IConfiguration configuration,
-            IVietQrService vietQrService)
+            IVietQrService vietQrService,
+            IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _configuration = configuration;
             _vietQrService = vietQrService;
+            _emailService = emailService;
         }
 
         // Endpoint này Server VNPay sẽ gọi (Webhook)
@@ -126,5 +128,132 @@ namespace TheALMAProject.API.Controllers
                 return BadRequest(new { Success = false, Message = ex.Message });
             }
         }
+
+        // Endpoint SePay Webhook nhận kết quả chuyển tiền thành công qua ngân hàng
+        [AllowAnonymous]
+        [HttpPost("sepay-webhook")]
+        public async Task<IActionResult> SePayWebhook([FromBody] SePayWebhookModel model)
+        {
+            try
+            {
+                // 1. Kiểm tra API Key (nếu cấu hình) để bảo mật webhook
+                var apiKey = _configuration["SePay:ApiKey"];
+                if (!string.IsNullOrEmpty(apiKey))
+                {
+                    var authHeader = Request.Headers["Authorization"].ToString();
+                    
+                    // In log debug ra Terminal để chẩn đoán
+                    Console.WriteLine($"[SePay Auth Debug] Header nhan duoc: '{authHeader}'");
+                    Console.WriteLine($"[SePay Auth Debug] ApiKey cau hinh: '{apiKey}'");
+
+                    bool isValidAuth = !string.IsNullOrEmpty(authHeader) && 
+                                       authHeader.Contains(apiKey, StringComparison.OrdinalIgnoreCase);
+                         
+                    if (!isValidAuth)
+                    {
+                        Console.WriteLine("[SePay Auth Debug] Xac thuc that bai! Tra ve 401 Unauthorized.");
+                        return Unauthorized(new { message = "Không có quyền truy cập SePay Webhook." });
+                    }
+                    Console.WriteLine("[SePay Auth Debug] Xac thuc thanh cong!");
+                }
+
+                // 2. Chỉ xử lý giao dịch nhận tiền chuyển khoản vào
+                if (string.IsNullOrEmpty(model.TransferType) || !model.TransferType.Equals("in", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Ok(new { success = false, message = "Không phải giao dịch nhận tiền." });
+                }
+
+                if (string.IsNullOrEmpty(model.Content))
+                {
+                    return BadRequest(new { success = false, message = "Không tìm thấy nội dung chuyển khoản trong giao dịch." });
+                }
+
+                // Tự động trả về 200 OK đối với các request Ping/Test mặc định từ SePay Dashboard
+                if (model.Content.Contains("sepay", StringComparison.OrdinalIgnoreCase) || 
+                    model.Content.Contains("test", StringComparison.OrdinalIgnoreCase))
+                {
+                    Console.WriteLine("[SePay Webhook Debug] Nhan tin hieu Ping/Test mac dinh tu SePay Dashboard. Tra ve HTTP 200 OK thanh cong.");
+                    return Ok(new { success = true, message = "Kết nối Webhook SePay thành công!" });
+                }
+
+                // 3. Tìm mã đơn hàng từ trường code hoặc từ nội dung chuyển khoản
+                string? matchedCode = null;
+                if (!string.IsNullOrEmpty(model.Code) && model.Code.StartsWith("ALMA", StringComparison.OrdinalIgnoreCase))
+                {
+                    matchedCode = model.Code;
+                }
+                else
+                {
+                    var matchWithHyphen = System.Text.RegularExpressions.Regex.Match(model.Content, @"ALMA-\d+", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (matchWithHyphen.Success)
+                    {
+                        matchedCode = matchWithHyphen.Value;
+                    }
+                    else
+                    {
+                        var matchNoHyphen = System.Text.RegularExpressions.Regex.Match(model.Content, @"ALMA\d+", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                        if (matchNoHyphen.Success)
+                        {
+                            matchedCode = matchNoHyphen.Value.Replace("ALMA", "ALMA-", StringComparison.OrdinalIgnoreCase);
+                        }
+                    }
+                }
+
+                if (string.IsNullOrEmpty(matchedCode))
+                {
+                    return BadRequest(new { success = false, message = "Không phân tích được mã đơn hàng từ giao dịch." });
+                }
+
+                // 4. Tìm đơn hàng tương ứng trong hệ thống
+                var order = await _unitOfWork.OrderRepo.GetByOrderCodeAsync(matchedCode);
+                if (order == null)
+                {
+                    return NotFound(new { success = false, message = $"Không tìm thấy đơn hàng {matchedCode}." });
+                }
+
+                // 5. Nếu đơn hàng chưa được thanh toán, tiến hành cập nhật trạng thái
+                if (order.PaymentStatus == "Unpaid" || order.PaymentStatus == "Pending")
+                {
+                    order.PaymentStatus = "Paid";
+                    order.OrderStatus = "Processing"; // Chuyển trạng thái sang Đang xử lý
+                    await _unitOfWork.SaveChangesAsync();
+
+                    // Gửi email thông báo xác nhận đơn hàng thành công tự động
+                    try
+                    {
+                        var user = await _unitOfWork.UserRepo.GetById(order.UserId);
+                        if (user != null)
+                        {
+                            await _emailService.SendOrderConfirmationAsync(user.Email, user.FullName, order.OrderCode, order.TotalAmount);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[Email Error]: Lỗi gửi email tự động xác nhận đơn hàng: {ex.Message}");
+                    }
+
+                    return Ok(new { success = true, message = $"Xác nhận thanh toán thành công cho đơn hàng {matchedCode}." });
+                }
+
+                return Ok(new { success = true, message = $"Đơn hàng {matchedCode} đã thanh toán trước đó." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, Message = ex.Message });
+            }
+        }
+    }
+
+    public class SePayWebhookModel
+    {
+        public long? Id { get; set; }
+        public string? Gateway { get; set; }
+        public string? TransactionDate { get; set; }
+        public string? AccountNumber { get; set; }
+        public string? Code { get; set; }
+        public string? Content { get; set; }
+        public string? TransferType { get; set; }
+        public decimal? TransferAmount { get; set; }
+        public string? ReferenceCode { get; set; }
     }
 }

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using TheALMAProject.Domain.Models;
 using TheALMAProject.Infrastructure.Models;
@@ -14,36 +12,36 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-    public DbSet<Address> Addresses { get; set; }
+    public DbSet<Address> Addresses { get; set; } = null!;
 
-    public DbSet<BaseProduct> BaseProducts { get; set; }
+    public DbSet<BaseProduct> BaseProducts { get; set; } = null!;
 
-    public DbSet<Cart> Carts { get; set; }
+    public DbSet<Cart> Carts { get; set; } = null!;
 
-    public DbSet<CartItem> CartItems { get; set; }
+    public DbSet<CartItem> CartItems { get; set; } = null!;
 
-    public DbSet<Font> Fonts { get; set; }
+    public DbSet<Font> Fonts { get; set; } = null!;
 
-    public DbSet<Icon> Icons { get; set; }
+    public DbSet<Icon> Icons { get; set; } = null!;
 
-    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Notification> Notifications { get; set; } = null!;
 
-    public DbSet<Order> Orders { get; set; }
+    public DbSet<Order> Orders { get; set; } = null!;
            
-    public DbSet<OrderItem> OrderItems { get; set; }
+    public DbSet<OrderItem> OrderItems { get; set; } = null!;
            
-    public DbSet<Review> Reviews { get; set; }
+    public DbSet<Review> Reviews { get; set; } = null!;
            
-    public DbSet<StoreProduct> StoreProducts { get; set; }
+    public DbSet<StoreProduct> StoreProducts { get; set; } = null!;
            
-    public DbSet<University> Universities { get; set; }
+    public DbSet<University> Universities { get; set; } = null!;
            
-    public DbSet<User> Users { get; set; }
+    public DbSet<User> Users { get; set; } = null!;
            
-    public DbSet<UserDesign> UserDesigns { get; set; }
+    public DbSet<UserDesign> UserDesigns { get; set; } = null!;
            
-    public DbSet<Voucher> Vouchers { get; set; }
-    public DbSet<Invoice> Invoices { get; set; }
+    public DbSet<Voucher> Vouchers { get; set; } = null!;
+    public DbSet<Invoice> Invoices { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -165,6 +163,10 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.ShipProvince).HasMaxLength(100);
             entity.Property(e => e.ShippingFee).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.RefundBankName).HasMaxLength(100);
+            entity.Property(e => e.RefundAccountNumber).HasMaxLength(50);
+            entity.Property(e => e.RefundAccountName).HasMaxLength(100);
+
 
             entity.HasOne(d => d.User).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.UserId)
@@ -279,8 +281,13 @@ public class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
             entity.Property(e => e.DesignName).HasMaxLength(255);
+            entity.Property(e => e.FrontCanvasJson).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.BackCanvasJson).HasColumnType("nvarchar(max)");
             entity.Property(e => e.PreviewImageUrl).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.FrontPreviewImageUrl).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.BackPreviewImageUrl).HasColumnType("nvarchar(max)");
             entity.Property(e => e.PrintFileUrl).HasMaxLength(500);
+            entity.Property(e => e.PlacementGuideUrl).HasMaxLength(500);
 
             entity.HasOne(d => d.BaseProduct).WithMany(p => p.UserDesigns)
                 .HasForeignKey(d => d.BaseProductId)

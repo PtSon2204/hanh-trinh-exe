@@ -1,7 +1,6 @@
 using TheALMAProject.Infrastructure;
 using TheALMAProject.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
 using TheALMAProject.API.Extensions;
 using TheALMAProject.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

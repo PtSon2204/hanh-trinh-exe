@@ -6,8 +6,13 @@ namespace TheALMAProject.Application.DTOs.AdminUserDesignDtos
         public int UserId { get; set; }
         public int BaseProductId { get; set; }
         public string CanvasJson { get; set; } = string.Empty;
+        public string? FrontCanvasJson { get; set; }
+        public string? BackCanvasJson { get; set; }
         public string? PreviewImageUrl { get; set; }
+        public string? FrontPreviewImageUrl { get; set; }
+        public string? BackPreviewImageUrl { get; set; }
         public string? PrintFileUrl { get; set; }
+        public string? PlacementGuideUrl { get; set; }
         public string? DesignName { get; set; }
         public bool IsOrdered { get; set; }
         public DateTime? CreatedAt { get; set; }

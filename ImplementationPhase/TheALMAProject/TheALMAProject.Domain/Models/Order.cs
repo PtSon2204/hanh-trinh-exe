@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TheALMAProject.Domain.Models;
 
@@ -35,6 +35,13 @@ public partial class Order
     public string OrderStatus { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }
+
+    public string? RefundBankName { get; set; }
+
+    public string? RefundAccountNumber { get; set; }
+
+    public string? RefundAccountName { get; set; }
+
 
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 

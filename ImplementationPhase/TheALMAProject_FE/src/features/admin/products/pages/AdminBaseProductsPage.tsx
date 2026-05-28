@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { getApiErrorMessage, resolveApiAssetUrl } from "../../../../shared/api/axiosClient";
 import type { PagedResult } from "../../../../shared/types/pagination";
 import { adminProductApi } from "../api/adminProductApi";
@@ -9,6 +9,78 @@ import type {
 } from "../types/adminProduct";
 
 type ImageSide = "front" | "back";
+
+type PrintAreaRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+type ProductPrintArea = Partial<Record<ImageSide, PrintAreaRect>>;
+
+type PrintAreaDrag = {
+  side: ImageSide;
+  mode: "move" | "resize";
+  startX: number;
+  startY: number;
+  startRect: PrintAreaRect;
+  editorWidth: number;
+  editorHeight: number;
+};
+
+const defaultPrintArea: Record<ImageSide, PrintAreaRect> = {
+  front: { x: 0.25, y: 0.22, width: 0.5, height: 0.48 },
+  back: { x: 0.25, y: 0.22, width: 0.5, height: 0.48 },
+};
+
+const clampNumber = (value: number, min: number, max: number) =>
+  Math.min(Math.max(value, min), max);
+
+const roundRectValue = (value: number) => Math.round(value * 10000) / 10000;
+
+const normalizePrintAreaRect = (rect: PrintAreaRect): PrintAreaRect => {
+  const x = clampNumber(rect.x, 0, 0.98);
+  const y = clampNumber(rect.y, 0, 0.98);
+  return {
+    x: roundRectValue(x),
+    y: roundRectValue(y),
+    width: roundRectValue(clampNumber(rect.width, 0.02, 1 - x)),
+    height: roundRectValue(clampNumber(rect.height, 0.02, 1 - y)),
+  };
+};
+
+function isPrintAreaRect(value: unknown): value is PrintAreaRect {
+  if (!value || typeof value !== "object") return false;
+  const rect = value as Record<string, unknown>;
+  return ["x", "y", "width", "height"].every(
+    (key) => typeof rect[key] === "number" && Number.isFinite(rect[key]),
+  );
+}
+
+function parsePrintAreaJson(value: string | null): ProductPrintArea | null {
+  if (!value?.trim()) return null;
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!parsed || typeof parsed !== "object") return null;
+    const source = parsed as Record<string, unknown>;
+    const area: ProductPrintArea = {};
+    if (isPrintAreaRect(source.front)) {
+      area.front = normalizePrintAreaRect(source.front);
+    }
+    if (isPrintAreaRect(source.back)) {
+      area.back = normalizePrintAreaRect(source.back);
+    }
+    return area.front || area.back ? area : null;
+  } catch {
+    return null;
+  }
+}
+
+function printAreaToJson(area: ProductPrintArea) {
+  return JSON.stringify(area, null, 2);
+}
 
 const currencyFormatter = new Intl.NumberFormat("vi-VN", {
   currency: "VND",
@@ -90,6 +162,160 @@ function emptyPage<T>(pageNumber: number, pageSize: number): PagedResult<T> {
   };
 }
 
+function PrintAreaEditor({
+  backImageUrl,
+  frontImageUrl,
+  value,
+  onChange,
+}: {
+  backImageUrl: string | null;
+  frontImageUrl: string | null;
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) {
+  const [activeSide, setActiveSide] = useState<ImageSide>("front");
+  const [drag, setDrag] = useState<PrintAreaDrag | null>(null);
+  const parsedArea = useMemo(
+    () => parsePrintAreaJson(value) ?? defaultPrintArea,
+    [value],
+  );
+  const activeRect = parsedArea[activeSide] ?? defaultPrintArea[activeSide];
+  const imageUrl = resolveApiAssetUrl(
+    activeSide === "front" ? frontImageUrl : backImageUrl,
+  );
+
+  const updateArea = useCallback(
+    (side: ImageSide, rect: PrintAreaRect) => {
+      const nextArea: ProductPrintArea = {
+        ...parsedArea,
+        [side]: normalizePrintAreaRect(rect),
+      };
+      onChange(printAreaToJson(nextArea));
+    },
+    [onChange, parsedArea],
+  );
+
+  const ensureSideRect = (side: ImageSide) => {
+    const current = parsedArea[side];
+    if (current) return;
+    onChange(printAreaToJson({ ...parsedArea, [side]: defaultPrintArea[side] }));
+  };
+
+  useEffect(() => {
+    if (!drag) return;
+
+    const handlePointerMove = (event: globalThis.PointerEvent) => {
+      const deltaX = (event.clientX - drag.startX) / drag.editorWidth;
+      const deltaY = (event.clientY - drag.startY) / drag.editorHeight;
+      const nextRect =
+        drag.mode === "move"
+          ? {
+              ...drag.startRect,
+              x: drag.startRect.x + deltaX,
+              y: drag.startRect.y + deltaY,
+            }
+          : {
+              ...drag.startRect,
+              width: drag.startRect.width + deltaX,
+              height: drag.startRect.height + deltaY,
+            };
+      updateArea(drag.side, nextRect);
+    };
+
+    const handlePointerUp = () => setDrag(null);
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [drag, updateArea]);
+
+  const startDrag = (
+    mode: PrintAreaDrag["mode"],
+    event: ReactPointerEvent<HTMLDivElement>,
+  ) => {
+    const editor = event.currentTarget.closest(".admin-print-area-editor__canvas");
+    if (!(editor instanceof HTMLElement)) return;
+    const bounds = editor.getBoundingClientRect();
+    event.preventDefault();
+    setDrag({
+      side: activeSide,
+      mode,
+      startX: event.clientX,
+      startY: event.clientY,
+      startRect: activeRect,
+      editorWidth: bounds.width || 1,
+      editorHeight: bounds.height || 1,
+    });
+  };
+
+  return (
+    <div className="admin-print-area-editor admin-product-form__wide">
+      <div className="admin-print-area-editor__header">
+        <div>
+          <strong>Vùng in cho khách custom</strong>
+          <span>Kéo khung để đặt vùng được phép thêm chữ/sticker.</span>
+        </div>
+        <div className="admin-print-area-editor__tabs">
+          {(["front", "back"] as ImageSide[]).map((side) => (
+            <button
+              key={side}
+              type="button"
+              className={activeSide === side ? "is-active" : ""}
+              onClick={() => {
+                setActiveSide(side);
+                ensureSideRect(side);
+              }}
+            >
+              {side === "front" ? "Mặt trước" : "Mặt sau"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="admin-print-area-editor__stage">
+        {imageUrl ? (
+          <img src={imageUrl} alt="Ảnh phôi để đặt vùng in" draggable="false" />
+        ) : (
+          <div className="admin-print-area-editor__empty">
+            Tải ảnh phôi để căn vùng in chính xác.
+          </div>
+        )}
+        <div className="admin-print-area-editor__canvas">
+          <div
+            className="admin-print-area-editor__rect"
+            onPointerDown={(event) => startDrag("move", event)}
+            style={{
+              height: `${activeRect.height * 100}%`,
+              left: `${activeRect.x * 100}%`,
+              top: `${activeRect.y * 100}%`,
+              width: `${activeRect.width * 100}%`,
+            }}
+          >
+            <span>Print area</span>
+            <div
+              className="admin-print-area-editor__handle"
+              onPointerDown={(event) => {
+                event.stopPropagation();
+                startDrag("resize", event);
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="admin-print-area-editor__numbers">
+        <span>x {activeRect.x}</span>
+        <span>y {activeRect.y}</span>
+        <span>w {activeRect.width}</span>
+        <span>h {activeRect.height}</span>
+      </div>
+    </div>
+  );
+}
+
 export function AdminBaseProductsPage() {
   const [products, setProducts] =
     useState<PagedResult<AdminBaseProductListDto> | null>(null);
@@ -116,6 +342,9 @@ export function AdminBaseProductsPage() {
       pageSize,
     }),
     [nameFilter, pageNumber, pageSize, statusFilter],
+  );
+  const printAreaInvalid = Boolean(
+    form.printAreaJson?.trim() && !parsePrintAreaJson(form.printAreaJson),
   );
 
   const loadProducts = useCallback(async () => {
@@ -193,6 +422,11 @@ export function AdminBaseProductsPage() {
   };
 
   const submitForm = async () => {
+    if (printAreaInvalid) {
+      setError("PrintAreaJson không hợp lệ. Hãy kéo lại vùng in hoặc sửa JSON.");
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
@@ -586,7 +820,40 @@ export function AdminBaseProductsPage() {
                   placeholder="Trắng,Đen,Cam"
                 />
               </label>
-              {/* PrintAreaJson is nullable in the backend and will be generated by a visual editor later. */}
+              <PrintAreaEditor
+                frontImageUrl={form.frontImageUrl}
+                backImageUrl={form.backImageUrl}
+                value={form.printAreaJson}
+                onChange={(printAreaJson) =>
+                  setForm((current) => ({
+                    ...current,
+                    printAreaJson,
+                  }))
+                }
+              />
+              <label className="admin-product-form__wide">
+                PrintAreaJson
+                <textarea
+                  value={form.printAreaJson ?? ""}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      printAreaJson: event.target.value,
+                    }))
+                  }
+                  spellCheck={false}
+                  placeholder={'{\n  "front": { "x": 0.25, "y": 0.22, "width": 0.5, "height": 0.48 }\n}'}
+                />
+                {printAreaInvalid ? (
+                  <span className="admin-form-hint admin-form-hint--danger">
+                    JSON phải có front/back với x, y, width, height dạng số.
+                  </span>
+                ) : (
+                  <span className="admin-form-hint">
+                    Dùng giá trị 0-1 để vùng in tự co giãn theo canvas customizer.
+                  </span>
+                )}
+              </label>
               <label className="admin-product-checkbox">
                 <input
                   type="checkbox"
@@ -605,7 +872,7 @@ export function AdminBaseProductsPage() {
                   type="button"
                   onClick={() => void submitForm()}
                   disabled={
-                    saving || uploadingImage !== null || !form.name.trim()
+                    saving || uploadingImage !== null || !form.name.trim() || printAreaInvalid
                   }
                 >
                   {saving

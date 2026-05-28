@@ -10,5 +10,6 @@ namespace TheALMAProject.Application.DTOs.AdminOrderDtos
         public string Size { get; set; } = null!;
         public int Quantity { get; set; }
         public string PrintFileUrl { get; set; } = null!;
+        public string PlacementGuideUrl { get; set; } = null!;
     }
 }

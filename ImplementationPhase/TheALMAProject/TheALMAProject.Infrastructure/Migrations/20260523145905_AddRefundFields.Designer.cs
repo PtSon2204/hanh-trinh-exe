@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TheALMAProject.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using TheALMAProject.Infrastructure.Data;
 namespace TheALMAProject.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260523145905_AddRefundFields")]
+    partial class AddRefundFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -756,12 +759,6 @@ namespace TheALMAProject.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DesignId"));
 
-                    b.Property<string>("BackCanvasJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("BackPreviewImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("BaseProductId")
                         .HasColumnType("int");
 
@@ -778,18 +775,8 @@ namespace TheALMAProject.Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("FrontCanvasJson")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FrontPreviewImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<bool>("IsOrdered")
                         .HasColumnType("bit");
-
-                    b.Property<string>("PlacementGuideUrl")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("PreviewImageUrl")
                         .HasColumnType("nvarchar(max)");
