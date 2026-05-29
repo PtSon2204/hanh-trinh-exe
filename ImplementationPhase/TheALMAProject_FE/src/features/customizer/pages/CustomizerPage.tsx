@@ -258,7 +258,7 @@ export default function CustomizerPage() {
         const sourceUrl = side === 'front'
             ? selectedProduct?.frontImageUrl
             : selectedProduct?.backImageUrl ?? selectedProduct?.frontImageUrl;
-        return resolveApiAssetUrl(sourceUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg';
+        return resolveApiAssetUrl(sourceUrl) ?? undefined;
     };
 
     const createCompositePreview = async (side: CanvasSide) => {
@@ -466,13 +466,20 @@ export default function CustomizerPage() {
 
     // Load phôi áo từ DB khi mount
     useEffect(() => {
-        customizerApi.getBaseProducts().then(data => {
-            setBaseProducts(data);
-            if (data.length > 0) {
-                setSelectedProductId(data[0].baseProductId);
-            }
-            setBaseProductsLoading(false);
-        });
+        customizerApi.getBaseProducts()
+            .then(data => {
+                setBaseProducts(data);
+                if (data.length > 0) {
+                    setSelectedProductId(data[0].baseProductId);
+                }
+            })
+            .catch(err => {
+                console.warn('[CustomizerPage] Không thể tải phôi áo từ server:', err);
+                setBaseProducts([]);
+            })
+            .finally(() => {
+                setBaseProductsLoading(false);
+            });
     }, []);
 
     // 2. Chức năng Thêm Chữ
@@ -1281,6 +1288,11 @@ QUAN TRỌNG về svgCode:
                                     <div className="flex items-center justify-center py-8 text-gray-400">
                                         <i className="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải phôi áo...
                                     </div>
+                                ) : baseProducts.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2 mb-4">
+                                        <i className="fa-solid fa-shirt text-3xl text-gray-300"></i>
+                                        <p className="text-xs text-center text-gray-400">Hiện tại không có phôi áo nào.<br />Vui lòng thử lại sau.</p>
+                                    </div>
                                 ) : (
                                     <div className="grid grid-cols-2 gap-3 mb-4">
                                         {baseProducts.map(p => (
@@ -1292,12 +1304,17 @@ QUAN TRỌNG về svgCode:
                                                     : 'border-gray-200 hover:border-blue-300'
                                                     }`}
                                             >
-                                                <img
-                                                    src={resolveApiAssetUrl(p.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
-                                                    className="w-full aspect-square object-cover bg-white rounded"
-                                                    alt={p.name}
-                                                    onError={(e) => (e.target as HTMLImageElement).src = '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
-                                                />
+                                                {resolveApiAssetUrl(p.frontImageUrl) ? (
+                                                    <img
+                                                        src={resolveApiAssetUrl(p.frontImageUrl)!}
+                                                        className="w-full aspect-square object-cover bg-white rounded"
+                                                        alt={p.name}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full aspect-square bg-gray-100 rounded flex items-center justify-center">
+                                                        <i className="fa-solid fa-shirt text-2xl text-gray-300"></i>
+                                                    </div>
+                                                )}
                                                 <p className={`text-[10px] font-bold mt-2 ${selectedProductId === p.baseProductId ? 'text-blue-600' : 'text-gray-600'
                                                     }`}>{p.name}</p>
                                                 {selectedProductId === p.baseProductId && (
