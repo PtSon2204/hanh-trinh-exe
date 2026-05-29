@@ -135,10 +135,15 @@ const CheckoutPage = () => {
     // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
     // ── Geocoding & Nominatim Helper Functions ────────────────────────────────
     const reverseGeocode = async (lat: number, lng: number, updateCallback: (address: string, province: string) => void) => {
+        // Thử Nominatim trước
         try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&email=son.bafpt@gmail.com`, {
-                headers: { 'Accept-Language': 'vi' }
+                headers: { 'Accept-Language': 'vi' },
+                signal: controller.signal
             });
+            clearTimeout(timeoutId);
             if (response.ok) {
                 const data = await response.json();
                 if (data && data.display_name) {
@@ -151,12 +156,21 @@ const CheckoutPage = () => {
                     return;
                 }
             }
-        } catch (err) {
-            console.warn("Primary reverse geocoding failed, trying Photon fallback:", err);
+        } catch (err: any) {
+            console.warn("Nominatim reverse geocoding failed:", err?.name === 'AbortError' ? 'Timeout' : err);
         }
 
+        // Đợi 1 giây trước khi thử fallback (tránh rate limit)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        // Fallback: dùng Photon
         try {
-            const response = await fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+            const response = await fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
             if (response.ok) {
                 const geojson = await response.json();
                 if (geojson && Array.isArray(geojson.features) && geojson.features.length > 0) {
@@ -177,10 +191,11 @@ const CheckoutPage = () => {
                     const province = props.city || props.town || props.state || "";
                     
                     updateCallback(fullAddress, province || fullAddress);
+                    return;
                 }
             }
-        } catch (err) {
-            console.error("All reverse geocoding options failed:", err);
+        } catch (err: any) {
+            console.error("Photon reverse geocoding also failed:", err?.name === 'AbortError' ? 'Timeout' : err);
         }
     };
 
@@ -499,28 +514,61 @@ const CheckoutPage = () => {
 
                 setModalCoords({ lat, lng });
 
+                // Luôn cập nhật bản đồ trước (không phụ thuộc reverse geocode)
                 if (isModal) {
                     if (modalMapRef.current && modalMarkerRef.current) {
                         modalMapRef.current.setView([lat, lng], 16);
                         modalMarkerRef.current.setLatLng([lat, lng]);
                     }
-                    await reverseGeocode(lat, lng, (address, province) => {
-                        setModalAddress(address);
-                        setModalProvince(province);
-                        setModalSearch(address);
-                    });
                 } else {
                     if (mapRef.current && markerRef.current) {
                         mapRef.current.setView([lat, lng], 16);
                         markerRef.current.setLatLng([lat, lng]);
                     }
-                    await reverseGeocode(lat, lng, (address, province) => {
+                }
+
+                // Thử reverse geocode để lấy địa chỉ text
+                const geocodeToastId = toast.loading("Đang lấy thông tin địa chỉ...");
+                let geocodeSuccess = false;
+
+                const updateAddress = (address: string, province: string) => {
+                    geocodeSuccess = true;
+                    if (isModal) {
+                        setModalAddress(address);
+                        setModalProvince(province);
+                        setModalSearch(address);
+                    } else {
                         setShippingInfo(prev => ({
                             ...prev,
                             shipAddress: address,
                             shipProvince: province
                         }));
                         setMiniMapSearch(address);
+                    }
+                };
+
+                // Thử reverse geocode (đã có fallback Nominatim → Photon bên trong)
+                await reverseGeocode(lat, lng, updateAddress);
+
+                toast.dismiss(geocodeToastId);
+                if (geocodeSuccess) {
+                    toast.success("Đã tìm được địa chỉ!");
+                } else {
+                    // Nếu cả 2 API đều thất bại → điền tọa độ vào địa chỉ để user biết vị trí
+                    const coordsText = `Vị trí GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    if (isModal) {
+                        setModalAddress(coordsText);
+                        setModalSearch(coordsText);
+                    } else {
+                        setShippingInfo(prev => ({
+                            ...prev,
+                            shipAddress: coordsText,
+                        }));
+                        setMiniMapSearch(coordsText);
+                    }
+                    toast("Đã định vị trên bản đồ! Bạn có thể nhập địa chỉ chi tiết bằng tay hoặc kéo ghim trên bản đồ.", {
+                        icon: "📍",
+                        duration: 5000,
                     });
                 }
             },
@@ -529,11 +577,15 @@ const CheckoutPage = () => {
                 console.error("GPS error:", error);
                 if (error.code === 1) {
                     toast.error("Vui lòng cấp quyền truy cập vị trí trên trình duyệt!");
+                } else if (error.code === 2) {
+                    toast.error("Không thể xác định vị trí. Hãy thử dùng ô tìm kiếm để nhập địa chỉ.");
+                } else if (error.code === 3) {
+                    toast.error("Hết thời gian chờ định vị. Hãy thử lại hoặc tìm kiếm địa chỉ.");
                 } else {
                     toast.error("Không thể xác định vị trí GPS. Vui lòng gõ địa chỉ tìm kiếm!");
                 }
             },
-            { enableHighAccuracy: true, timeout: 10000 }
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
         );
     };
 
@@ -1150,24 +1202,24 @@ const CheckoutPage = () => {
             {/* ── VietQR Modal ── */}
             {qrData.isOpen && (
                 <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center relative border border-gray-100">
+                    <div className="bg-white rounded-3xl shadow-2xl p-5 sm:p-7 max-w-sm w-full text-center relative border border-gray-100 max-h-[92vh] overflow-y-auto custom-scrollbar">
                         {isPaid ? (
                             // SUCCESS SCREEN (Shopee-style shipping truck animation) — hiện cho cả COD và VietQR
                             <div>
-                                <div className="mb-4">
-                                    <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 border-2 shadow-inner ${
+                                <div className="mb-3">
+                                    <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 border-2 shadow-inner ${
                                         qrData.url ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'
                                     }`}>
                                         {qrData.url ? (
-                                            <i className="fa-solid fa-circle-check text-5xl text-blue-500"></i>
+                                            <i className="fa-solid fa-circle-check text-4xl text-blue-500"></i>
                                         ) : (
-                                            <i className="fa-solid fa-truck-fast text-5xl text-orange-500"></i>
+                                            <i className="fa-solid fa-truck-fast text-4xl text-orange-500"></i>
                                         )}
                                     </div>
-                                    <h3 className="text-2xl font-extrabold text-gray-900">
+                                    <h3 className="text-xl font-extrabold text-gray-900">
                                         {qrData.url ? "Thanh toán thành công!" : "Đặt hàng thành công! 🎉"}
                                     </h3>
-                                    <p className="text-gray-500 text-sm mt-1">
+                                    <p className="text-gray-500 text-xs mt-1">
                                         {qrData.url
                                             ? "Đơn hàng của bạn đã được xác nhận và đang chuẩn bị"
                                             : "Đơn COD của bạn đã được ghi nhận — chúng tôi sẽ liên hệ sớm!"}
@@ -1175,7 +1227,7 @@ const CheckoutPage = () => {
                                 </div>
 
                                 {/* Shopee-style moving truck animation — hiện cho cả COD lẫn VietQR */}
-                                <div className={`relative w-full h-20 rounded-2xl overflow-hidden flex items-center mb-6 border ${
+                                <div className={`relative w-full h-16 rounded-xl overflow-hidden flex items-center mb-4 border ${
                                     qrData.url
                                         ? 'bg-blue-50/60 border-blue-100'
                                         : 'bg-orange-50/60 border-orange-100'
@@ -1203,20 +1255,20 @@ const CheckoutPage = () => {
                                         }
                                         .animate-truck-slide {
                                             position: absolute;
-                                            bottom: 12px;
+                                            bottom: 8px;
                                             animation: truckMove 3.5s linear infinite;
                                         }
                                     `}} />
                                     {/* Road — dashed moving line */}
-                                    <div className="absolute bottom-4 left-0 right-0 h-0.5 animate-road bg-repeat-x"></div>
+                                    <div className="absolute bottom-3 left-0 right-0 h-0.5 animate-road bg-repeat-x"></div>
                                     {/* Moving Truck icon */}
                                     <div className="animate-truck-slide animate-truck-bounce">
-                                        <i className={`fa-solid fa-truck-fast text-3xl drop-shadow-sm ${
+                                        <i className={`fa-solid fa-truck-fast text-2xl drop-shadow-sm ${
                                             qrData.url ? 'text-blue-500' : 'text-orange-500'
                                         }`}></i>
                                     </div>
                                     {/* Status badge */}
-                                    <span className={`absolute top-2 left-3 text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                                    <span className={`absolute top-2 left-3 text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                                         qrData.url
                                             ? 'text-blue-600 bg-blue-100/80'
                                             : 'text-orange-600 bg-orange-100/80'
@@ -1225,7 +1277,7 @@ const CheckoutPage = () => {
                                     </span>
                                 </div>
 
-                                <div className="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100 text-left space-y-2">
+                                <div className="bg-gray-50 rounded-xl p-3.5 mb-4 border border-gray-100 text-left space-y-1.5">
                                     <div className="flex justify-between text-xs text-gray-500">
                                         <span>Mã đơn hàng:</span>
                                         <span className="font-bold text-gray-800">#{qrData.orderId}</span>
@@ -1250,7 +1302,7 @@ const CheckoutPage = () => {
                                         setIsPaid(false);
                                         navigate("/orders");
                                     }}
-                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 text-sm sm:text-base"
+                                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/25 text-xs sm:text-sm"
                                 >
                                     <i className="fa-solid fa-arrow-left-long"></i> Quay lại danh sách đơn hàng
                                 </button>
@@ -1258,20 +1310,20 @@ const CheckoutPage = () => {
                         ) : (
                             // REGULAR QR CODE SCREEN (Removed 'Tôi đã thanh toán xong' button)
                             <div>
-                                <div className="mb-4">
-                                    <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                                        <i className="fa-solid fa-qrcode text-3xl text-blue-600"></i>
+                                <div className="mb-3">
+                                    <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-2">
+                                        <i className="fa-solid fa-qrcode text-2xl text-blue-600"></i>
                                     </div>
-                                    <h3 className="text-2xl font-extrabold text-gray-900">Quét mã thanh toán</h3>
-                                    <p className="text-gray-500 text-sm mt-1">Mở ứng dụng ngân hàng để quét mã</p>
+                                    <h3 className="text-xl font-extrabold text-gray-900">Quét mã thanh toán</h3>
+                                    <p className="text-gray-500 text-xs mt-0.5">Mở ứng dụng ngân hàng để quét mã</p>
                                 </div>
 
                                 {/* QR Image */}
-                                <div className="bg-white p-3 rounded-2xl inline-block mb-6 border-2 border-gray-100 shadow-sm">
+                                <div className="bg-white p-2 rounded-2xl inline-block mb-4 border border-gray-100 shadow-sm">
                                     <img
                                         src={qrData.url}
                                         alt="VietQR Payment"
-                                        className="w-64 h-64 object-contain rounded-xl"
+                                        className="w-48 h-48 sm:w-56 sm:h-56 object-contain rounded-xl"
                                         onError={(e) => {
                                             // Fallback nếu ảnh lỗi
                                             (e.target as HTMLImageElement).style.display = 'none';
@@ -1279,14 +1331,14 @@ const CheckoutPage = () => {
                                     />
                                 </div>
 
-                                <div className="bg-gray-50 rounded-xl p-4 mb-6">
-                                    <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
-                                    <p className="text-2xl font-black text-blue-600">{qrData.amount.toLocaleString('vi-VN')} VNĐ</p>
-                                    <p className="text-xs text-red-500 italic mt-2">* Hệ thống tự động chuyển trang khi nhận được tiền</p>
+                                <div className="bg-gray-50 rounded-xl p-3.5 mb-4">
+                                    <p className="text-xs text-gray-600 mb-0.5">Số tiền cần thanh toán</p>
+                                    <p className="text-xl font-black text-blue-600">{qrData.amount.toLocaleString('vi-VN')} VNĐ</p>
+                                    <p className="text-[10px] text-red-500 italic mt-1.5">* Hệ thống tự động chuyển trang khi nhận được tiền</p>
                                 </div>
 
                                 {qrData.orderId && (
-                                    <p className="text-xs text-gray-400 mb-4">Mã đơn: #{qrData.orderId}</p>
+                                    <p className="text-xs text-gray-400 mb-3">Mã đơn: #{qrData.orderId}</p>
                                 )}
 
                                 <button
@@ -1324,7 +1376,7 @@ const CheckoutPage = () => {
                                             setChangingPaymentMethod(false);
                                         }
                                     }}
-                                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-2.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed text-xs sm:text-sm"
                                 >
                                     {changingPaymentMethod ? (
                                         <i className="fa-solid fa-spinner fa-spin"></i>
@@ -1342,7 +1394,7 @@ const CheckoutPage = () => {
                                         toast.success("Đơn hàng đã được lưu! Bạn có thể thanh toán sau.");
                                         navigate("/orders");
                                     }}
-                                    className="mt-4 w-full text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors py-2 block text-center disabled:opacity-60"
+                                    className="mt-2 w-full text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors py-1.5 block text-center disabled:opacity-60"
                                 >
                                     Thanh toán sau
                                 </button>

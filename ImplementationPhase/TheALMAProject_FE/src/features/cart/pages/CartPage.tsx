@@ -262,7 +262,7 @@ export default function CartPage() {
                                             />
                                         </div>
                                         {/* Product Image */}
-                                        <div className="w-32 h-40 bg-gray-50 rounded-xl shrink-0 flex items-center justify-center p-2 relative overflow-hidden border border-gray-200 shadow-inner">
+                                        <div className="w-44 h-52 bg-gray-50 rounded-xl shrink-0 flex items-center justify-center p-2 relative overflow-hidden border border-gray-200 shadow-inner">
                                             <img
                                                 src={resolveApiAssetUrl(item.imageUrl) || '/images/default-shirt.png'}
                                                 alt="Mockup"

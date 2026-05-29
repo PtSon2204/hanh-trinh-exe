@@ -146,7 +146,7 @@ const drawContainedImage = (
 };
 
 export default function CustomizerPage() {
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
     const { user } = useAuth();
 
     // --- Refs (Front) ---
@@ -191,6 +191,8 @@ export default function CustomizerPage() {
     const [cartModalOpen, setCartModalOpen] = useState(false);
     const [sizeQty, setSizeQty] = useState<Record<string, number>>({ S: 0, M: 0, L: 0, XL: 0, XXL: 0 });
     const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const [userHeight, setUserHeight] = useState<string>('');
+    const [userWeight, setUserWeight] = useState<string>('');
 
     // --- States AI ---
     const [aiPrompt, setAiPrompt] = useState('');
@@ -208,6 +210,30 @@ export default function CustomizerPage() {
     const getActiveCanvas = () =>
         viewMode === 'front' ? fabricCanvas.current : backFabricCanvas.current;
 
+    const getRecommendedSize = () => {
+        const h = parseFloat(userHeight);
+        const w = parseFloat(userWeight);
+        if (isNaN(h) || isNaN(w) || h <= 0 || w <= 0) return '';
+        
+        let weightSize = 'S';
+        if (w >= 78) weightSize = 'XXL';
+        else if (w >= 69) weightSize = 'XL';
+        else if (w >= 61) weightSize = 'L';
+        else if (w >= 53) weightSize = 'M';
+        else weightSize = 'S';
+
+        let heightSize = 'S';
+        if (h >= 181) heightSize = 'XXL';
+        else if (h >= 175) heightSize = 'XL';
+        else if (h >= 168) heightSize = 'L';
+        else if (h >= 160) heightSize = 'M';
+        else heightSize = 'S';
+
+        const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+        return sizes[Math.max(sizes.indexOf(weightSize), sizes.indexOf(heightSize))];
+    };
+    const recSize = getRecommendedSize();
+
     const getPrintAreaForSide = (side: CanvasSide) => printAreaRef.current?.[side];
 
     const getProductUrlForSide = (side: CanvasSide) => {
@@ -224,50 +250,77 @@ export default function CustomizerPage() {
         designCanvas.discardActiveObject();
         designCanvas.renderAll();
 
-        const productUrl = getProductUrlForSide(side);
-        const shirtImage = await loadPreviewImage(processedImages[productUrl] ?? productUrl);
-        const outputCanvas = document.createElement('canvas');
-        outputCanvas.width = PRODUCT_PREVIEW_WIDTH;
-        outputCanvas.height = PRODUCT_PREVIEW_HEIGHT;
-        const ctx = outputCanvas.getContext('2d');
-        if (!ctx) return designCanvas.toDataURL({ format: 'png', multiplier: 0.5 });
+        try {
+            const productUrl = getProductUrlForSide(side);
+            const shirtImage = await loadPreviewImage(processedImages[productUrl] ?? productUrl);
+            const outputCanvas = document.createElement('canvas');
+            outputCanvas.width = PRODUCT_PREVIEW_WIDTH;
+            outputCanvas.height = PRODUCT_PREVIEW_HEIGHT;
+            const ctx = outputCanvas.getContext('2d');
+            if (!ctx) return designCanvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
 
-        ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-        const shirtBox = {
-            left: PRODUCT_PREVIEW_WIDTH * 0.075,
-            top: 0,
-            width: PRODUCT_PREVIEW_WIDTH * 0.85,
-            height: PRODUCT_PREVIEW_HEIGHT,
-        };
+            ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+            // Nền trắng cho JPEG (tránh nền đen khi transparent)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-        if (shirtColorHex !== '#FFFFFF') {
-            ctx.save();
-            drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
-            ctx.globalCompositeOperation = 'source-in';
-            ctx.fillStyle = shirtColorHex;
-            ctx.fillRect(shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
-            ctx.restore();
+            const shirtBox = {
+                left: PRODUCT_PREVIEW_WIDTH * 0.075,
+                top: 0,
+                width: PRODUCT_PREVIEW_WIDTH * 0.85,
+                height: PRODUCT_PREVIEW_HEIGHT,
+            };
+
+            if (shirtColorHex !== '#FFFFFF') {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = PRODUCT_PREVIEW_WIDTH;
+                tempCanvas.height = PRODUCT_PREVIEW_HEIGHT;
+                const tempCtx = tempCanvas.getContext('2d');
+                if (tempCtx) {
+                    drawContainedImage(tempCtx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+                    tempCtx.globalCompositeOperation = 'multiply';
+                    tempCtx.fillStyle = shirtColorHex;
+                    tempCtx.fillRect(shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+                    tempCtx.globalCompositeOperation = 'destination-in';
+                    drawContainedImage(tempCtx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+                    ctx.drawImage(tempCanvas, 0, 0);
+                }
+            } else {
+                drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+            }
+
+            const designUrl = designCanvas.toDataURL({ format: 'png', multiplier: 0.5 });
+            const designImage = await loadPreviewImage(designUrl);
+            ctx.drawImage(
+                designImage,
+                PRODUCT_PREVIEW_WIDTH * 0.02,
+                PRODUCT_PREVIEW_HEIGHT * 0.02,
+                PRODUCT_PREVIEW_WIDTH * 0.76,
+                PRODUCT_PREVIEW_HEIGHT * 0.88,
+            );
+
+            return outputCanvas.toDataURL('image/jpeg', 0.6);
+        } catch (err) {
+            console.warn('[createCompositePreview] Fallback to simple canvas export:', err);
+            return designCanvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
         }
-
-        drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
-
-        const designUrl = designCanvas.toDataURL({ format: 'png', multiplier: 1 });
-        const designImage = await loadPreviewImage(designUrl);
-        ctx.drawImage(
-            designImage,
-            PRODUCT_PREVIEW_WIDTH * 0.2,
-            PRODUCT_PREVIEW_HEIGHT * 0.18,
-            PRODUCT_PREVIEW_WIDTH * 0.6,
-            PRODUCT_PREVIEW_HEIGHT * 0.65,
-        );
-
-        return outputCanvas.toDataURL('image/png');
     };
 
     const createSidePreviewImages = async () => {
-        const frontPreviewImageUrl = await createCompositePreview('front');
-        const backPreviewImageUrl = await createCompositePreview('back');
-
+        let frontPreviewImageUrl = '';
+        let backPreviewImageUrl = '';
+        try {
+            frontPreviewImageUrl = await createCompositePreview('front');
+        } catch (err) {
+            console.warn('[createSidePreviewImages] Front preview failed:', err);
+            frontPreviewImageUrl = fabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 }) ?? '';
+        }
+        try {
+            backPreviewImageUrl = await createCompositePreview('back');
+        } catch (err) {
+            console.warn('[createSidePreviewImages] Back preview failed:', err);
+            backPreviewImageUrl = backFabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 }) ?? '';
+        }
         return { frontPreviewImageUrl, backPreviewImageUrl };
     };
 
@@ -318,16 +371,6 @@ export default function CustomizerPage() {
             width: w, height: h,
             backgroundColor: 'transparent', selection: true,
         });
-        const defaultText = new fabric.IText('A1 CLASS', {
-            left: w / 2, top: h * 0.35,
-            originX: 'center', originY: 'center',
-            fontSize: 32, fontFamily: 'Impact', fontWeight: 'bold',
-            fill: '#1e293b',
-            cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
-            transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
-        });
-        fabricCanvas.current.add(defaultText);
-        fabricCanvas.current.setActiveObject(defaultText);
         fabricCanvas.current.on('object:added', updateLayers);
         fabricCanvas.current.on('object:removed', updateLayers);
         fabricCanvas.current.on('object:modified', updateLayers);
@@ -617,8 +660,16 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             fabricCanvas.current.renderAll();
             backFabricCanvas.current?.discardActiveObject();
             backFabricCanvas.current?.renderAll();
-            const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
-            const canvasDataURL = fabricCanvas.current.getObjects().length > 0 ? frontPreviewImageUrl : backPreviewImageUrl;
+
+            // Tạo preview — nếu composite fail thì fallback sang simple export
+            let canvasDataURL = '';
+            try {
+                const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
+                canvasDataURL = fabricCanvas.current.getObjects().length > 0 ? frontPreviewImageUrl : backPreviewImageUrl;
+            } catch {
+                canvasDataURL = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+            }
+
             const frontJSON = fabricCanvas.current.toJSON(['id', 'selectable']);
             const backJSON = backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] };
             const newEntry = {
@@ -636,8 +687,8 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             localStorage.setItem('alma_design_history', JSON.stringify(updatedHistory));
             toast.success('Đã lưu thiết kế thành công!');
         } catch (err) {
-            console.error('Không thể tạo preview thiết kế:', err);
-            toast.error('Không thể tạo preview thiết kế. Vui lòng thử lại.');
+            console.error('Không thể lưu thiết kế:', err);
+            toast.error('Không thể lưu thiết kế. Vui lòng thử lại.');
         }
     };
 
@@ -673,6 +724,98 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
         setCartModalOpen(true);
     };
 
+    // Helper: Tạo ảnh composite (áo + thiết kế) để hiển thị trong giỏ hàng
+    const generateCompositePreview = (): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            if (!fabricCanvas.current) {
+                reject(new Error('Canvas not available'));
+                return;
+            }
+
+            const COMPOSITE_W = 400;
+            const COMPOSITE_H = 500;
+
+            // Lấy ảnh áo đã xử lý (bỏ nền) hoặc ảnh gốc
+            const shirtImgSrc = processedImages[activeProductUrl] ?? activeProductUrl;
+
+            const shirtImg = new Image();
+            shirtImg.crossOrigin = 'anonymous';
+            shirtImg.src = shirtImgSrc;
+
+            shirtImg.onload = () => {
+                try {
+                    const offscreen = document.createElement('canvas');
+                    offscreen.width = COMPOSITE_W;
+                    offscreen.height = COMPOSITE_H;
+                    const ctx = offscreen.getContext('2d');
+                    if (!ctx) { reject(new Error('Cannot get 2d context')); return; }
+
+                    // Nền trắng
+                    ctx.fillStyle = '#f9fafb';
+                    ctx.fillRect(0, 0, COMPOSITE_W, COMPOSITE_H);
+
+                    // --- Vẽ áo (chiếm ~85% chiều rộng, căn giữa) ---
+                    const shirtDrawW = COMPOSITE_W * 0.85;
+                    const shirtAspect = shirtImg.naturalHeight / shirtImg.naturalWidth;
+                    const shirtDrawH = shirtDrawW * shirtAspect;
+                    const shirtX = (COMPOSITE_W - shirtDrawW) / 2;
+                    const shirtY = (COMPOSITE_H - shirtDrawH) / 2;
+
+                    // Nếu áo có màu (không trắng) → tô màu áo bằng cách vẽ tạm lên canvas phụ rồi blend
+                    if (shirtColorHex !== '#FFFFFF') {
+                        // Vẽ áo lên canvas phụ để áp dụng color multiply
+                        const tempCanvas = document.createElement('canvas');
+                        tempCanvas.width = COMPOSITE_W;
+                        tempCanvas.height = COMPOSITE_H;
+                        const tempCtx = tempCanvas.getContext('2d');
+                        if (tempCtx) {
+                            tempCtx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            // Áp dụng màu qua globalCompositeOperation
+                            tempCtx.globalCompositeOperation = 'multiply';
+                            tempCtx.fillStyle = shirtColorHex;
+                            tempCtx.fillRect(shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            // Giữ alpha từ ảnh gốc
+                            tempCtx.globalCompositeOperation = 'destination-in';
+                            tempCtx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            ctx.drawImage(tempCanvas, 0, 0);
+                        }
+                    } else {
+                        ctx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                    }
+
+                    // --- Vẽ thiết kế (canvas Fabric) lên vùng tương ứng ---
+                    // Vùng thiết kế trên áo: tương ứng với canvas wrapper (58% width, 68% height, top 10%, left 15% của container)
+                    // Nhưng ở đây tính theo tỉ lệ so với ảnh áo (85% width container)
+                    const designAreaX = shirtX + shirtDrawW * 0.08;
+                    const designAreaY = shirtY + shirtDrawH * 0.06;
+                    const designAreaW = shirtDrawW * 0.74;
+                    const designAreaH = shirtDrawH * 0.78;
+
+                    // Export design từ Fabric canvas
+                    const designDataUrl = fabricCanvas.current!.toDataURL({ format: 'png', multiplier: 0.5 });
+                    const designImg = new Image();
+                    designImg.src = designDataUrl;
+                    designImg.onload = () => {
+                        ctx.drawImage(designImg, designAreaX, designAreaY, designAreaW, designAreaH);
+                        resolve(offscreen.toDataURL('image/jpeg', 0.6));
+                    };
+                    designImg.onerror = () => {
+                        // Nếu không load được design, vẫn trả về ảnh áo
+                        resolve(offscreen.toDataURL('image/jpeg', 0.6));
+                    };
+                } catch (e) {
+                    reject(e);
+                }
+            };
+
+            shirtImg.onerror = () => {
+                // Fallback: nếu không load được ảnh áo, dùng canvas gốc
+                const fallback = fabricCanvas.current!.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+                resolve(fallback);
+            };
+        });
+    };
+
     const handleConfirmAddToCart = async () => {
         if (!fabricCanvas.current) return;
         const hasAny = Object.values(sizeQty).some(q => q > 0);
@@ -683,8 +826,27 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             fabricCanvas.current.renderAll();
             backFabricCanvas.current?.discardActiveObject();
             backFabricCanvas.current?.renderAll();
-            const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
-            const previewDataUrl = fabricCanvas.current.getObjects().length > 0 ? frontPreviewImageUrl : backPreviewImageUrl;
+
+            // Tạo ảnh preview riêng cho front/back — với fallback
+            let frontPreviewImageUrl = '';
+            let backPreviewImageUrl = '';
+            let previewDataUrl = '';
+            try {
+                const sideImages = await createSidePreviewImages();
+                frontPreviewImageUrl = sideImages.frontPreviewImageUrl;
+                backPreviewImageUrl = sideImages.backPreviewImageUrl;
+            } catch (previewErr) {
+                console.warn('[handleConfirmAddToCart] Side preview failed, using fallback:', previewErr);
+                frontPreviewImageUrl = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.5, multiplier: 0.4 });
+                backPreviewImageUrl = backFabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.5, multiplier: 0.4 }) ?? '';
+            }
+            try {
+                previewDataUrl = await generateCompositePreview();
+            } catch (compositeErr) {
+                console.warn('[handleConfirmAddToCart] Composite preview failed, using front preview:', compositeErr);
+                previewDataUrl = frontPreviewImageUrl;
+            }
+
             const frontCanvasJson = JSON.stringify(fabricCanvas.current.toJSON(['id', 'selectable']));
             const backCanvasJson = JSON.stringify(backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] });
             await customizerApi.saveAndAddMultiSize(
@@ -707,7 +869,9 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             setSizeQty({ S: 0, M: 0, L: 0, XL: 0, XXL: 0 });
             navigate('/cart');
         } catch (err: any) {
-            const msg = err?.response?.data?.message || err?.response?.data || 'Lỗi khi thêm vào giỏ hàng!';
+            console.error('[handleConfirmAddToCart] Error:', err);
+            const serverMsg = err?.response?.data?.message || err?.response?.data;
+            const msg = typeof serverMsg === 'string' ? serverMsg : (err?.message || 'Lỗi khi thêm vào giỏ hàng!');
             toast.error(msg);
         } finally {
             setIsAddingToCart(false);
@@ -921,30 +1085,30 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                                         <i className="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải phôi áo...
                                     </div>
                                 ) : (
-                                <div className="grid grid-cols-2 gap-3 mb-4">
-                                    {baseProducts.map(p => (
-                                        <div
-                                            key={p.baseProductId}
-                                            onClick={() => setSelectedProductId(p.baseProductId)}
-                                            className={`bg-gray-50 rounded-lg p-2 text-center cursor-pointer relative shadow-sm border-2 transition-all hover:shadow-md ${selectedProductId === p.baseProductId
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-200 hover:border-blue-300'
-                                                }`}
-                                        >
-                                            <img
-                                                src={resolveApiAssetUrl(p.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
-                                                className="w-full aspect-square object-cover bg-white rounded"
-                                                alt={p.name}
-                                                onError={(e) => (e.target as HTMLImageElement).src = '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
-                                            />
-                                            <p className={`text-[10px] font-bold mt-2 ${selectedProductId === p.baseProductId ? 'text-blue-600' : 'text-gray-600'
-                                                }`}>{p.name}</p>
-                                            {selectedProductId === p.baseProductId && (
-                                                <i className="fa-solid fa-circle-check absolute -top-2 -right-2 text-blue-500 bg-white rounded-full text-sm"></i>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        {baseProducts.map(p => (
+                                            <div
+                                                key={p.baseProductId}
+                                                onClick={() => setSelectedProductId(p.baseProductId)}
+                                                className={`bg-gray-50 rounded-lg p-2 text-center cursor-pointer relative shadow-sm border-2 transition-all hover:shadow-md ${selectedProductId === p.baseProductId
+                                                    ? 'border-blue-500 bg-blue-50'
+                                                    : 'border-gray-200 hover:border-blue-300'
+                                                    }`}
+                                            >
+                                                <img
+                                                    src={resolveApiAssetUrl(p.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
+                                                    className="w-full aspect-square object-cover bg-white rounded"
+                                                    alt={p.name}
+                                                    onError={(e) => (e.target as HTMLImageElement).src = '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
+                                                />
+                                                <p className={`text-[10px] font-bold mt-2 ${selectedProductId === p.baseProductId ? 'text-blue-600' : 'text-gray-600'
+                                                    }`}>{p.name}</p>
+                                                {selectedProductId === p.baseProductId && (
+                                                    <i className="fa-solid fa-circle-check absolute -top-2 -right-2 text-blue-500 bg-white rounded-full text-sm"></i>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
 
                                 <div className="w-full h-px bg-gray-200 mb-4"></div>
@@ -1171,41 +1335,51 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                     <div className="flex-1 relative flex items-center justify-center p-4 mt-10 md:mt-0">
                         {/* Khu vực Mô phỏng Áo (Cực kỳ quan trọng) */}
                         <div className="relative w-full max-w-[550px] aspect-[4/5] flex items-center justify-center shirt-container overflow-hidden rounded-xl">
-                            {shirtColorHex !== '#FFFFFF' && shirtMaskUrl ? (
-                                <div
-                                    className="absolute w-[85%] h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[11] pointer-events-none select-none"
-                                    style={{
-                                        backgroundColor: shirtColorHex,
-                                        maskImage: `url(${shirtMaskUrl})`,
-                                        maskPosition: 'center',
-                                        maskRepeat: 'no-repeat',
-                                        maskSize: 'contain',
-                                        mixBlendMode: 'multiply',
-                                        opacity: 0.72,
-                                        transition: 'background-color 0.2s ease, opacity 0.2s ease',
-                                        WebkitMaskImage: `url(${shirtMaskUrl})`,
-                                        WebkitMaskPosition: 'center',
-                                        WebkitMaskRepeat: 'no-repeat',
-                                        WebkitMaskSize: 'contain',
-                                    }}
-                                />
-                            ) : null}
-                            {/* Hình nền Áo */}
-                            <img
-                                src={processedImages[activeProductUrl] ?? activeProductUrl}
-                                alt={selectedProduct?.name ?? 'Phôi áo'}
-                                className="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
-                                draggable="false"
-                                style={{
-                                    opacity: isImageProcessing ? 0.6 : 1,
-                                    transition: 'opacity 0.2s ease',
-                                }}
-                            />
+                            {/* Loading state khi chưa load phôi từ DB */}
+                            {baseProductsLoading ? (
+                                <div className="flex flex-col items-center justify-center gap-3 text-gray-400">
+                                    <i className="fa-solid fa-spinner fa-spin text-3xl text-blue-500"></i>
+                                    <p className="text-sm font-medium">Đang tải phôi áo...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Color overlay — nằm TRÊN ảnh áo (z-[11]) để hòa trộn màu (mix-blend-mode: multiply) */}
+                                    {shirtColorHex !== '#FFFFFF' && (
+                                        <div
+                                            className="absolute w-[85%] h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[11] pointer-events-none select-none"
+                                            style={{
+                                                backgroundColor: shirtColorHex,
+                                                mixBlendMode: 'multiply',
+                                                maskImage: `url(${processedImages[activeProductUrl] ?? activeProductUrl})`,
+                                                maskPosition: 'center',
+                                                maskRepeat: 'no-repeat',
+                                                maskSize: 'contain',
+                                                transition: 'background-color 0.3s ease',
+                                                WebkitMaskImage: `url(${processedImages[activeProductUrl] ?? activeProductUrl})`,
+                                                WebkitMaskPosition: 'center',
+                                                WebkitMaskRepeat: 'no-repeat',
+                                                WebkitMaskSize: 'contain',
+                                            }}
+                                        />
+                                    )}
+                                    {/* Hình nền Áo — z-[10] nằm DƯỚI color layer */}
+                                    <img
+                                        src={processedImages[activeProductUrl] ?? activeProductUrl}
+                                        alt={selectedProduct?.name ?? 'Phôi áo'}
+                                        className="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
+                                        draggable="false"
+                                        style={{
+                                            opacity: isImageProcessing ? 0.6 : 1,
+                                            transition: 'opacity 0.2s ease',
+                                        }}
+                                    />
+                                </>
+                            )}
 
                             {/* Khung vẽ Fabric.js - MẶT TRƯỚC */}
                             <div
                                 ref={wrapperRef}
-                                className="absolute w-[60%] h-[65%] top-[18%] left-[20%] z-20 border-2 border-transparent"
+                                className="absolute w-[76%] h-[88%] top-[2%] left-[2%] z-20 border-2 border-transparent"
                                 style={{
                                     visibility: viewMode === 'front' ? 'visible' : 'hidden',
                                     pointerEvents: viewMode === 'front' ? 'auto' : 'none',
@@ -1220,7 +1394,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                             {/* Khung vẽ Fabric.js - MẶT SAU */}
                             <div
                                 ref={backWrapperRef}
-                                className="absolute w-[60%] h-[65%] top-[18%] left-[20%] z-20 border-2 border-transparent"
+                                className="absolute w-[76%] h-[88%] top-[2%] left-[2%] z-20 border-2 border-transparent"
                                 style={{
                                     visibility: viewMode === 'back' ? 'visible' : 'hidden',
                                     pointerEvents: viewMode === 'back' ? 'auto' : 'none',
@@ -1234,12 +1408,9 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                             </div>
                         </div>
 
-                        {/* Thanh công cụ nổi */}
                         <div className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 bg-white border rounded shadow flex flex-col z-30 w-11 overflow-hidden">
                             <button onClick={() => handleFloatingAction('flip')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center"><i className="fa-solid fa-arrows-up-down"></i></button>
                             <button onClick={() => handleFloatingAction('center')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center"><i className="fa-solid fa-align-center fa-rotate-90"></i></button>
-                            <button onClick={() => handleFloatingAction('down')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center"><i className="fa-solid fa-angle-left"></i></button>
-                            <button onClick={() => handleFloatingAction('up')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center"><i className="fa-solid fa-angle-right"></i></button>
                             <button onClick={() => handleFloatingAction('delete')} className="h-11 text-red-500 hover:text-red-700 hover:bg-red-50 border-b flex items-center justify-center"><i className="fa-regular fa-trash-can"></i></button>
                             <button onClick={() => handleFloatingAction('clone')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 flex items-center justify-center"><i className="fa-regular fa-copy"></i></button>
                         </div>
@@ -1272,11 +1443,10 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                                         key={c.code}
                                         title={c.label}
                                         onClick={() => setShirtColorHex(c.code)}
-                                        className={`w-10 h-10 rounded-xl border-2 shadow-sm flex items-center justify-center transition-all hover:scale-110 ${
-                                            shirtColorHex === c.code
-                                                ? 'border-blue-500 scale-110 ring-2 ring-blue-300'
-                                                : 'border-gray-200 hover:border-gray-400'
-                                        }`}
+                                        className={`w-10 h-10 rounded-xl border-2 shadow-sm flex items-center justify-center transition-all hover:scale-110 ${shirtColorHex === c.code
+                                            ? 'border-blue-500 scale-110 ring-2 ring-blue-300'
+                                            : 'border-gray-200 hover:border-gray-400'
+                                            }`}
                                         style={{ backgroundColor: c.bg }}
                                     >
                                         {shirtColorHex === c.code && (
@@ -1372,6 +1542,48 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
 
                         <div className="p-6">
                             <div className="max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+                                {/* Size Recommender */}
+                                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
+                                    <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                        <i className="fa-solid fa-calculator text-blue-500"></i> Gợi ý chọn Size
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-3 mb-3">
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-medium block mb-1">Chiều cao (cm)</label>
+                                            <input
+                                                type="number"
+                                                value={userHeight}
+                                                onChange={e => setUserHeight(e.target.value)}
+                                                placeholder="Ví dụ: 170"
+                                                className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-medium block mb-1">Cân nặng (kg)</label>
+                                            <input
+                                                type="number"
+                                                value={userWeight}
+                                                onChange={e => setUserWeight(e.target.value)}
+                                                placeholder="Ví dụ: 65"
+                                                className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    {recSize && (
+                                        <div className="bg-blue-50 border border-blue-100 rounded-lg p-2.5 flex items-center justify-between transition-all">
+                                            <span className="text-xs text-blue-800 font-medium">
+                                                Size gợi ý: <span className="font-bold text-sm bg-blue-600 text-white px-2 py-0.5 rounded ml-1">{recSize}</span>
+                                            </span>
+                                            <button
+                                                onClick={() => setSizeQty(prev => ({ ...prev, [recSize]: (prev[recSize] || 0) + 1 }))}
+                                                className="bg-white hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1.5 rounded transition shadow-sm"
+                                            >
+                                                Chọn size này
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Size steppers */}
                                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Số lượng theo size</p>
                                 <div className="space-y-3 mb-5">

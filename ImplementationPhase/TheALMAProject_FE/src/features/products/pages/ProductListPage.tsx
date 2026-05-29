@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../auth/context/AuthContext';
+import { toast } from 'react-hot-toast';
 import productApi from '../api/productApi';
 import ProductCard from '../components/ProductCard';
 import ProductFilters from '../components/ProductFilters';
@@ -28,7 +28,6 @@ const SEARCH_FIELDS = [
 ];
 
 export default function ProductListPage() {
-  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const [searchField, setSearchField] = useState('name');
