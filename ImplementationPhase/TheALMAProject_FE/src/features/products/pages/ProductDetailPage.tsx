@@ -25,6 +25,8 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState<string>();
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [userHeight, setUserHeight] = useState<string>('');
+  const [userWeight, setUserWeight] = useState<string>('');
   const navigate = useNavigate();
 
   const formatter = new Intl.NumberFormat('vi-VN', {
@@ -104,6 +106,30 @@ export default function ProductDetailPage() {
       setAddingToCart(false);
     }
   };
+
+  const getRecommendedSize = () => {
+    const h = parseFloat(userHeight);
+    const w = parseFloat(userWeight);
+    if (isNaN(h) || isNaN(w) || h <= 0 || w <= 0) return '';
+    
+    let weightSize = 'S';
+    if (w >= 78) weightSize = 'XXL';
+    else if (w >= 69) weightSize = 'XL';
+    else if (w >= 61) weightSize = 'L';
+    else if (w >= 53) weightSize = 'M';
+    else weightSize = 'S';
+
+    let heightSize = 'S';
+    if (h >= 181) heightSize = 'XXL';
+    else if (h >= 175) heightSize = 'XL';
+    else if (h >= 168) heightSize = 'L';
+    else if (h >= 160) heightSize = 'M';
+    else heightSize = 'S';
+
+    const sizes = ['S', 'M', 'L', 'XL', 'XXL'];
+    return sizes[Math.max(sizes.indexOf(weightSize), sizes.indexOf(heightSize))];
+  };
+  const recSize = getRecommendedSize();
 
   // Build gallery images from product data
   const galleryImages = product
@@ -213,6 +239,48 @@ export default function ProductDetailPage() {
                   selectedSize={selectedSize}
                   onSizeChange={setSelectedSize}
                 />
+
+                {/* Size Recommender */}
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 my-4" style={{ maxWidth: '380px' }}>
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1">
+                    <i className="fa-solid fa-calculator text-blue-500"></i> Gợi ý chọn Size
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-medium block mb-1">Chiều cao (cm)</label>
+                      <input
+                        type="number"
+                        value={userHeight}
+                        onChange={e => setUserHeight(e.target.value)}
+                        placeholder="Ví dụ: 170"
+                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-gray-500 font-medium block mb-1">Cân nặng (kg)</label>
+                      <input
+                        type="number"
+                        value={userWeight}
+                        onChange={e => setUserWeight(e.target.value)}
+                        placeholder="Ví dụ: 65"
+                        className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                  {recSize && (
+                    <div className="bg-blue-50 border border-blue-100 rounded-lg p-2.5 flex items-center justify-between transition-all">
+                      <span className="text-xs text-blue-800 font-medium">
+                        Size gợi ý: <span className="font-bold text-sm bg-blue-600 text-white px-2 py-0.5 rounded ml-1">{recSize}</span>
+                      </span>
+                      <button
+                        onClick={() => setSelectedSize(recSize)}
+                        className="bg-white hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1.5 rounded transition shadow-sm"
+                      >
+                        Chọn size này
+                      </button>
+                    </div>
+                  )}
+                </div>
 
                 {/* Quantity selector */}
                 <div className="pdp-quantity">
