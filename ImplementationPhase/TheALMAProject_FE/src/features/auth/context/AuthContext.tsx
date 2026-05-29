@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { createContext, useCallback, useContext, useState } from "react";
+import { createContext, useCallback, useContext, useState, useEffect } from "react";
 import type { UserSession } from "../../../shared/types/auth.types";
+import axiosClient from "../../../shared/api/axiosClient";
 
 // ─── Context Shape ────────────────────────────────────────────────────────────
 interface AuthContextValue {
@@ -26,6 +27,7 @@ function loadSession(): UserSession | null {
 				email: localStorage.getItem("userEmail") ?? "",
 				fullName: localStorage.getItem("userFullName") ?? "",
 				role: localStorage.getItem("userRole") ?? "",
+				avatarUrl: localStorage.getItem("userAvatarUrl") || null,
 			};
 		}
 	} catch {
@@ -43,6 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		localStorage.setItem("userEmail", session.email);
 		localStorage.setItem("userFullName", session.fullName);
 		localStorage.setItem("userRole", session.role);
+		if (session.avatarUrl) {
+			localStorage.setItem("userAvatarUrl", session.avatarUrl);
+		} else {
+			localStorage.removeItem("userAvatarUrl");
+		}
 		setUser(session);
 	}, []);
 
@@ -51,8 +58,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		localStorage.removeItem("userEmail");
 		localStorage.removeItem("userFullName");
 		localStorage.removeItem("userRole");
+		localStorage.removeItem("userAvatarUrl");
 		setUser(null);
 	}, []);
+
+	// Sync profile (especially avatar and fullName) if not yet synced in session
+	useEffect(() => {
+		if (user && !user.avatarUrl) {
+			axiosClient.get("/profile")
+				.then(res => {
+					if (res.data?.avatarUrl) {
+						login({
+							...user,
+							avatarUrl: res.data.avatarUrl,
+							fullName: res.data.fullName ?? user.fullName,
+						});
+					}
+				})
+				.catch(err => {
+					console.error("Failed to sync profile avatar on load:", err);
+				});
+		}
+	}, [user, login]);
 
 	return (
 		<AuthContext.Provider

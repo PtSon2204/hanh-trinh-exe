@@ -5,6 +5,7 @@ import authApi from "../../features/auth/api/authApi";
 import { useAuth } from "../../features/auth/context/AuthContext";
 import { SearchOverlay } from "../../features/products";
 import { cartApi } from "../../features/cart/api/cartApi";
+import { resolveApiAssetUrl } from "../api/axiosClient";
 import "../../features/home/pages/HomePage.css";
 
 export default function Navbar() {
@@ -121,11 +122,41 @@ export default function Navbar() {
             {user ? (
               <div className="alma-nav__user-menu">
                 <Link to="/profile" className="alma-nav__login-btn">
-                  👤 {user.fullName.split(" ").pop()}
+                  {user.avatarUrl ? (
+                    <img
+                      src={resolveApiAssetUrl(user.avatarUrl) || ""}
+                      alt="Avatar"
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "1.5px solid rgba(37, 99, 235, 0.2)",
+                      }}
+                    />
+                  ) : (
+                    "👤"
+                  )}
+                  <span>{user.fullName.split(" ").pop()}</span>
                 </Link>
                 <div className="alma-nav__dropdown">
-                  <Link to="/profile" className="alma-nav__dropdown-item">
-                    👤 Trang cá nhân
+                  <Link to="/profile" className="alma-nav__dropdown-item" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {user.avatarUrl ? (
+                      <img
+                        src={resolveApiAssetUrl(user.avatarUrl) || ""}
+                        alt="Avatar"
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          border: "1px solid rgba(0, 0, 0, 0.1)",
+                        }}
+                      />
+                    ) : (
+                      "👤"
+                    )}
+                    <span>Trang cá nhân</span>
                   </Link>
                   {user.role === "Admin" || user.role === "Product Manager" ? (
                     <Link to="/admin" className="alma-nav__dropdown-item">
@@ -133,9 +164,6 @@ export default function Navbar() {
                     </Link>
                   ) : (
                     <>
-                      <Link to="/my-designs" className="alma-nav__dropdown-item">
-                        🎨 Lịch sử thiết kế
-                      </Link>
                       <Link to="/orders" className="alma-nav__dropdown-item">
                         📦 Đơn hàng
                       </Link>
@@ -167,12 +195,28 @@ export default function Navbar() {
             <Link to="/customizer" onClick={() => setMobileOpen(false)}>✨ Thiết Kế Ngay</Link>
             {user ? (
               <>
-                <Link to="/profile" onClick={() => setMobileOpen(false)}>👤 Trang cá nhân</Link>
+                <Link to="/profile" onClick={() => setMobileOpen(false)} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  {user.avatarUrl ? (
+                    <img
+                      src={resolveApiAssetUrl(user.avatarUrl) || ""}
+                      alt="Avatar"
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                        border: "1px solid rgba(0, 0, 0, 0.1)",
+                      }}
+                    />
+                  ) : (
+                    "👤"
+                  )}
+                  <span>Trang cá nhân</span>
+                </Link>
                 {user.role === "Admin" || user.role === "Product Manager" ? (
                   <Link to="/admin" onClick={() => setMobileOpen(false)}>🛠️ Trang quản trị</Link>
                 ) : (
                   <>
-                    <Link to="/my-designs" onClick={() => setMobileOpen(false)}>🎨 Lịch sử thiết kế</Link>
                     <Link to="/orders" onClick={() => setMobileOpen(false)}>📦 Đơn hàng</Link>
                   </>
                 )}

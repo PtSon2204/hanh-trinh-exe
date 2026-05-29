@@ -30,11 +30,14 @@ export default function ProductCard({ product }: Props) {
     currency: 'VND',
   });
 
+  // Extract first image from pipe-separated imageUrl (multi-image support)
+  const firstImageUrl = product.imageUrl?.split('|')[0] || null;
+
   return (
     <Link to={`/products/${product.productId}`} className="product-card" id={`product-card-${product.productId}`}>
       <div className="product-card__img-wrap">
         <img
-          src={resolveApiAssetUrl(product.imageUrl ?? null) || '/images/placeholder-product.png'}
+          src={resolveApiAssetUrl(firstImageUrl) || '/images/placeholder-product.png'}
           alt={product.name}
           className="product-card__img"
           loading="lazy"
