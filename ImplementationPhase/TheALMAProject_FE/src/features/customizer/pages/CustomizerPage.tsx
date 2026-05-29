@@ -8,6 +8,7 @@ import type { BaseProductDto, IconDto, PrintAreaRect } from '../types';
 import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
 import './CustomizerPage.css';
 
+// ── Custom types ────────────────────────────────────────────────────────────
 type CanvasSide = 'front' | 'back';
 
 type CanvasBounds = {
@@ -22,6 +23,41 @@ type FabricTransformEvent = fabric.IEvent & {
         target?: fabric.Object;
     };
 };
+
+/** Fabric Image object extended with a price addon field */
+type FabricImageWithPrice = fabric.Image & { _priceAddon?: number };
+
+/** Options returned by fabric's loadSVGFromString */
+type SVGOptions = { width?: number; height?: number; [key: string]: unknown };
+
+/** History entry saved to localStorage */
+type HistoryEntry = {
+    id: number;
+    name: string;
+    time: string;
+    thumbnail: string;
+    shirtColor: string;
+    canvasJSON: object;
+    backCanvasJSON: object;
+    objectCount: number;
+};
+
+// Typed wrappers for fabric internal SVG helpers (not exposed in @types/fabric)
+const fabricAny = fabric as unknown as {
+    loadSVGFromString: (
+        svgCode: string,
+        callback: (objects: fabric.Object[], options: SVGOptions) => void,
+    ) => void;
+};
+const loadSVGFromString = (
+    svgCode: string,
+    callback: (objects: fabric.Object[], options: SVGOptions) => void,
+) => fabricAny.loadSVGFromString(svgCode, callback);
+
+const groupSVGElements = (objects: fabric.Object[], options: SVGOptions): fabric.Group =>
+    (fabric.util as unknown as { groupSVGElements: (o: fabric.Object[], opts: SVGOptions) => fabric.Group })
+        .groupSVGElements(objects, options);
+// ────────────────────────────────────────────────────────────────────────────
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
@@ -182,7 +218,7 @@ export default function CustomizerPage() {
 
     // --- States Dữ liệu Thiết kế ---
     const [, setLayerTrigger] = useState(0);
-    const [historyList, setHistoryList] = useState<any[]>([]);
+    const [historyList, setHistoryList] = useState<HistoryEntry[]>([]);
 
     // --- States Icons từ DB ---
     const [icons, setIcons] = useState<IconDto[]>([]);
@@ -258,7 +294,7 @@ export default function CustomizerPage() {
         const sourceUrl = side === 'front'
             ? selectedProduct?.frontImageUrl
             : selectedProduct?.backImageUrl ?? selectedProduct?.frontImageUrl;
-        return resolveApiAssetUrl(sourceUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg';
+        return resolveApiAssetUrl(sourceUrl) ?? undefined;
     };
 
     const createCompositePreview = async (side: CanvasSide) => {
@@ -269,7 +305,7 @@ export default function CustomizerPage() {
         designCanvas.renderAll();
 
         try {
-            const productUrl = getProductUrlForSide(side);
+            const productUrl = getProductUrlForSide(side) ?? '';
             const shirtImage = await loadPreviewImage(processedImages[productUrl] ?? productUrl);
             const outputCanvas = document.createElement('canvas');
             outputCanvas.width = PRODUCT_PREVIEW_WIDTH;
@@ -418,7 +454,7 @@ export default function CustomizerPage() {
         try {
             const saved = JSON.parse(localStorage.getItem('alma_design_history') || '[]');
             setHistoryList(saved);
-        } catch { }
+        } catch { /* ignore parse errors for empty/invalid history */ }
 
         // Handle Resize
         const handleResize = () => {
@@ -466,13 +502,20 @@ export default function CustomizerPage() {
 
     // Load phôi áo từ DB khi mount
     useEffect(() => {
-        customizerApi.getBaseProducts().then(data => {
-            setBaseProducts(data);
-            if (data.length > 0) {
-                setSelectedProductId(data[0].baseProductId);
-            }
-            setBaseProductsLoading(false);
-        });
+        customizerApi.getBaseProducts()
+            .then(data => {
+                setBaseProducts(data);
+                if (data.length > 0) {
+                    setSelectedProductId(data[0].baseProductId);
+                }
+            })
+            .catch(err => {
+                console.warn('[CustomizerPage] Không thể tải phôi áo từ server:', err);
+                setBaseProducts([]);
+            })
+            .finally(() => {
+                setBaseProductsLoading(false);
+            });
     }, []);
 
     // 2. Chức năng Thêm Chữ
@@ -504,7 +547,7 @@ export default function CustomizerPage() {
         fabric.Image.fromURL(resolvedUrl, (img) => {
             const maxSize = ac.width! * 0.5;
             const scale = maxSize / Math.max(img.width!, img.height!);
-            (img as any)._priceAddon = icon.priceAddon; // lưu giá vào object để tính tiền
+            (img as FabricImageWithPrice)._priceAddon = icon.priceAddon; // lưu giá vào object để tính tiền
             img.set({
                 left: ac.width! / 2, top: ac.height! / 2,
                 originX: 'center', originY: 'center',
@@ -527,13 +570,13 @@ export default function CustomizerPage() {
         setAddingIconIdx(idx);
         try {
             // Dùng loadSVGFromString để parse SVG đúng cách (tránh lỗi kích thước sai)
-            (fabric as any).loadSVGFromString(svgCode, (objects: fabric.Object[], options: any) => {
+            loadSVGFromString(svgCode, (objects: fabric.Object[], options: SVGOptions) => {
                 if (!objects || objects.length === 0) {
                     toast.error('SVG không hợp lệ!');
                     setAddingIconIdx(null);
                     return;
                 }
-                const svgGroup = (fabric.util as any).groupSVGElements(objects, options);
+                const svgGroup = groupSVGElements(objects, options);
                 const maxSize = ac.width! * 0.40;
                 const naturalW = svgGroup.width ?? 100;
                 const naturalH = svgGroup.height ?? 100;
@@ -604,9 +647,9 @@ export default function CustomizerPage() {
         };
 
         if (icon?.svgCode) {
-            (fabric as any).loadSVGFromString(icon.svgCode, (objects: fabric.Object[], options: any) => {
+            loadSVGFromString(icon.svgCode, (objects: fabric.Object[], options: SVGOptions) => {
                 if (!objects || objects.length === 0) { addTextToCanvas(canvasH * 0.55); return; }
-                const svgGroup = (fabric.util as any).groupSVGElements(objects, options);
+                const svgGroup = groupSVGElements(objects, options);
 
                 let iconSize = canvasW * 0.42;
                 let iconTop = canvasH * 0.18;
@@ -809,9 +852,9 @@ QUAN TRỌNG về svgCode:
             const parsed = JSON.parse(jsonStr);
             setAiSuggestion(parsed);
             toast.success('AI đã tạo gợi ý thiết kế thành công!');
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Gemini error:', err);
-            const msg = err?.message || 'Lỗi không xác định';
+            const msg = err instanceof Error ? err.message : 'Lỗi không xác định';
             // Phân loại lỗi để thông báo rõ hơn
             if (msg.includes('quota') || msg.includes('Quota') || msg.includes('RESOURCE_EXHAUSTED')) {
                 setAiError('Quá giới hạn API miễn phí. Vui lòng thử lại sau vài phút, hoặc kiểm tra quota tại https://ai.dev/rate-limit');
@@ -833,8 +876,9 @@ QUAN TRỌNG về svgCode:
         let total = 0;
         [fabricCanvas.current, backFabricCanvas.current].forEach(canvas => {
             if (!canvas) return;
-            canvas.getObjects().forEach((obj: any) => {
-                if (typeof obj._priceAddon === 'number') total += obj._priceAddon;
+            canvas.getObjects().forEach((obj) => {
+                const priceAddon = (obj as FabricImageWithPrice)._priceAddon;
+                if (typeof priceAddon === 'number') total += priceAddon;
             });
         });
         return total;
@@ -888,7 +932,7 @@ QUAN TRỌNG về svgCode:
     };
 
     // 8. Tải lại thiết kế từ Lịch sử
-    const loadDesignFromHistory = (entry: any) => {
+    const loadDesignFromHistory = (entry: HistoryEntry) => {
         if (!fabricCanvas.current) return;
         fabricCanvas.current.loadFromJSON(entry.canvasJSON, () => {
             fabricCanvas.current?.renderAll();
@@ -1063,10 +1107,12 @@ QUAN TRỌNG về svgCode:
             setCartModalOpen(false);
             setSizeQty({ S: 0, M: 0, L: 0, XL: 0, XXL: 0 });
             navigate('/cart');
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('[handleConfirmAddToCart] Error:', err);
-            const serverMsg = err?.response?.data?.message || err?.response?.data;
-            const msg = typeof serverMsg === 'string' ? serverMsg : (err?.message || 'Lỗi khi thêm vào giỏ hàng!');
+            const axiosErr = err as { response?: { data?: { message?: string } | string }; message?: string };
+            const serverMsg = axiosErr?.response?.data;
+            const serverMsgStr = typeof serverMsg === 'object' ? serverMsg?.message : serverMsg;
+            const msg = typeof serverMsgStr === 'string' ? serverMsgStr : (axiosErr?.message || 'Lỗi khi thêm vào giỏ hàng!');
             toast.error(msg);
         } finally {
             setIsAddingToCart(false);
@@ -1188,9 +1234,9 @@ QUAN TRỌNG về svgCode:
     };
 
     // --- Active Product Image URL (handles both front and back views) ---
-    const activeProductUrl = viewMode === 'front'
+    const activeProductUrl: string = (viewMode === 'front'
         ? getProductUrlForSide('front')
-        : getProductUrlForSide('back');
+        : getProductUrlForSide('back')) ?? '';
 
     // --- Automatically process background removal when active URL changes ---
     useEffect(() => {
@@ -1217,7 +1263,6 @@ QUAN TRỌNG về svgCode:
     }, [activeProductUrl, processedImages]);
 
     const currentLayers = (getActiveCanvas()?.getObjects() || []);
-    const shirtMaskUrl = processedImages[activeProductUrl];
     const activePrintAreaStyle = getPrintAreaOverlayStyle(selectedProduct?.printArea?.[viewMode]);
 
     return (
@@ -1282,6 +1327,11 @@ QUAN TRỌNG về svgCode:
                                     <div className="flex items-center justify-center py-8 text-gray-400">
                                         <i className="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải phôi áo...
                                     </div>
+                                ) : baseProducts.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2 mb-4">
+                                        <i className="fa-solid fa-shirt text-3xl text-gray-300"></i>
+                                        <p className="text-xs text-center text-gray-400">Hiện tại không có phôi áo nào.<br />Vui lòng thử lại sau.</p>
+                                    </div>
                                 ) : (
                                     <div className="grid grid-cols-2 gap-3 mb-4">
                                         {baseProducts.map(p => (
@@ -1293,12 +1343,17 @@ QUAN TRỌNG về svgCode:
                                                     : 'border-gray-200 hover:border-blue-300'
                                                     }`}
                                             >
-                                                <img
-                                                    src={resolveApiAssetUrl(p.frontImageUrl) ?? '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
-                                                    className="w-full aspect-square object-cover bg-white rounded"
-                                                    alt={p.name}
-                                                    onError={(e) => (e.target as HTMLImageElement).src = '/images/Phoi_ao/áo cộc tay ko cổ.jpg'}
-                                                />
+                                                {resolveApiAssetUrl(p.frontImageUrl) ? (
+                                                    <img
+                                                        src={resolveApiAssetUrl(p.frontImageUrl)!}
+                                                        className="w-full aspect-square object-cover bg-white rounded"
+                                                        alt={p.name}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full aspect-square bg-gray-100 rounded flex items-center justify-center">
+                                                        <i className="fa-solid fa-shirt text-2xl text-gray-300"></i>
+                                                    </div>
+                                                )}
                                                 <p className={`text-[10px] font-bold mt-2 ${selectedProductId === p.baseProductId ? 'text-blue-600' : 'text-gray-600'
                                                     }`}>{p.name}</p>
                                                 {selectedProductId === p.baseProductId && (
@@ -1320,7 +1375,8 @@ QUAN TRỌNG về svgCode:
                                         <i className="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải icons...
                                     </div>
                                 ) : icons.length === 0 ? (
-                                    <p className="text-xs text-gray-400 italic text-center py-4">Chưa có icon nào trong DB.</p>
+                                    <p className="text-xs text-gray-400 italic text-center py-4">Hiện tại không có icon nào trong thư viện.
+Vui lòng thử lại sau..</p>
                                 ) : (
                                     <div className="grid grid-cols-3 gap-2 pb-4">
                                         {icons.map(icon => (
@@ -1543,7 +1599,7 @@ QUAN TRỌNG về svgCode:
                                                         onClick={() => {
                                                             const ac = getActiveCanvas();
                                                             if (!ac) return;
-                                                            const textObj = new (window as any).fabric.IText(t, {
+                                                            const textObj = new fabric.IText(t, {
                                                                 left: ac.width! / 2,
                                                                 top: ac.height! / 2,
                                                                 originX: 'center', originY: 'center',
@@ -1724,7 +1780,7 @@ QUAN TRỌNG về svgCode:
                                                             onClick={() => {
                                                                 const ac = getActiveCanvas();
                                                                 if (!ac) return;
-                                                                (window as any).fabric.Image.fromURL(imgUrl, (img: fabric.Image) => {
+                                                                fabric.Image.fromURL(imgUrl, (img: fabric.Image) => {
                                                                     const maxDim = Math.min(ac.getWidth(), ac.getHeight()) * 0.45;
                                                                     const scale = Math.min(maxDim / (img.width || 1), maxDim / (img.height || 1));
                                                                     img.set({
@@ -1999,13 +2055,14 @@ QUAN TRỌNG về svgCode:
                         {layersVisible && (
                             <div className="px-4 py-3 bg-gray-50 border-b">
                                 {currentLayers.length === 0 ? <p className="text-xs text-gray-400 italic">Chưa có họa tiết nào.</p> :
-                                    currentLayers.map((obj: any, i) => {
+                                    currentLayers.map((obj, i) => {
                                         const isText = obj.type === 'i-text' || obj.type === 'text';
+                                        const textObj = isText ? (obj as fabric.IText) : null;
                                         return (
                                             <div key={i} className="flex justify-between items-center text-sm bg-white border p-2 rounded shadow-sm mb-1 cursor-pointer hover:bg-blue-50" onClick={() => { const ac = getActiveCanvas(); ac?.setActiveObject(obj); ac?.renderAll(); }}>
                                                 <span className="font-medium text-gray-800 truncate">
                                                     <i className={`fa-solid ${isText ? 'fa-t' : 'fa-image'} text-gray-400 mr-2`}></i>
-                                                    {isText ? `"${obj.text?.substring(0, 10)}..."` : `Sticker ${i + 1}`}
+                                                    {isText ? `"${textObj?.text?.substring(0, 10)}..."` : `Sticker ${i + 1}`}
                                                 </span>
                                                 <button onClick={(e) => { e.stopPropagation(); const ac = getActiveCanvas(); ac?.remove(obj); ac?.renderAll(); }} className="text-red-400 hover:text-red-600"><i className="fa-regular fa-trash-can"></i></button>
                                             </div>

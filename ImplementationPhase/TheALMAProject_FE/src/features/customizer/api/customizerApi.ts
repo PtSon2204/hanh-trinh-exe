@@ -59,7 +59,7 @@ const mapBaseProduct = (p: BaseProductResponse): BaseProductDto => {
         baseProductId: p.baseProductId ?? p.BaseProductId,
         name: p.name ?? p.Name,
         basePrice: p.basePrice ?? p.BasePrice ?? 150000,
-        frontImageUrl: p.frontImageUrl ?? p.FrontImageUrl ?? FALLBACK_BASE_PRODUCT.frontImageUrl,
+        frontImageUrl: p.frontImageUrl ?? p.FrontImageUrl ?? '',
         backImageUrl: p.backImageUrl ?? p.BackImageUrl ?? undefined,
         availableColors: p.availableColors ?? p.AvailableColors ?? '#FFFFFF,#000000',
         printAreaJson,
@@ -77,16 +77,7 @@ const loadBaseProductDetail = async (productId: number): Promise<BaseProductResp
     }
 };
 
-// Phôi áo fallback (chỉ dùng khi DB trả về rỗng hoặc lỗi)
-const FALLBACK_BASE_PRODUCT: BaseProductDto = {
-    baseProductId: 1,
-    name: "Áo Phông",
-    basePrice: 150000,
-    frontImageUrl: "/images/Phoi_ao/áo cộc tay ko cổ.jpg",
-    availableColors: "#FFFFFF,#000000,#9ca3af,#f9a8d4,#dbeafe,#4ade80,#c084fc,#fde047,#f97316,#dc2626",
-    printAreaJson: null,
-    printArea: null,
-};
+// Phôi áo fallback đã bị xóa — khi DB trả về rỗng, UI sẽ hiển thị thông báo "Không có phôi áo nào"
 
 export const customizerApi = {
     // ─── Lấy danh sách phôi áo từ DB ─────────────────────────────────────────
@@ -104,8 +95,8 @@ export const customizerApi = {
             const active = products.filter((p) => (p.isActive ?? p.IsActive) !== false);
 
             if (active.length === 0) {
-                console.warn('[customizerApi] DB trả về 0 phôi áo active, dùng fallback.');
-                return [FALLBACK_BASE_PRODUCT];
+                console.warn('[customizerApi] DB trả về 0 phôi áo active.');
+                return [];
             }
 
             // BE list cũ có thể chưa trả printAreaJson, nên hydrate từ detail endpoint.
@@ -120,7 +111,7 @@ export const customizerApi = {
             return productsWithPrintArea;
         } catch (err) {
             console.error('[customizerApi] Không thể tải phôi áo từ DB:', err);
-            return [FALLBACK_BASE_PRODUCT];
+            return [];
         }
     },
 
