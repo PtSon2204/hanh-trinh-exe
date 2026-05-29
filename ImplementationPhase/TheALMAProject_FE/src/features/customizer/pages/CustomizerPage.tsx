@@ -224,50 +224,77 @@ export default function CustomizerPage() {
         designCanvas.discardActiveObject();
         designCanvas.renderAll();
 
-        const productUrl = getProductUrlForSide(side);
-        const shirtImage = await loadPreviewImage(processedImages[productUrl] ?? productUrl);
-        const outputCanvas = document.createElement('canvas');
-        outputCanvas.width = PRODUCT_PREVIEW_WIDTH;
-        outputCanvas.height = PRODUCT_PREVIEW_HEIGHT;
-        const ctx = outputCanvas.getContext('2d');
-        if (!ctx) return designCanvas.toDataURL({ format: 'png', multiplier: 0.5 });
+        try {
+            const productUrl = getProductUrlForSide(side);
+            const shirtImage = await loadPreviewImage(processedImages[productUrl] ?? productUrl);
+            const outputCanvas = document.createElement('canvas');
+            outputCanvas.width = PRODUCT_PREVIEW_WIDTH;
+            outputCanvas.height = PRODUCT_PREVIEW_HEIGHT;
+            const ctx = outputCanvas.getContext('2d');
+            if (!ctx) return designCanvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
 
-        ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-        const shirtBox = {
-            left: PRODUCT_PREVIEW_WIDTH * 0.075,
-            top: 0,
-            width: PRODUCT_PREVIEW_WIDTH * 0.85,
-            height: PRODUCT_PREVIEW_HEIGHT,
-        };
+            ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+            // Nền trắng cho JPEG (tránh nền đen khi transparent)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, outputCanvas.width, outputCanvas.height);
 
-        if (shirtColorHex !== '#FFFFFF') {
-            ctx.save();
-            drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
-            ctx.globalCompositeOperation = 'source-in';
-            ctx.fillStyle = shirtColorHex;
-            ctx.fillRect(shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
-            ctx.restore();
+            const shirtBox = {
+                left: PRODUCT_PREVIEW_WIDTH * 0.075,
+                top: 0,
+                width: PRODUCT_PREVIEW_WIDTH * 0.85,
+                height: PRODUCT_PREVIEW_HEIGHT,
+            };
+
+            if (shirtColorHex !== '#FFFFFF') {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = PRODUCT_PREVIEW_WIDTH;
+                tempCanvas.height = PRODUCT_PREVIEW_HEIGHT;
+                const tempCtx = tempCanvas.getContext('2d');
+                if (tempCtx) {
+                    drawContainedImage(tempCtx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+                    tempCtx.globalCompositeOperation = 'multiply';
+                    tempCtx.fillStyle = shirtColorHex;
+                    tempCtx.fillRect(shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+                    tempCtx.globalCompositeOperation = 'destination-in';
+                    drawContainedImage(tempCtx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+                    ctx.drawImage(tempCanvas, 0, 0);
+                }
+            } else {
+                drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+            }
+
+            const designUrl = designCanvas.toDataURL({ format: 'png', multiplier: 0.5 });
+            const designImage = await loadPreviewImage(designUrl);
+            ctx.drawImage(
+                designImage,
+                PRODUCT_PREVIEW_WIDTH * 0.02,
+                PRODUCT_PREVIEW_HEIGHT * 0.02,
+                PRODUCT_PREVIEW_WIDTH * 0.76,
+                PRODUCT_PREVIEW_HEIGHT * 0.88,
+            );
+
+            return outputCanvas.toDataURL('image/jpeg', 0.6);
+        } catch (err) {
+            console.warn('[createCompositePreview] Fallback to simple canvas export:', err);
+            return designCanvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
         }
-
-        drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
-
-        const designUrl = designCanvas.toDataURL({ format: 'png', multiplier: 1 });
-        const designImage = await loadPreviewImage(designUrl);
-        ctx.drawImage(
-            designImage,
-            PRODUCT_PREVIEW_WIDTH * 0.02,
-            PRODUCT_PREVIEW_HEIGHT * 0.02,
-            PRODUCT_PREVIEW_WIDTH * 0.76,
-            PRODUCT_PREVIEW_HEIGHT * 0.88,
-        );
-
-        return outputCanvas.toDataURL('image/png');
     };
 
     const createSidePreviewImages = async () => {
-        const frontPreviewImageUrl = await createCompositePreview('front');
-        const backPreviewImageUrl = await createCompositePreview('back');
-
+        let frontPreviewImageUrl = '';
+        let backPreviewImageUrl = '';
+        try {
+            frontPreviewImageUrl = await createCompositePreview('front');
+        } catch (err) {
+            console.warn('[createSidePreviewImages] Front preview failed:', err);
+            frontPreviewImageUrl = fabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 }) ?? '';
+        }
+        try {
+            backPreviewImageUrl = await createCompositePreview('back');
+        } catch (err) {
+            console.warn('[createSidePreviewImages] Back preview failed:', err);
+            backPreviewImageUrl = backFabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 }) ?? '';
+        }
         return { frontPreviewImageUrl, backPreviewImageUrl };
     };
 
@@ -318,16 +345,6 @@ export default function CustomizerPage() {
             width: w, height: h,
             backgroundColor: 'transparent', selection: true,
         });
-        const defaultText = new fabric.IText('A1 CLASS', {
-            left: w / 2, top: h * 0.35,
-            originX: 'center', originY: 'center',
-            fontSize: 32, fontFamily: 'Impact', fontWeight: 'bold',
-            fill: '#1e293b',
-            cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
-            transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
-        });
-        fabricCanvas.current.add(defaultText);
-        fabricCanvas.current.setActiveObject(defaultText);
         fabricCanvas.current.on('object:added', updateLayers);
         fabricCanvas.current.on('object:removed', updateLayers);
         fabricCanvas.current.on('object:modified', updateLayers);
@@ -617,8 +634,16 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             fabricCanvas.current.renderAll();
             backFabricCanvas.current?.discardActiveObject();
             backFabricCanvas.current?.renderAll();
-            const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
-            const canvasDataURL = fabricCanvas.current.getObjects().length > 0 ? frontPreviewImageUrl : backPreviewImageUrl;
+
+            // Tạo preview — nếu composite fail thì fallback sang simple export
+            let canvasDataURL = '';
+            try {
+                const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
+                canvasDataURL = fabricCanvas.current.getObjects().length > 0 ? frontPreviewImageUrl : backPreviewImageUrl;
+            } catch {
+                canvasDataURL = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+            }
+
             const frontJSON = fabricCanvas.current.toJSON(['id', 'selectable']);
             const backJSON = backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] };
             const newEntry = {
@@ -636,8 +661,8 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             localStorage.setItem('alma_design_history', JSON.stringify(updatedHistory));
             toast.success('Đã lưu thiết kế thành công!');
         } catch (err) {
-            console.error('Không thể tạo preview thiết kế:', err);
-            toast.error('Không thể tạo preview thiết kế. Vui lòng thử lại.');
+            console.error('Không thể lưu thiết kế:', err);
+            toast.error('Không thể lưu thiết kế. Vui lòng thử lại.');
         }
     };
 
@@ -741,16 +766,16 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                     const designAreaH = shirtDrawH * 0.78;
 
                     // Export design từ Fabric canvas
-                    const designDataUrl = fabricCanvas.current!.toDataURL({ format: 'png', multiplier: 1 });
+                    const designDataUrl = fabricCanvas.current!.toDataURL({ format: 'png', multiplier: 0.5 });
                     const designImg = new Image();
                     designImg.src = designDataUrl;
                     designImg.onload = () => {
                         ctx.drawImage(designImg, designAreaX, designAreaY, designAreaW, designAreaH);
-                        resolve(offscreen.toDataURL('image/png', 0.85));
+                        resolve(offscreen.toDataURL('image/jpeg', 0.6));
                     };
                     designImg.onerror = () => {
                         // Nếu không load được design, vẫn trả về ảnh áo
-                        resolve(offscreen.toDataURL('image/png', 0.85));
+                        resolve(offscreen.toDataURL('image/jpeg', 0.6));
                     };
                 } catch (e) {
                     reject(e);
@@ -759,7 +784,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
 
             shirtImg.onerror = () => {
                 // Fallback: nếu không load được ảnh áo, dùng canvas gốc
-                const fallback = fabricCanvas.current!.toDataURL({ format: 'png', multiplier: 0.5 });
+                const fallback = fabricCanvas.current!.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
                 resolve(fallback);
             };
         });
@@ -776,10 +801,26 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             backFabricCanvas.current?.discardActiveObject();
             backFabricCanvas.current?.renderAll();
 
-            // Tạo ảnh preview riêng cho front/back
-            const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
-            // Tạo ảnh composite (áo + thiết kế) cho preview chính
-            const previewDataUrl = await generateCompositePreview();
+            // Tạo ảnh preview riêng cho front/back — với fallback
+            let frontPreviewImageUrl = '';
+            let backPreviewImageUrl = '';
+            let previewDataUrl = '';
+            try {
+                const sideImages = await createSidePreviewImages();
+                frontPreviewImageUrl = sideImages.frontPreviewImageUrl;
+                backPreviewImageUrl = sideImages.backPreviewImageUrl;
+            } catch (previewErr) {
+                console.warn('[handleConfirmAddToCart] Side preview failed, using fallback:', previewErr);
+                frontPreviewImageUrl = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.5, multiplier: 0.4 });
+                backPreviewImageUrl = backFabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.5, multiplier: 0.4 }) ?? '';
+            }
+            try {
+                previewDataUrl = await generateCompositePreview();
+            } catch (compositeErr) {
+                console.warn('[handleConfirmAddToCart] Composite preview failed, using front preview:', compositeErr);
+                previewDataUrl = frontPreviewImageUrl;
+            }
+
             const frontCanvasJson = JSON.stringify(fabricCanvas.current.toJSON(['id', 'selectable']));
             const backCanvasJson = JSON.stringify(backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] });
             await customizerApi.saveAndAddMultiSize(
@@ -802,7 +843,9 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
             setSizeQty({ S: 0, M: 0, L: 0, XL: 0, XXL: 0 });
             navigate('/cart');
         } catch (err: any) {
-            const msg = err?.response?.data?.message || err?.response?.data || 'Lỗi khi thêm vào giỏ hàng!';
+            console.error('[handleConfirmAddToCart] Error:', err);
+            const serverMsg = err?.response?.data?.message || err?.response?.data;
+            const msg = typeof serverMsg === 'string' ? serverMsg : (err?.message || 'Lỗi khi thêm vào giỏ hàng!');
             toast.error(msg);
         } finally {
             setIsAddingToCart(false);
@@ -1266,36 +1309,46 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                     <div className="flex-1 relative flex items-center justify-center p-4 mt-10 md:mt-0">
                         {/* Khu vực Mô phỏng Áo (Cực kỳ quan trọng) */}
                         <div className="relative w-full max-w-[550px] aspect-[4/5] flex items-center justify-center shirt-container overflow-hidden rounded-xl">
-                            {shirtColorHex !== '#FFFFFF' && shirtMaskUrl ? (
-                                <div
-                                    className="absolute w-[85%] h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[11] pointer-events-none select-none"
-                                    style={{
-                                        backgroundColor: shirtColorHex,
-                                        maskImage: `url(${shirtMaskUrl})`,
-                                        maskPosition: 'center',
-                                        maskRepeat: 'no-repeat',
-                                        maskSize: 'contain',
-                                        mixBlendMode: 'multiply',
-                                        opacity: 0.72,
-                                        transition: 'background-color 0.2s ease, opacity 0.2s ease',
-                                        WebkitMaskImage: `url(${shirtMaskUrl})`,
-                                        WebkitMaskPosition: 'center',
-                                        WebkitMaskRepeat: 'no-repeat',
-                                        WebkitMaskSize: 'contain',
-                                    }}
-                                />
-                            ) : null}
-                            {/* Hình nền Áo */}
-                            <img
-                                src={processedImages[activeProductUrl] ?? activeProductUrl}
-                                alt={selectedProduct?.name ?? 'Phôi áo'}
-                                className="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
-                                draggable="false"
-                                style={{
-                                    opacity: isImageProcessing ? 0.6 : 1,
-                                    transition: 'opacity 0.2s ease',
-                                }}
-                            />
+                            {/* Loading state khi chưa load phôi từ DB */}
+                            {baseProductsLoading ? (
+                                <div className="flex flex-col items-center justify-center gap-3 text-gray-400">
+                                    <i className="fa-solid fa-spinner fa-spin text-3xl text-blue-500"></i>
+                                    <p className="text-sm font-medium">Đang tải phôi áo...</p>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Color overlay — nằm TRÊN ảnh áo (z-[11]) để hòa trộn màu (mix-blend-mode: multiply) */}
+                                    {shirtColorHex !== '#FFFFFF' && (
+                                        <div
+                                            className="absolute w-[85%] h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[11] pointer-events-none select-none"
+                                            style={{
+                                                backgroundColor: shirtColorHex,
+                                                mixBlendMode: 'multiply',
+                                                maskImage: `url(${processedImages[activeProductUrl] ?? activeProductUrl})`,
+                                                maskPosition: 'center',
+                                                maskRepeat: 'no-repeat',
+                                                maskSize: 'contain',
+                                                transition: 'background-color 0.3s ease',
+                                                WebkitMaskImage: `url(${processedImages[activeProductUrl] ?? activeProductUrl})`,
+                                                WebkitMaskPosition: 'center',
+                                                WebkitMaskRepeat: 'no-repeat',
+                                                WebkitMaskSize: 'contain',
+                                            }}
+                                        />
+                                    )}
+                                    {/* Hình nền Áo — z-[10] nằm DƯỚI color layer */}
+                                    <img
+                                        src={processedImages[activeProductUrl] ?? activeProductUrl}
+                                        alt={selectedProduct?.name ?? 'Phôi áo'}
+                                        className="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
+                                        draggable="false"
+                                        style={{
+                                            opacity: isImageProcessing ? 0.6 : 1,
+                                            transition: 'opacity 0.2s ease',
+                                        }}
+                                    />
+                                </>
+                            )}
 
                             {/* Khung vẽ Fabric.js - MẶT TRƯỚC */}
                             <div

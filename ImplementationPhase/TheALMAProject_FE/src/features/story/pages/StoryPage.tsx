@@ -1,9 +1,3 @@
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { useAuth } from "../../auth/context/AuthContext";
-import authApi from "../../auth/api/authApi";
-import { toast } from "react-hot-toast";
-import { cartApi } from "../../cart/api/cartApi";
 import Navbar from "../../../shared/components/Navbar";
 import Footer from "../../../shared/components/Footer";
 import "./StoryPage.css";

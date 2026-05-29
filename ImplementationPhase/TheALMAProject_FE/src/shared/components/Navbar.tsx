@@ -42,7 +42,6 @@ export default function Navbar() {
   const isHomeActive = currentPath === "/";
   const isProductActive = currentPath.startsWith("/category") || currentPath.startsWith("/products");
   const isStoryActive = currentPath.startsWith("/Story") || currentPath.startsWith("/story");
-  const isOrderActive = currentPath.startsWith("/orders");
   const isContactActive = currentPath.startsWith("/contact");
   const isCustomizerActive = currentPath.startsWith("/customizer");
 
