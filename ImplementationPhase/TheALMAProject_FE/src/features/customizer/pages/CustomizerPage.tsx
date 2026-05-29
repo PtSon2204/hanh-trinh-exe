@@ -197,12 +197,28 @@ export default function CustomizerPage() {
     const [isAiLoading, setIsAiLoading] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState<{
         concept: string;
-        icons: { name: string; description: string; emoji: string }[];
+        icons: { name: string; description: string; emoji: string; svgCode?: string }[];
         colors: { hex: string; name: string }[];
         texts: string[];
         style: string;
+        templates?: {
+            name: string;
+            description: string;
+            shirtColor: string;
+            textColor: string;
+            iconIndex: number;
+            text: string;
+            layout: 'center' | 'top-icon-bottom-text' | 'large-icon';
+        }[];
     } | null>(null);
     const [aiError, setAiError] = useState<string | null>(null);
+    const [addingIconIdx, setAddingIconIdx] = useState<number | null>(null);
+    const [applyingTemplateIdx, setApplyingTemplateIdx] = useState<number | null>(null);
+
+    // --- States Zoom & Preview ---
+    const [shirtZoom, setShirtZoom] = useState(1);
+    const [previewOpen, setPreviewOpen] = useState(false);
+    const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
     // Helper: trả về canvas đang active (dùng sau khi states đã khởi tạo)
     const getActiveCanvas = () =>
@@ -240,17 +256,34 @@ export default function CustomizerPage() {
             height: PRODUCT_PREVIEW_HEIGHT,
         };
 
-        if (shirtColorHex !== '#FFFFFF') {
+        // 1. Vẽ áo gốc (trắng/base)
+        drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+
+        // 2. Overlay màu áo bằng multiply (giống live canvas)
+        if (shirtColorHex && shirtColorHex !== '#FFFFFF' && shirtColorHex !== '#ffffff') {
             ctx.save();
-            drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
-            ctx.globalCompositeOperation = 'source-in';
+            ctx.globalCompositeOperation = 'multiply';
+            ctx.globalAlpha = 0.75;
             ctx.fillStyle = shirtColorHex;
-            ctx.fillRect(shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+            // Chỉ fill vùng áo (dùng shirt image làm mask bằng destination-in)
+            // Cách đơn giản: vẽ một layer canvas phụ rồi compose
+            const colorCanvas = document.createElement('canvas');
+            colorCanvas.width = outputCanvas.width;
+            colorCanvas.height = outputCanvas.height;
+            const cctx = colorCanvas.getContext('2d')!;
+            // Vẽ shirt image lên colorCanvas
+            drawContainedImage(cctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
+            // Đổi composite thành source-atop để fill màu chỉ lên vùng áo
+            cctx.globalCompositeOperation = 'source-atop';
+            cctx.fillStyle = shirtColorHex;
+            cctx.globalAlpha = 0.72;
+            cctx.fillRect(0, 0, colorCanvas.width, colorCanvas.height);
+            // Composite colorCanvas lên outputCanvas với multiply
+            ctx.drawImage(colorCanvas, 0, 0);
             ctx.restore();
         }
 
-        drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
-
+        // 3. Vẽ thiết kế (stickers, text) lên trên
         const designUrl = designCanvas.toDataURL({ format: 'png', multiplier: 1 });
         const designImage = await loadPreviewImage(designUrl);
         ctx.drawImage(
@@ -318,16 +351,6 @@ export default function CustomizerPage() {
             width: w, height: h,
             backgroundColor: 'transparent', selection: true,
         });
-        const defaultText = new fabric.IText('A1 CLASS', {
-            left: w / 2, top: h * 0.35,
-            originX: 'center', originY: 'center',
-            fontSize: 32, fontFamily: 'Impact', fontWeight: 'bold',
-            fill: '#1e293b',
-            cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
-            transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
-        });
-        fabricCanvas.current.add(defaultText);
-        fabricCanvas.current.setActiveObject(defaultText);
         fabricCanvas.current.on('object:added', updateLayers);
         fabricCanvas.current.on('object:removed', updateLayers);
         fabricCanvas.current.on('object:modified', updateLayers);
@@ -459,7 +482,127 @@ export default function CustomizerPage() {
         }, { crossOrigin: 'anonymous' });
     };
 
+    // 3b. Thêm SVG icon từ AI gợi ý lên canvas
+    const handleAddSvgIconToCanvas = (svgCode: string, idx: number) => {
+        const ac = getActiveCanvas();
+        if (!ac) return;
+        setAddingIconIdx(idx);
+        try {
+            // Dùng loadSVGFromString để parse SVG đúng cách (tránh lỗi kích thước sai)
+            (fabric as any).loadSVGFromString(svgCode, (objects: fabric.Object[], options: any) => {
+                if (!objects || objects.length === 0) {
+                    toast.error('SVG không hợp lệ!');
+                    setAddingIconIdx(null);
+                    return;
+                }
+                const svgGroup = (fabric.util as any).groupSVGElements(objects, options);
+                const maxSize = ac.width! * 0.40;
+                const naturalW = svgGroup.width ?? 100;
+                const naturalH = svgGroup.height ?? 100;
+                const scale = maxSize / Math.max(naturalW, naturalH);
+                svgGroup.set({
+                    left: ac.width! / 2,
+                    top: ac.height! / 2,
+                    originX: 'center',
+                    originY: 'center',
+                    scaleX: scale,
+                    scaleY: scale,
+                    selectable: true,
+                    evented: true,
+                    cornerColor: '#3b82f6',
+                    cornerStyle: 'circle',
+                    cornerSize: 8,
+                    transparentCorners: false,
+                    borderColor: '#3b82f6',
+                    borderScaleFactor: 2,
+                });
+                ac.add(svgGroup);
+                ac.setActiveObject(svgGroup);
+                constrainObject(viewMode, svgGroup, ac, true);
+                toast.success('Đã thêm icon AI lên áo!');
+                setAddingIconIdx(null);
+            });
+        } catch {
+            toast.error('Không thể thêm icon!');
+            setAddingIconIdx(null);
+        }
+    };
 
+    // 3c. Áp dụng toàn bộ mẫu thiết kế AI lên áo
+    const handleApplyTemplate = (tpl: NonNullable<NonNullable<typeof aiSuggestion>['templates']>[number], idx: number) => {
+        const ac = getActiveCanvas();
+        if (!ac || !aiSuggestion) return;
+        setApplyingTemplateIdx(idx);
+
+        // 1. Đặt màu áo
+        setShirtColorHex(tpl.shirtColor);
+
+        // 2. Xóa canvas hiện tại
+        ac.clear();
+        ac.renderAll();
+
+        const icon = aiSuggestion.icons[tpl.iconIndex];
+        const canvasW = ac.width!;
+        const canvasH = ac.height!;
+
+        const addTextToCanvas = (yOffset: number) => {
+            if (!tpl.text) { setApplyingTemplateIdx(null); return; }
+            const textObj = new fabric.IText(tpl.text, {
+                left: canvasW / 2,
+                top: yOffset,
+                originX: 'center', originY: 'top',
+                fontSize: tpl.layout === 'large-icon' ? 14 : 18,
+                fontFamily: 'Impact',
+                fill: tpl.textColor || '#ffffff',
+                cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
+                transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
+                charSpacing: 80,
+            });
+            ac.add(textObj);
+            constrainObject(viewMode, textObj, ac, true);
+            ac.renderAll();
+            toast.success(`Đã áp dụng mẫu "${tpl.name}"!`);
+            setApplyingTemplateIdx(null);
+        };
+
+        if (icon?.svgCode) {
+            (fabric as any).loadSVGFromString(icon.svgCode, (objects: fabric.Object[], options: any) => {
+                if (!objects || objects.length === 0) { addTextToCanvas(canvasH * 0.55); return; }
+                const svgGroup = (fabric.util as any).groupSVGElements(objects, options);
+
+                let iconSize = canvasW * 0.42;
+                let iconTop = canvasH * 0.18;
+                let textY = canvasH * 0.64;
+
+                if (tpl.layout === 'large-icon') {
+                    iconSize = canvasW * 0.55;
+                    iconTop = canvasH * 0.1;
+                    textY = canvasH * 0.72;
+                } else if (tpl.layout === 'center') {
+                    iconSize = canvasW * 0.4;
+                    iconTop = canvasH * 0.25;
+                    textY = canvasH * 0.68;
+                }
+
+                const scale = iconSize / Math.max(svgGroup.width ?? 100, svgGroup.height ?? 100);
+                svgGroup.set({
+                    left: canvasW / 2,
+                    top: iconTop,
+                    originX: 'center', originY: 'top',
+                    scaleX: scale, scaleY: scale,
+                    selectable: true, evented: true,
+                    cornerColor: '#3b82f6', cornerStyle: 'circle', cornerSize: 8,
+                    transparentCorners: false, borderColor: '#3b82f6', borderScaleFactor: 2,
+                });
+                ac.add(svgGroup);
+                constrainObject(viewMode, svgGroup, ac, true);
+                ac.renderAll();
+                addTextToCanvas(textY);
+            });
+        } else {
+            addTextToCanvas(canvasH * 0.5);
+        }
+    };
 
     // 4. Các nút Toolbar nổi
     const handleFloatingAction = (action: string) => {
@@ -508,10 +651,30 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
   "concept": "Mô tả concept thiết kế tổng thể 2-3 câu",
   "style": "Tên phong cách ví dụ: Streetwear",
   "icons": [
-    { "name": "Tên họa tiết 1", "description": "Mô tả 1 câu", "emoji": "🎨" },
-    { "name": "Tên họa tiết 2", "description": "Mô tả 1 câu", "emoji": "⚡" },
-    { "name": "Tên họa tiết 3", "description": "Mô tả 1 câu", "emoji": "🔥" },
-    { "name": "Tên họa tiết 4", "description": "Mô tả 1 câu", "emoji": "✨" }
+    {
+      "name": "Tên họa tiết 1",
+      "description": "Mô tả 1 câu",
+      "emoji": "🎨",
+      "svgCode": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><!-- SVG shapes đơn giản, màu sắc phù hợp concept --></svg>"
+    },
+    {
+      "name": "Tên họa tiết 2",
+      "description": "Mô tả 1 câu",
+      "emoji": "⚡",
+      "svgCode": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><!-- SVG shapes đơn giản --></svg>"
+    },
+    {
+      "name": "Tên họa tiết 3",
+      "description": "Mô tả 1 câu",
+      "emoji": "🔥",
+      "svgCode": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><!-- SVG shapes đơn giản --></svg>"
+    },
+    {
+      "name": "Tên họa tiết 4",
+      "description": "Mô tả 1 câu",
+      "emoji": "✨",
+      "svgCode": "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><!-- SVG shapes đơn giản --></svg>"
+    }
   ],
   "colors": [
     { "hex": "#1a1a1a", "name": "Đen" },
@@ -522,8 +685,45 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
     "Slogan gợi ý 1",
     "Slogan gợi ý 2",
     "Slogan gợi ý 3"
+  ],
+  "templates": [
+    {
+      "name": "Tên mẫu 1",
+      "description": "Mô tả ngắn phong cách mẫu này",
+      "shirtColor": "#1a1a1a",
+      "textColor": "#ffffff",
+      "iconIndex": 0,
+      "text": "SLOGAN CHÍNH",
+      "layout": "top-icon-bottom-text"
+    },
+    {
+      "name": "Tên mẫu 2",
+      "description": "Mô tả ngắn phong cách mẫu này",
+      "shirtColor": "#1d4ed8",
+      "textColor": "#ffffff",
+      "iconIndex": 1,
+      "text": "SLOGAN PHỤ",
+      "layout": "large-icon"
+    },
+    {
+      "name": "Tên mẫu 3",
+      "description": "Mô tả ngắn phong cách mẫu này",
+      "shirtColor": "#ffffff",
+      "textColor": "#1a1a1a",
+      "iconIndex": 2,
+      "text": "MINIMAL TEXT",
+      "layout": "center"
+    }
   ]
-}`;
+}
+
+QUAN TRỌNG về svgCode:
+- Mỗi icon PHẢI có svgCode là SVG hợp lệ, viewBox='0 0 100 100'
+- Vẽ hình ảnh đại diện cho concept (phi hành gia, ngân hà, tia sét, v.v.)
+- Dùng các shapes cơ bản: circle, rect, polygon, path, ellipse
+- Màu sắc phù hợp với phong cách thiết kế
+- Giữ SVG đơn giản nhưng nhận ra được, khoảng 5-15 shapes
+- KHÔNG dùng ngoặc kép lồng nhau trong svgCode, dùng nháy đơn cho attributes SVG`;
 
         try {
             const res = await fetch(
@@ -539,7 +739,7 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                         }],
                         generationConfig: {
                             temperature: 0.8,
-                            maxOutputTokens: 1500,
+                            maxOutputTokens: 4000,
                             thinkingConfig: { thinkingBudget: 0 }, // tắt thinking mode
                         }
                     })
@@ -1056,18 +1256,116 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                                             </span>
                                         </div>
 
-                                        {/* Icons gợi ý */}
+                                        {/* === MẪU THIẾT KẾ AI === */}
+                                        {aiSuggestion.templates && aiSuggestion.templates.length > 0 && (
+                                            <div>
+                                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                                    <i className="fa-solid fa-shirt"></i> Mẫu Thiết Kế Hoàn Chỉnh
+                                                    <span className="ml-auto text-[9px] normal-case font-normal text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-full">1-click áp dụng</span>
+                                                </p>
+                                                <div className="flex flex-col gap-2">
+                                                    {aiSuggestion.templates.map((tpl, i) => {
+                                                        const previewIcon = aiSuggestion.icons[tpl.iconIndex];
+                                                        const isApplying = applyingTemplateIdx === i;
+                                                        return (
+                                                            <div
+                                                                key={i}
+                                                                className="group relative bg-white border-2 border-gray-200 hover:border-indigo-400 rounded-xl overflow-hidden transition-all hover:shadow-lg"
+                                                            >
+                                                                {/* Preview card ngang */}
+                                                                <div className="flex items-stretch gap-0">
+                                                                    {/* Mini shirt preview */}
+                                                                    <div
+                                                                        className="w-20 shrink-0 flex flex-col items-center justify-center gap-1 p-2 relative"
+                                                                        style={{ backgroundColor: tpl.shirtColor }}
+                                                                    >
+                                                                        {/* SVG mini preview */}
+                                                                        {previewIcon?.svgCode ? (
+                                                                            <div
+                                                                                className="w-10 h-10"
+                                                                                dangerouslySetInnerHTML={{ __html: previewIcon.svgCode }}
+                                                                            />
+                                                                        ) : (
+                                                                            <span className="text-2xl">{previewIcon?.emoji ?? '🎨'}</span>
+                                                                        )}
+                                                                        <p
+                                                                            className="text-[7px] font-black tracking-wider text-center leading-tight px-1 truncate w-full text-center"
+                                                                            style={{ color: tpl.textColor, textShadow: tpl.shirtColor === '#ffffff' ? '0 0 3px rgba(0,0,0,0.3)' : 'none' }}
+                                                                        >{tpl.text}</p>
+                                                                    </div>
+                                                                    {/* Info + Apply */}
+                                                                    <div className="flex-1 flex flex-col justify-between p-2.5 min-w-0">
+                                                                        <div>
+                                                                            <p className="font-bold text-gray-800 text-[11px] truncate">{tpl.name}</p>
+                                                                            <p className="text-gray-400 text-[9px] leading-tight mt-0.5 line-clamp-2">{tpl.description}</p>
+                                                                            <div className="flex items-center gap-1 mt-1.5">
+                                                                                <span className="w-3 h-3 rounded-full border border-gray-200 shrink-0" style={{ backgroundColor: tpl.shirtColor }} />
+                                                                                <span className="text-[8px] text-gray-400">{aiSuggestion.colors.find(c => c.hex === tpl.shirtColor)?.name ?? 'Màu tùy chỉnh'}</span>
+                                                                                <span className="mx-1 text-gray-200">·</span>
+                                                                                <span className="text-[8px] text-gray-400 truncate">{previewIcon?.name ?? '—'}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => handleApplyTemplate(tpl, i)}
+                                                                            disabled={isApplying}
+                                                                            className="mt-2 w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-[10px] font-bold py-1.5 rounded-lg flex items-center justify-center gap-1 transition disabled:opacity-60"
+                                                                        >
+                                                                            {isApplying ? (
+                                                                                <><i className="fa-solid fa-spinner fa-spin"></i> Đang áp dụng...</>
+                                                                            ) : (
+                                                                                <><i className="fa-solid fa-magic-wand-sparkles"></i> Áp Dụng Ngay</>
+                                                                            )}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Icons gợi ý - visual SVG cards */}
                                         <div>
                                             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-1">
                                                 <i className="fa-solid fa-icons"></i> Gợi Ý Icon / Họa Tiết
+                                                <span className="ml-auto text-[9px] normal-case font-normal text-purple-500 bg-purple-50 px-1.5 py-0.5 rounded-full">Click để thêm</span>
                                             </p>
-                                            <div className="grid grid-cols-1 gap-1.5">
+                                            <div className="grid grid-cols-2 gap-2">
                                                 {aiSuggestion.icons.map((icon, i) => (
-                                                    <div key={i} className="flex items-start gap-2 bg-white border border-gray-200 rounded-lg p-2 text-xs">
-                                                        <span className="text-xl leading-none">{icon.emoji}</span>
-                                                        <div>
-                                                            <p className="font-semibold text-gray-800">{icon.name}</p>
-                                                            <p className="text-gray-500 text-[10px]">{icon.description}</p>
+                                                    <div
+                                                        key={i}
+                                                        className="group relative flex flex-col bg-white border-2 border-gray-200 hover:border-purple-400 rounded-xl overflow-hidden transition-all hover:shadow-md cursor-pointer"
+                                                        onClick={() => icon.svgCode && handleAddSvgIconToCanvas(icon.svgCode, i)}
+                                                    >
+                                                        {/* SVG Preview */}
+                                                        <div className="w-full aspect-square bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2 relative">
+                                                            {icon.svgCode ? (
+                                                                <div
+                                                                    className="w-full h-full"
+                                                                    dangerouslySetInnerHTML={{ __html: icon.svgCode }}
+                                                                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                                />
+                                                            ) : (
+                                                                <span className="text-3xl">{icon.emoji}</span>
+                                                            )}
+                                                            {/* Hover overlay */}
+                                                            <div className="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                {addingIconIdx === i ? (
+                                                                    <div className="bg-white/90 rounded-full px-2 py-1 flex items-center gap-1 text-[10px] font-bold text-purple-600 shadow">
+                                                                        <i className="fa-solid fa-spinner fa-spin text-[9px]"></i> Đang thêm...
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="bg-white/90 rounded-full px-2 py-1 flex items-center gap-1 text-[10px] font-bold text-purple-600 shadow">
+                                                                        <i className="fa-solid fa-plus text-[9px]"></i> Thêm vào áo
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        {/* Info */}
+                                                        <div className="px-2 py-1.5 border-t border-gray-100">
+                                                            <p className="font-semibold text-gray-800 text-[10px] truncate">{icon.emoji} {icon.name}</p>
+                                                            <p className="text-gray-400 text-[9px] leading-tight line-clamp-2 mt-0.5">{icon.description}</p>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -1169,8 +1467,11 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                     </div>
 
                     <div className="flex-1 relative flex items-center justify-center p-4 mt-10 md:mt-0">
-                        {/* Khu vực Mô phỏng Áo (Cực kỳ quan trọng) */}
-                        <div className="relative w-full max-w-[550px] aspect-[4/5] flex items-center justify-center shirt-container overflow-hidden rounded-xl">
+                        {/* Khu vực Mô phỏng Áo */}
+                        <div
+                            className="relative w-full max-w-[550px] aspect-[4/5] flex items-center justify-center shirt-container overflow-hidden rounded-xl"
+                            style={{ transform: `scale(${shirtZoom})`, transformOrigin: 'center center', transition: 'transform 0.2s ease' }}
+                        >
                             {shirtColorHex !== '#FFFFFF' && shirtMaskUrl ? (
                                 <div
                                     className="absolute w-[85%] h-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[11] pointer-events-none select-none"
@@ -1235,13 +1536,71 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                         </div>
 
                         {/* Thanh công cụ nổi */}
-                        <div className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 bg-white border rounded shadow flex flex-col z-30 w-11 overflow-hidden">
-                            <button onClick={() => handleFloatingAction('flip')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center"><i className="fa-solid fa-arrows-up-down"></i></button>
-                            <button onClick={() => handleFloatingAction('center')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center"><i className="fa-solid fa-align-center fa-rotate-90"></i></button>
-                            <button onClick={() => handleFloatingAction('down')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center"><i className="fa-solid fa-angle-left"></i></button>
-                            <button onClick={() => handleFloatingAction('up')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 border-b flex items-center justify-center"><i className="fa-solid fa-angle-right"></i></button>
-                            <button onClick={() => handleFloatingAction('delete')} className="h-11 text-red-500 hover:text-red-700 hover:bg-red-50 border-b flex items-center justify-center"><i className="fa-regular fa-trash-can"></i></button>
-                            <button onClick={() => handleFloatingAction('clone')} className="h-11 text-gray-500 hover:text-blue-600 hover:bg-gray-50 flex items-center justify-center"><i className="fa-regular fa-copy"></i></button>
+                        <div className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 bg-white border rounded-xl shadow-md flex flex-col z-30 w-11 overflow-hidden">
+                            {/* Flip */}
+                            <button
+                                title="Lật dọc"
+                                onClick={() => handleFloatingAction('flip')}
+                                className="h-11 text-gray-500 hover:text-blue-600 hover:bg-blue-50 border-b flex items-center justify-center transition"
+                            >
+                                <i className="fa-solid fa-arrows-up-down text-sm"></i>
+                            </button>
+                            {/* Center */}
+                            <button
+                                title="Căn giữa"
+                                onClick={() => handleFloatingAction('center')}
+                                className="h-11 text-gray-500 hover:text-blue-600 hover:bg-blue-50 border-b flex items-center justify-center transition"
+                            >
+                                <i className="fa-solid fa-align-center fa-rotate-90 text-sm"></i>
+                            </button>
+                            {/* Zoom In */}
+                            <button
+                                title="Phóng to áo"
+                                onClick={() => setShirtZoom(z => Math.min(z + 0.15, 2.2))}
+                                className="h-11 text-gray-500 hover:text-green-600 hover:bg-green-50 border-b flex items-center justify-center transition"
+                            >
+                                <i className="fa-solid fa-magnifying-glass-plus text-sm"></i>
+                            </button>
+                            {/* Zoom Out */}
+                            <button
+                                title="Thu nhỏ áo"
+                                onClick={() => setShirtZoom(z => Math.max(z - 0.15, 0.5))}
+                                className="h-11 text-gray-500 hover:text-green-600 hover:bg-green-50 border-b flex items-center justify-center transition"
+                            >
+                                <i className="fa-solid fa-magnifying-glass-minus text-sm"></i>
+                            </button>
+                            {/* Preview */}
+                            <button
+                                title="Xem trước thiết kế"
+                                onClick={async () => {
+                                    try {
+                                        const { frontPreviewImageUrl } = await createSidePreviewImages();
+                                        setPreviewImageUrl(frontPreviewImageUrl);
+                                        setPreviewOpen(true);
+                                    } catch {
+                                        toast.error('Không thể tạo preview!');
+                                    }
+                                }}
+                                className="h-11 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 border-b flex items-center justify-center transition"
+                            >
+                                <i className="fa-regular fa-eye text-sm"></i>
+                            </button>
+                            {/* Delete */}
+                            <button
+                                title="Xóa đối tượng"
+                                onClick={() => handleFloatingAction('delete')}
+                                className="h-11 text-red-500 hover:text-red-700 hover:bg-red-50 border-b flex items-center justify-center transition"
+                            >
+                                <i className="fa-regular fa-trash-can text-sm"></i>
+                            </button>
+                            {/* Clone */}
+                            <button
+                                title="Nhân bản"
+                                onClick={() => handleFloatingAction('clone')}
+                                className="h-11 text-gray-500 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition"
+                            >
+                                <i className="fa-regular fa-copy text-sm"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -1475,6 +1834,93 @@ Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào kh�
                     </div>
                 </div>
             </div>
+
+            {/* ===== MODAL XEM TRƯỚC THIẾT KẾ ===== */}
+            {previewOpen && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(10,10,20,0.85)', backdropFilter: 'blur(8px)' }}
+                    onClick={() => setPreviewOpen(false)}
+                >
+                    <div
+                        className="relative max-w-lg w-full mx-4 flex flex-col items-center gap-4"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="w-full flex items-center justify-between px-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></div>
+                                <span className="text-white font-bold text-sm tracking-wide">Xem Trước Thiết Kế</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {previewImageUrl && (
+                                    <a
+                                        href={previewImageUrl}
+                                        download="alma-design-preview.png"
+                                        className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-white/20"
+                                        onClick={e => e.stopPropagation()}
+                                    >
+                                        <i className="fa-solid fa-download text-[10px]"></i> Tải xuống
+                                    </a>
+                                )}
+                                <button
+                                    onClick={() => setPreviewOpen(false)}
+                                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition border border-white/20"
+                                >
+                                    <i className="fa-solid fa-xmark text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Preview Image Card */}
+                        <div
+                            className="w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10 relative"
+                            style={{
+                                background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e1b4b 100%)',
+                            }}
+                        >
+                            {/* Decorative dots */}
+                            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+
+                            <div className="relative z-10 flex items-center justify-center p-8 min-h-[380px]">
+                                {previewImageUrl ? (
+                                    <img
+                                        src={previewImageUrl}
+                                        alt="Design Preview"
+                                        className="max-w-full max-h-[400px] object-contain drop-shadow-2xl rounded-lg"
+                                        style={{ filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))' }}
+                                    />
+                                ) : (
+                                    <div className="flex flex-col items-center gap-3 text-white/60">
+                                        <i className="fa-solid fa-spinner fa-spin text-3xl"></i>
+                                        <span className="text-sm">Đang tạo preview...</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Footer info bar */}
+                            <div className="relative z-10 px-5 py-3 bg-black/30 border-t border-white/10 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <span className="w-3 h-3 rounded-full border-2 border-white/40 inline-block" style={{ backgroundColor: shirtColorHex }}></span>
+                                    <span className="text-white/70 text-xs">{selectedProduct?.name ?? 'Phôi áo'}</span>
+                                </div>
+                                <span className="text-white/50 text-[10px] font-mono">
+                                    Zoom: {Math.round(shirtZoom * 100)}%
+                                </span>
+                                <button
+                                    onClick={() => { setPreviewOpen(false); setViewMode('back'); }}
+                                    className="text-white/60 hover:text-white text-[10px] transition flex items-center gap-1"
+                                >
+                                    <i className="fa-solid fa-rotate text-[9px]"></i> Xem mặt sau
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Hint */}
+                        <p className="text-white/30 text-[10px] text-center">Nhấn ra ngoài để đóng</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
