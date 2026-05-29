@@ -4,6 +4,8 @@ import toast from "react-hot-toast";
 import axiosClient, { resolveApiAssetUrl } from "../../../shared/api/axiosClient";
 import { cartApi } from "../../cart/api/cartApi";
 import type { CartResponseDto } from "../../cart/types/index";
+import { useAuth } from "../../auth/context/AuthContext";
+import type { AddressDto } from "../../../shared/types/auth.types";
 
 // Declare Leaflet types
 declare global {
@@ -14,6 +16,7 @@ declare global {
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [loading, setLoading] = useState(false);
 
     // ── Giỏ hàng từ API ──────────────────────────────────────────────────────
@@ -35,6 +38,58 @@ const CheckoutPage = () => {
         shipAddress: "",
         shipProvince: "",
     });
+
+    // ── Saved Addresses state ─────────────────────────────────────────────────
+    const [savedAddresses, setSavedAddresses] = useState<AddressDto[]>([]);
+    const [showAddressPicker, setShowAddressPicker] = useState(false);
+
+    // Helper: geocode an address string and update mini-map marker
+    const geocodeAndUpdateMiniMap = useCallback(async (addressText: string) => {
+        try {
+            const results = await searchGeocodeSuggestions(addressText);
+            if (results.length > 0) {
+                const best = results[0];
+                const lat = parseFloat(best.lat);
+                const lng = parseFloat(best.lon);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    setModalCoords({ lat, lng });
+                    if (mapRef.current && markerRef.current) {
+                        mapRef.current.setView([lat, lng], 16);
+                        markerRef.current.setLatLng([lat, lng]);
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn('Geocode for mini-map failed:', err);
+        }
+    }, []);
+
+    // Auto-populate from default saved address and user email
+    useEffect(() => {
+        if (!user) return;
+        setShippingInfo(prev => ({ ...prev, email: prev.email || user.email }));
+
+        axiosClient.get<AddressDto[]>('/profile/addresses')
+            .then(res => {
+                const list = res.data || [];
+                setSavedAddresses(list);
+                const defaultAddr = list.find(a => a.isDefault);
+                if (defaultAddr) {
+                    const fullAddr = `${defaultAddr.addressLine}, ${defaultAddr.district}, ${defaultAddr.province}`;
+                    setShippingInfo(prev => ({
+                        ...prev,
+                        shipName: prev.shipName || defaultAddr.fullName,
+                        shipPhone: prev.shipPhone || defaultAddr.phone,
+                        shipAddress: prev.shipAddress || fullAddr,
+                        shipProvince: prev.shipProvince || defaultAddr.province,
+                    }));
+                    setMiniMapSearch(fullAddr);
+                    // Geocode to update map marker position
+                    geocodeAndUpdateMiniMap(fullAddr);
+                }
+            })
+            .catch(err => console.warn('Could not load saved addresses:', err));
+    }, [user, geocodeAndUpdateMiniMap]);
 
     const [paymentMethod, setPaymentMethod] = useState<"VIETQR" | "COD">("VIETQR");
 
@@ -899,9 +954,93 @@ const CheckoutPage = () => {
 
                         {/* Shipping Address */}
                         <div className="mb-6 p-6 bg-white border border-gray-100 shadow-md rounded-2xl">
-                            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <i className="fa-solid fa-location-dot text-blue-500"></i> Địa chỉ nhận hàng
-                            </h2>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <i className="fa-solid fa-location-dot text-blue-500"></i> Địa chỉ nhận hàng
+                                </h2>
+                                {savedAddresses.length > 0 && (
+                                    <div style={{ position: 'relative' }}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddressPicker(!showAddressPicker)}
+                                            style={{
+                                                background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                                                color: 'white',
+                                                border: 'none',
+                                                padding: '8px 16px',
+                                                borderRadius: '12px',
+                                                fontSize: '13px',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                boxShadow: '0 4px 12px -4px rgba(79, 70, 229, 0.4)',
+                                                transition: 'all 0.2s',
+                                            }}
+                                        >
+                                            📋 Chọn từ địa chỉ đã lưu
+                                        </button>
+                                        {showAddressPicker && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '100%',
+                                                right: 0,
+                                                marginTop: '8px',
+                                                background: 'white',
+                                                border: '1.5px solid #e2e8f0',
+                                                borderRadius: '16px',
+                                                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+                                                zIndex: 50,
+                                                width: '360px',
+                                                maxHeight: '320px',
+                                                overflowY: 'auto',
+                                                padding: '8px',
+                                            }}>
+                                                {savedAddresses.map(addr => (
+                                                    <div
+                                                        key={addr.addressId}
+                                                        onClick={() => {
+                                                            const fullAddr = `${addr.addressLine}, ${addr.district}, ${addr.province}`;
+                                                            setShippingInfo(prev => ({
+                                                                ...prev,
+                                                                shipName: addr.fullName,
+                                                                shipPhone: addr.phone,
+                                                                shipAddress: fullAddr,
+                                                                shipProvince: addr.province,
+                                                            }));
+                                                            setMiniMapSearch(fullAddr);
+                                                            setShowAddressPicker(false);
+                                                            toast.success(`Đã chọn địa chỉ của ${addr.fullName}`);
+                                                            // Geocode to update mini-map marker position
+                                                            geocodeAndUpdateMiniMap(fullAddr);
+                                                        }}
+                                                        style={{
+                                                            padding: '12px',
+                                                            borderRadius: '12px',
+                                                            cursor: 'pointer',
+                                                            transition: 'background 0.15s',
+                                                            border: addr.isDefault ? '1.5px solid #3b82f6' : '1px solid transparent',
+                                                            marginBottom: '4px',
+                                                        }}
+                                                        onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                                                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                                            <span style={{ fontWeight: 700, fontSize: '13px', color: '#0f172a' }}>{addr.fullName}</span>
+                                                            {addr.isDefault && (
+                                                                <span style={{ background: '#dbeafe', color: '#1e40af', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '999px' }}>Mặc định</span>
+                                                            )}
+                                                        </div>
+                                                        <div style={{ fontSize: '12px', color: '#64748b' }}>📞 {addr.phone}</div>
+                                                        <div style={{ fontSize: '12px', color: '#475569', marginTop: '2px' }}>📍 {addr.addressLine}, {addr.district}, {addr.province}</div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <input type="text" name="shipName" required value={shippingInfo.shipName} onChange={handleInputChange} placeholder="Họ và tên" className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 placeholder-gray-400 text-sm" />

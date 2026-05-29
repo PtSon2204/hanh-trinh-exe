@@ -67,6 +67,16 @@ function formatCurrency(value: number) {
   return currencyFormatter.format(value);
 }
 
+// ── Multi-image helpers ────────────────────────────────────────
+function parseImageUrls(imageUrl: string | null): string[] {
+  if (!imageUrl) return [];
+  return imageUrl.split('|').filter(Boolean);
+}
+
+function joinImageUrls(urls: string[]): string {
+  return urls.filter(Boolean).join('|');
+}
+
 function emptyPage<T>(pageNumber: number, pageSize: number): PagedResult<T> {
   return {
     data: [],
@@ -204,7 +214,12 @@ export function AdminStoreProductsPage() {
       setImageUploading(true);
       setError(null);
       const imageUrl = await adminProductApi.uploadStoreProductImage(file);
-      setForm((current) => ({ ...current, imageUrl }));
+      // Append new image URL to existing pipe-separated list
+      setForm((current) => {
+        const existingUrls = parseImageUrls(current.imageUrl);
+        existingUrls.push(imageUrl);
+        return { ...current, imageUrl: joinImageUrls(existingUrls) };
+      });
       setMessage("Đã tải ảnh sản phẩm.");
     } catch (err) {
       console.error("Failed to upload store product image", err);
@@ -212,6 +227,14 @@ export function AdminStoreProductsPage() {
     } finally {
       setImageUploading(false);
     }
+  };
+
+  const removeStoreImage = (indexToRemove: number) => {
+    setForm((current) => {
+      const existingUrls = parseImageUrls(current.imageUrl);
+      existingUrls.splice(indexToRemove, 1);
+      return { ...current, imageUrl: joinImageUrls(existingUrls) };
+    });
   };
 
   const submitForm = async () => {
@@ -282,7 +305,7 @@ export function AdminStoreProductsPage() {
   const refreshAll = () =>
     Promise.all([loadProducts(), loadBaseProducts(), loadUniversities()]);
 
-  const previewImageUrl = resolveApiAssetUrl(form.imageUrl);
+  const previewImageUrls = parseImageUrls(form.imageUrl).map(url => resolveApiAssetUrl(url));
 
   return (
     <section className="admin-orders-page admin-products-page">
@@ -618,7 +641,7 @@ export function AdminStoreProductsPage() {
                 />
               </label>
               <label className="admin-product-form__wide">
-                Ảnh sản phẩm
+                Ảnh sản phẩm (nhiều ảnh)
                 <input
                   type="file"
                   accept="image/*"
@@ -629,15 +652,38 @@ export function AdminStoreProductsPage() {
                 />
                 {imageUploading ? (
                   <span className="admin-form-hint">Đang tải ảnh...</span>
-                ) : previewImageUrl ? (
-                  <div className="admin-product-image-preview">
-                    <img src={previewImageUrl} alt="Ảnh sản phẩm" />
-                    <a href={previewImageUrl} target="_blank" rel="noreferrer">
-                      Xem ảnh đã tải
-                    </a>
+                ) : previewImageUrls.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
+                    {previewImageUrls.map((url, idx) => (
+                      <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
+                        <img src={url || ''} alt={`Ảnh ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {idx === 0 && (
+                          <span style={{
+                            position: 'absolute', top: '2px', left: '2px',
+                            background: '#3b82f6', color: 'white', fontSize: '9px',
+                            fontWeight: 700, padding: '1px 4px', borderRadius: '4px'
+                          }}>Chính</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeStoreImage(idx)}
+                          style={{
+                            position: 'absolute', top: '2px', right: '2px',
+                            width: '20px', height: '20px', borderRadius: '50%',
+                            background: 'rgba(239,68,68,0.9)', color: 'white',
+                            border: 'none', cursor: 'pointer', fontSize: '11px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontWeight: 700, lineHeight: 1
+                          }}
+                          title="Xóa ảnh này"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 ) : (
-                  <span className="admin-form-hint">Chưa tải ảnh.</span>
+                  <span className="admin-form-hint">Chưa tải ảnh. Có thể tải nhiều ảnh.</span>
                 )}
               </label>
               <label className="admin-product-checkbox">

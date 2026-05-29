@@ -131,12 +131,37 @@ export default function ProductDetailPage() {
   };
   const recSize = getRecommendedSize();
 
-  // Build gallery images from product data
-  const galleryImages = product
-    ? [product.imageUrl, product.frontImageUrl, product.backImageUrl]
-        .map(url => resolveApiAssetUrl(url ?? null))
-        .filter(Boolean) as string[]
-    : [];
+  // Build gallery images from product data (multi-image support)
+  // If admin uploaded images (pipe-separated imageUrl), show ONLY those.
+  // Fall back to frontImageUrl/backImageUrl only if no imageUrl images exist.
+  const galleryImages = (() => {
+    if (!product) return [];
+    
+    const isValidUrlString = (url: string | null | undefined): url is string => {
+      if (!url) return false;
+      const clean = url.trim().toLowerCase();
+      return clean.length > 0 && clean !== 'null' && clean !== 'undefined';
+    };
+
+    const isResolvedUrlValid = (url: string | null): url is string => {
+      if (!url) return false;
+      const clean = url.toLowerCase();
+      return !clean.endsWith('/null') && !clean.endsWith('/undefined');
+    };
+
+    const adminImages = (product.imageUrl?.split('|') || [])
+      .filter(isValidUrlString)
+      .map(url => resolveApiAssetUrl(url))
+      .filter(isResolvedUrlValid);
+    
+    if (adminImages.length > 0) return adminImages;
+
+    // Fallback: use front/back images from base product
+    return [product.frontImageUrl, product.backImageUrl]
+      .filter(isValidUrlString)
+      .map(url => resolveApiAssetUrl(url))
+      .filter(isResolvedUrlValid);
+  })();
 
   return (
     <div className="pdp flex flex-col min-h-screen" style={{ fontFamily: "'Outfit', sans-serif" }}>

@@ -134,7 +134,7 @@ export default function SearchOverlay({ isOpen, onClose }: Props) {
                 style={{ animationDelay: `${i * 50}ms` }}
               >
                 <img
-                  src={resolveApiAssetUrl(item.imageUrl ?? null) || '/images/placeholder-product.png'}
+                  src={resolveApiAssetUrl(item.imageUrl?.split('|')[0] ?? null) || '/images/placeholder-product.png'}
                   alt={item.name}
                   className="search-result__img"
                   onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder-product.png'; }}

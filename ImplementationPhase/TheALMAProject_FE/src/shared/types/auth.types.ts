@@ -53,4 +53,24 @@ export interface UserSession {
   email: string;
   fullName: string;
   role: string;
+  avatarUrl?: string | null;
+}
+
+export interface AddressDto {
+  addressId: number;
+  fullName: string;
+  phone: string;
+  addressLine: string;
+  province: string;
+  district: string;
+  isDefault: boolean;
+}
+
+export interface CreateAddressDto {
+  fullName: string;
+  phone: string;
+  addressLine: string;
+  province: string;
+  district: string;
+  isDefault: boolean;
 }
