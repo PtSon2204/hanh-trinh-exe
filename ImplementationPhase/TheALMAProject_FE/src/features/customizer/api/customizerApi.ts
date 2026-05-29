@@ -130,29 +130,13 @@ export const customizerApi = {
             const res = await axiosClient.get('/Icon/all');
             const data = res.data;
             const icons = readCollection<IconDto>(data);
-            
-            if (icons.length === 0) {
-                return [
-                    { iconId: 101, name: "Sticker 1", imageUrl: "/images/stickers/1.png", priceAddon: 5000 },
-                    { iconId: 102, name: "Sticker 2", imageUrl: "/images/stickers/2.png", priceAddon: 5000 },
-                    { iconId: 103, name: "Sticker 3", imageUrl: "/images/stickers/3.png", priceAddon: 5000 },
-                    { iconId: 104, name: "Sticker 4", imageUrl: "/images/stickers/4.png", priceAddon: 5000 },
-                    { iconId: 105, name: "Sticker 5", imageUrl: "/images/stickers/5.png", priceAddon: 5000 }
-                ];
-            }
             return icons.map((icon) => ({
                 ...icon,
                 imageUrl: resolveApiAssetUrl(icon.imageUrl) ?? icon.imageUrl,
             }));
         } catch (err) {
             console.error('Không thể tải icons từ server:', err);
-            return [
-                { iconId: 101, name: "Sticker 1", imageUrl: "/images/stickers/1.png", priceAddon: 5000 },
-                { iconId: 102, name: "Sticker 2", imageUrl: "/images/stickers/2.png", priceAddon: 5000 },
-                { iconId: 103, name: "Sticker 3", imageUrl: "/images/stickers/3.png", priceAddon: 5000 },
-                { iconId: 104, name: "Sticker 4", imageUrl: "/images/stickers/4.png", priceAddon: 5000 },
-                { iconId: 105, name: "Sticker 5", imageUrl: "/images/stickers/5.png", priceAddon: 5000 }
-            ];
+            return [];
         }
     },
 
