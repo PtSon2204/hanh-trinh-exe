@@ -1217,7 +1217,6 @@ QUAN TRỌNG về svgCode:
     }, [activeProductUrl, processedImages]);
 
     const currentLayers = (getActiveCanvas()?.getObjects() || []);
-    const shirtMaskUrl = processedImages[activeProductUrl];
     const activePrintAreaStyle = getPrintAreaOverlayStyle(selectedProduct?.printArea?.[viewMode]);
 
     return (
