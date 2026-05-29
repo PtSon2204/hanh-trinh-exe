@@ -164,7 +164,9 @@ export default function CustomizerPage() {
     // --- States UI ---
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
-    const [activeTab, setActiveTab] = useState<'base' | 'ai' | 'text'>('base');
+    const [activeTab, setActiveTab] = useState<'base' | 'ai' | 'text' | 'upload'>('base');
+    const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+    const [isDraggingOver, setIsDraggingOver] = useState(false);
     const [viewMode, setViewMode] = useState<'front' | 'back'>('front');
     const [layersVisible, setLayersVisible] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);
@@ -1263,8 +1265,11 @@ QUAN TRỌNG về svgCode:
                         <div onClick={() => setActiveTab('ai')} className={`flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer transition ${activeTab === 'ai' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
                             <i className="fa-solid fa-wand-magic-sparkles w-5 text-center text-purple-500 text-lg"></i> AI Thiết Kế
                         </div>
-                        <div onClick={() => setActiveTab('text')} className={`flex items-center gap-3 p-3.5 border border-gray-200 rounded-b-lg cursor-pointer transition ${activeTab === 'text' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
+                        <div onClick={() => setActiveTab('text')} className={`flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer transition ${activeTab === 'text' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
                             <i className="fa-solid fa-font w-5 text-center text-green-500 text-lg"></i> Thêm Chữ
+                        </div>
+                        <div onClick={() => setActiveTab('upload')} className={`flex items-center gap-3 p-3.5 border border-gray-200 rounded-b-lg cursor-pointer transition ${activeTab === 'upload' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
+                            <i className="fa-solid fa-image w-5 text-center text-orange-500 text-lg"></i> Tải Ảnh Lên
                         </div>
                     </div>
 
@@ -1306,35 +1311,9 @@ QUAN TRỌNG về svgCode:
 
                                 <div className="w-full h-px bg-gray-200 mb-4"></div>
 
-                                {/* SECTION: Icon cố định */}
-                                <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                    Stickers Có Sẵn <span className="text-green-500 normal-case font-normal">(miễn phí)</span>
-                                </h4>
-                                <div className="grid grid-cols-3 gap-2 mb-4">
-                                    {([
-                                        { iconId: 101, name: 'Star', imageUrl: '/images/stickers/1.png', priceAddon: 0 },
-                                        { iconId: 102, name: 'Heart', imageUrl: '/images/stickers/2.png', priceAddon: 0 },
-                                        { iconId: 103, name: 'Flash', imageUrl: '/images/stickers/3.png', priceAddon: 0 },
-                                        { iconId: 104, name: 'Crown', imageUrl: '/images/stickers/4.png', priceAddon: 0 },
-                                        { iconId: 105, name: 'Fire', imageUrl: '/images/stickers/5.png', priceAddon: 0 },
-                                        { iconId: 106, name: 'Peace', imageUrl: '/images/stickers/9.png', priceAddon: 0 },
-                                    ] as import('../types').IconDto[]).map(icon => (
-                                        <div key={icon.iconId} onClick={() => handleAddIcon(icon)}
-                                            className="relative group cursor-pointer bg-gray-50 border border-gray-200 rounded-lg p-2 hover:border-green-500 hover:shadow-md transition flex flex-col items-center gap-1">
-                                            <img src={resolveApiAssetUrl(icon.imageUrl) ?? '/images/placeholder.png'} className="w-full aspect-square object-contain" alt={icon.name}
-                                                onError={(e) => (e.target as HTMLImageElement).src = '/images/placeholder.png'} />
-                                            <p className="text-[9px] text-gray-500 truncate w-full text-center">{icon.name}</p>
-                                            <span className="text-[9px] font-bold text-green-600">Miễn phí</span>
-                                            <div className="absolute inset-0 bg-green-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                                                <i className="fa-solid fa-plus text-green-600 text-lg"></i>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
                                 {/* SECTION: Icons từ DB */}
                                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">
-                                    Thư viện Icons <span className="text-blue-500 normal-case font-normal">(từ DB)</span>
+                                    Thư viện Icons
                                 </h4>
                                 {iconsLoading ? (
                                     <div className="flex items-center justify-center py-8 text-gray-400">
@@ -1600,8 +1579,47 @@ QUAN TRỌNG về svgCode:
                                 </div>
                                 <div className="mb-3">
                                     <label className="text-xs font-medium text-gray-600 mb-1 block">Font chữ</label>
-                                    <select id="text-font-select" defaultValue="Impact" className="w-full border border-gray-300 rounded-lg p-2.5 text-sm">
-                                        <option value="Arial">Arial</option><option value="Impact">Impact</option><option value="Georgia">Georgia</option>
+                                    <select id="text-font-select" defaultValue="Impact" className="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white">
+                                        <optgroup label="── Đậm & Mạnh">
+                                            <option value="Impact">Impact</option>
+                                            <option value="Bebas Neue">Bebas Neue</option>
+                                            <option value="Oswald">Oswald</option>
+                                            <option value="Montserrat">Montserrat</option>
+                                            <option value="Russo One">Russo One</option>
+                                            <option value="Squada One">Squada One</option>
+                                            <option value="Fjalla One">Fjalla One</option>
+                                            <option value="Righteous">Righteous</option>
+                                            <option value="Titan One">Titan One</option>
+                                            <option value="Alfa Slab One">Alfa Slab One</option>
+                                            <option value="Abril Fatface">Abril Fatface</option>
+                                            <option value="Black Han Sans">Black Han Sans</option>
+                                        </optgroup>
+                                        <optgroup label="── Hiển Thị / Streetwear">
+                                            <option value="Bangers">Bangers</option>
+                                            <option value="Boogaloo">Boogaloo</option>
+                                            <option value="Press Start 2P">Press Start 2P</option>
+                                            <option value="Special Elite">Special Elite</option>
+                                            <option value="Permanent Marker">Permanent Marker</option>
+                                        </optgroup>
+                                        <optgroup label="── Viết Tay / Nghệ Thuật">
+                                            <option value="Pacifico">Pacifico</option>
+                                            <option value="Lobster">Lobster</option>
+                                            <option value="Dancing Script">Dancing Script</option>
+                                            <option value="Raleway">Raleway</option>
+                                        </optgroup>
+                                        <optgroup label="── Hiện Đại / Sạch">
+                                            <option value="Poppins">Poppins</option>
+                                            <option value="Roboto">Roboto</option>
+                                            <option value="Open Sans">Open Sans</option>
+                                            <option value="Nunito">Nunito</option>
+                                            <option value="Outfit">Outfit</option>
+                                        </optgroup>
+                                        <optgroup label="── Cổ Điển / Sang Trọng">
+                                            <option value="Playfair Display">Playfair Display</option>
+                                            <option value="Merriweather">Merriweather</option>
+                                            <option value="Georgia">Georgia</option>
+                                            <option value="Arial">Arial</option>
+                                        </optgroup>
                                     </select>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3 mb-3">
@@ -1609,6 +1627,153 @@ QUAN TRỌNG về svgCode:
                                     <div><label className="text-xs font-medium text-gray-600 block">Màu chữ</label><input type="color" id="text-color-input" defaultValue="#000000" className="w-full h-[42px] border rounded-lg cursor-pointer" /></div>
                                 </div>
                                 <button onClick={handleAddText} className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold py-3 rounded-lg flex justify-center gap-2"><i className="fa-solid fa-plus"></i> Thêm Chữ Vào Áo</button>
+                            </div>
+                        )}
+
+                        {/* TAB UPLOAD ẢNH */}
+                        {activeTab === 'upload' && (
+                            <div>
+                                <h4 className="text-xs font-bold text-orange-500 uppercase tracking-widest mb-3 mt-2 flex items-center gap-2">
+                                    <i className="fa-solid fa-image"></i> Tải Ảnh Tùy Chỉnh
+                                </h4>
+                                <p className="text-xs text-gray-500 mb-3 leading-relaxed">
+                                    Tải ảnh, sticker, logo từ máy lên để in lên áo. Hỗ trợ PNG, JPG, WebP, GIF.
+                                </p>
+
+                                {/* Drop zone */}
+                                <label
+                                    htmlFor="image-upload-input"
+                                    className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                                        isDraggingOver
+                                            ? 'border-orange-400 bg-orange-50'
+                                            : 'border-gray-300 bg-gray-50 hover:border-orange-400 hover:bg-orange-50/50'
+                                    }`}
+                                    onDragOver={e => { e.preventDefault(); setIsDraggingOver(true); }}
+                                    onDragLeave={() => setIsDraggingOver(false)}
+                                    onDrop={e => {
+                                        e.preventDefault();
+                                        setIsDraggingOver(false);
+                                        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                                        files.forEach(file => {
+                                            const reader = new FileReader();
+                                            reader.onload = ev => {
+                                                const dataUrl = ev.target?.result as string;
+                                                if (dataUrl) setUploadedImages(prev => [dataUrl, ...prev]);
+                                            };
+                                            reader.readAsDataURL(file);
+                                        });
+                                    }}
+                                >
+                                    <i className={`fa-solid fa-cloud-arrow-up text-3xl mb-2 transition-colors ${
+                                        isDraggingOver ? 'text-orange-500' : 'text-gray-400'
+                                    }`}></i>
+                                    <span className="text-xs font-semibold text-gray-500">
+                                        {isDraggingOver ? 'Thả ảnh vào đây!' : 'Kéo thả hoặc click để chọn ảnh'}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 mt-1">PNG, JPG, WebP, GIF • Tối đa 10MB</span>
+                                </label>
+                                <input
+                                    id="image-upload-input"
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={e => {
+                                        const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('image/'));
+                                        files.forEach(file => {
+                                            if (file.size > 10 * 1024 * 1024) {
+                                                toast.error(`Ảnh "${file.name}" quá lớn (tối đa 10MB)`);
+                                                return;
+                                            }
+                                            const reader = new FileReader();
+                                            reader.onload = ev => {
+                                                const dataUrl = ev.target?.result as string;
+                                                if (dataUrl) setUploadedImages(prev => [dataUrl, ...prev]);
+                                            };
+                                            reader.readAsDataURL(file);
+                                        });
+                                        e.target.value = '';
+                                    }}
+                                />
+
+                                {/* Thư viện ảnh đã tải */}
+                                {uploadedImages.length > 0 && (
+                                    <div className="mt-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest flex items-center gap-1">
+                                                <i className="fa-solid fa-images"></i> Ảnh đã tải ({uploadedImages.length})
+                                            </p>
+                                            <button
+                                                onClick={() => setUploadedImages([])}
+                                                className="text-[10px] text-red-400 hover:text-red-600 transition flex items-center gap-1"
+                                            >
+                                                <i className="fa-solid fa-trash-can"></i> Xóa tất cả
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {uploadedImages.map((imgUrl, idx) => (
+                                                <div key={idx} className="group relative rounded-xl overflow-hidden border-2 border-gray-200 hover:border-orange-400 transition-all hover:shadow-md bg-white">
+                                                    <img
+                                                        src={imgUrl}
+                                                        alt={`Ảnh ${idx + 1}`}
+                                                        className="w-full aspect-square object-contain p-1"
+                                                    />
+                                                    {/* Overlay */}
+                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
+                                                        <button
+                                                            onClick={() => {
+                                                                const ac = getActiveCanvas();
+                                                                if (!ac) return;
+                                                                (window as any).fabric.Image.fromURL(imgUrl, (img: fabric.Image) => {
+                                                                    const maxDim = Math.min(ac.getWidth(), ac.getHeight()) * 0.45;
+                                                                    const scale = Math.min(maxDim / (img.width || 1), maxDim / (img.height || 1));
+                                                                    img.set({
+                                                                        left: ac.getWidth() / 2,
+                                                                        top: ac.getHeight() / 2,
+                                                                        originX: 'center',
+                                                                        originY: 'center',
+                                                                        scaleX: scale,
+                                                                        scaleY: scale,
+                                                                        cornerColor: '#f97316',
+                                                                        cornerStyle: 'circle',
+                                                                        cornerSize: 8,
+                                                                        transparentCorners: false,
+                                                                        borderColor: '#f97316',
+                                                                        borderScaleFactor: 2,
+                                                                    });
+                                                                    ac.add(img);
+                                                                    ac.setActiveObject(img);
+                                                                    constrainObject(viewMode, img, ac, true);
+                                                                    ac.renderAll();
+                                                                    toast.success('Đã thêm ảnh vào áo!');
+                                                                }, { crossOrigin: 'anonymous' });
+                                                            }}
+                                                            className="bg-orange-500 hover:bg-orange-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 transition"
+                                                        >
+                                                            <i className="fa-solid fa-plus text-[9px]"></i> Thêm vào áo
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))}
+                                                            className="bg-white/20 hover:bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-lg flex items-center gap-1 transition"
+                                                        >
+                                                            <i className="fa-solid fa-trash-can text-[9px]"></i> Xóa
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {uploadedImages.length === 0 && (
+                                    <div className="mt-4 bg-orange-50 border border-orange-100 rounded-xl p-3 text-center">
+                                        <i className="fa-solid fa-lightbulb text-orange-400 text-lg mb-1"></i>
+                                        <p className="text-[11px] text-orange-600 font-medium">Mẹo</p>
+                                        <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                                            Bạn có thể tải ảnh PNG trong suốt để làm sticker, hoặc ảnh JPG để in chụp chốp đẹp hơn.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -1673,7 +1838,7 @@ QUAN TRỌNG về svgCode:
                             {/* Khung vẽ Fabric.js - MẶT TRƯỚC */}
                             <div
                                 ref={wrapperRef}
-                                className="absolute w-[76%] h-[88%] top-[2%] left-[2%] z-20 border-2 border-transparent"
+                                className="absolute w-[85%] h-full top-0 left-1/2 -translate-x-1/2 z-20 border-2 border-transparent"
                                 style={{
                                     visibility: viewMode === 'front' ? 'visible' : 'hidden',
                                     pointerEvents: viewMode === 'front' ? 'auto' : 'none',
@@ -1688,7 +1853,7 @@ QUAN TRỌNG về svgCode:
                             {/* Khung vẽ Fabric.js - MẶT SAU */}
                             <div
                                 ref={backWrapperRef}
-                                className="absolute w-[76%] h-[88%] top-[2%] left-[2%] z-20 border-2 border-transparent"
+                                className="absolute w-[85%] h-full top-0 left-1/2 -translate-x-1/2 z-20 border-2 border-transparent"
                                 style={{
                                     visibility: viewMode === 'back' ? 'visible' : 'hidden',
                                     pointerEvents: viewMode === 'back' ? 'auto' : 'none',
