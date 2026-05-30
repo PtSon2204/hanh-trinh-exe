@@ -345,13 +345,7 @@ export default function CustomizerPage() {
 
             const designUrl = designCanvas.toDataURL({ format: 'png', multiplier: 0.5 });
             const designImage = await loadPreviewImage(designUrl);
-            ctx.drawImage(
-                designImage,
-                PRODUCT_PREVIEW_WIDTH * 0.02,
-                PRODUCT_PREVIEW_HEIGHT * 0.02,
-                PRODUCT_PREVIEW_WIDTH * 0.76,
-                PRODUCT_PREVIEW_HEIGHT * 0.88,
-            );
+            ctx.drawImage(designImage, 0, 0, PRODUCT_PREVIEW_WIDTH, PRODUCT_PREVIEW_HEIGHT);
 
             return outputCanvas.toDataURL('image/jpeg', 0.6);
         } catch (err) {
@@ -993,12 +987,10 @@ QUAN TRỌNG về svgCode:
                     ctx.fillStyle = '#f9fafb';
                     ctx.fillRect(0, 0, COMPOSITE_W, COMPOSITE_H);
 
-                    // --- Vẽ áo (chiếm ~85% chiều rộng, căn giữa) ---
+                    // --- Vẽ áo theo cùng product-stage frame với editor/customizer ---
                     const shirtDrawW = COMPOSITE_W * 0.85;
-                    const shirtAspect = shirtImg.naturalHeight / shirtImg.naturalWidth;
-                    const shirtDrawH = shirtDrawW * shirtAspect;
                     const shirtX = (COMPOSITE_W - shirtDrawW) / 2;
-                    const shirtY = (COMPOSITE_H - shirtDrawH) / 2;
+                    const shirtY = 0;
 
                     // Nếu áo có màu (không trắng) → tô màu áo bằng cách vẽ tạm lên canvas phụ rồi blend
                     if (shirtColorHex !== '#FFFFFF') {
@@ -1008,34 +1000,26 @@ QUAN TRỌNG về svgCode:
                         tempCanvas.height = COMPOSITE_H;
                         const tempCtx = tempCanvas.getContext('2d');
                         if (tempCtx) {
-                            tempCtx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            drawContainedImage(tempCtx, shirtImg, shirtX, shirtY, shirtDrawW, COMPOSITE_H);
                             // Áp dụng màu qua globalCompositeOperation
                             tempCtx.globalCompositeOperation = 'multiply';
                             tempCtx.fillStyle = shirtColorHex;
-                            tempCtx.fillRect(shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            tempCtx.fillRect(shirtX, shirtY, shirtDrawW, COMPOSITE_H);
                             // Giữ alpha từ ảnh gốc
                             tempCtx.globalCompositeOperation = 'destination-in';
-                            tempCtx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                            drawContainedImage(tempCtx, shirtImg, shirtX, shirtY, shirtDrawW, COMPOSITE_H);
                             ctx.drawImage(tempCanvas, 0, 0);
                         }
                     } else {
-                        ctx.drawImage(shirtImg, shirtX, shirtY, shirtDrawW, shirtDrawH);
+                        drawContainedImage(ctx, shirtImg, shirtX, shirtY, shirtDrawW, COMPOSITE_H);
                     }
 
-                    // --- Vẽ thiết kế (canvas Fabric) lên vùng tương ứng ---
-                    // Vùng thiết kế trên áo: tương ứng với canvas wrapper (58% width, 68% height, top 10%, left 15% của container)
-                    // Nhưng ở đây tính theo tỉ lệ so với ảnh áo (85% width container)
-                    const designAreaX = shirtX + shirtDrawW * 0.08;
-                    const designAreaY = shirtY + shirtDrawH * 0.06;
-                    const designAreaW = shirtDrawW * 0.74;
-                    const designAreaH = shirtDrawH * 0.78;
-
-                    // Export design từ Fabric canvas
+                    // Export design từ Fabric canvas và đặt lên cùng product-stage frame.
                     const designDataUrl = fabricCanvas.current!.toDataURL({ format: 'png', multiplier: 0.5 });
                     const designImg = new Image();
                     designImg.src = designDataUrl;
                     designImg.onload = () => {
-                        ctx.drawImage(designImg, designAreaX, designAreaY, designAreaW, designAreaH);
+                        ctx.drawImage(designImg, 0, 0, COMPOSITE_W, COMPOSITE_H);
                         resolve(offscreen.toDataURL('image/jpeg', 0.6));
                     };
                     designImg.onerror = () => {
@@ -1881,7 +1865,7 @@ Vui lòng thử lại sau..</p>
                                     <img
                                         src={processedImages[activeProductUrl] ?? activeProductUrl}
                                         alt={selectedProduct?.name ?? 'Phôi áo'}
-                                        className="w-[85%] object-contain drop-shadow-2xl select-none relative z-10"
+                                        className="absolute w-[85%] h-full object-contain drop-shadow-2xl select-none z-10"
                                         draggable="false"
                                         style={{
                                             opacity: isImageProcessing ? 0.6 : 1,
@@ -1894,7 +1878,7 @@ Vui lòng thử lại sau..</p>
                             {/* Khung vẽ Fabric.js - MẶT TRƯỚC */}
                             <div
                                 ref={wrapperRef}
-                                className="absolute w-[85%] h-full top-0 left-1/2 -translate-x-1/2 z-20 border-2 border-transparent"
+                                className="absolute inset-0 z-20 border-2 border-transparent"
                                 style={{
                                     visibility: viewMode === 'front' ? 'visible' : 'hidden',
                                     pointerEvents: viewMode === 'front' ? 'auto' : 'none',
@@ -1909,7 +1893,7 @@ Vui lòng thử lại sau..</p>
                             {/* Khung vẽ Fabric.js - MẶT SAU */}
                             <div
                                 ref={backWrapperRef}
-                                className="absolute w-[85%] h-full top-0 left-1/2 -translate-x-1/2 z-20 border-2 border-transparent"
+                                className="absolute inset-0 z-20 border-2 border-transparent"
                                 style={{
                                     visibility: viewMode === 'back' ? 'visible' : 'hidden',
                                     pointerEvents: viewMode === 'back' ? 'auto' : 'none',
