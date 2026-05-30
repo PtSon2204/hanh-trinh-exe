@@ -79,7 +79,7 @@ function FunCanvas() {
 
     // ── 1. Spawn bubbles ──────────────────────────────────────────
     const bubbles: HTMLDivElement[] = [];
-    for (let i = 0; i < 22; i++) {
+    for (let i = 0; i < 6; i++) {
       const b = document.createElement("div");
       b.className = "bubble";
       const size = 18 + Math.random() * 42;
@@ -125,9 +125,9 @@ function FunCanvas() {
     let streakTimer: ReturnType<typeof setInterval>;
     const scheduleStreak = () => {
       streakTimer = setInterval(() => {
-        const count = 1 + Math.floor(Math.random() * 3);
+        const count = 1;
         for (let i = 0; i < count; i++) setTimeout(spawnStreak, i * 120);
-      }, 600 + Math.random() * 900);
+      }, 2500 + Math.random() * 1500);
     };
     scheduleStreak();
 
@@ -192,7 +192,7 @@ function HeroCanvas() {
     const H = () => rect().height || window.innerHeight;
 
     // ── A. Floating school objects ────────────────────────────────
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 5; i++) {
       const obj = document.createElement("div");
       obj.className = "floating-obj";
       const emoji = SCHOOL_EMOJIS[Math.floor(Math.random() * SCHOOL_EMOJIS.length)];
@@ -246,60 +246,8 @@ function HeroCanvas() {
     // kick off one right away
     setTimeout(spawnShootingStar, 600);
 
-    // ── C. Graduation-cap goose flock every 5 s ───────────────────
-    const GOOSE_BODY = "🦆";
-    const GOOSE_CAP  = "🎓";
-
-    const spawnGooseFlock = () => {
-      const w = W();
-      const flockSize = 4 + Math.floor(Math.random() * 5);
-      const fromRight = Math.random() < 0.5;
-      const baseY = 10 + Math.random() * 65;
-      const scale = 0.85 + Math.random() * 0.7;
-      const dur   = 6 + Math.random() * 4;
-
-      for (let i = 0; i < flockSize; i++) {
-        const wrapper = document.createElement("div");
-        wrapper.className = "goose-unit";
-
-        const cap = document.createElement("span");
-        cap.className = "goose-cap";
-        cap.textContent = GOOSE_CAP;
-
-        const body = document.createElement("span");
-        body.className = "goose-body";
-        body.textContent = GOOSE_BODY;
-
-        wrapper.appendChild(cap);
-        wrapper.appendChild(body);
-
-        const staggerGap = 32 + Math.random() * 20;
-        const staggerY   = (Math.random() - 0.5) * 28;
-        const startX     = fromRight ? w + 80 + i * staggerGap : -(80 + i * staggerGap);
-        const endX       = fromRight ? -(w + 160) : (w + 160);
-        const flipVal    = fromRight ? -1 : 1;
-
-        wrapper.style.cssText = `
-          left:${startX}px;
-          top:calc(${baseY}% + ${staggerY}px);
-          font-size:${scale * 1.7}rem;
-          --goose-end:${endX - startX}px;
-          --goose-flip:${flipVal};
-          --goose-dur:${dur + i * 0.18}s;
-          --goose-delay:${i * 0.14}s;
-          animation: gooseMarch var(--goose-dur) linear var(--goose-delay) forwards;
-        `;
-        container.appendChild(wrapper);
-        setTimeout(() => wrapper.remove(), (dur + flockSize * 0.18 + 1) * 1000);
-      }
-    };
-
-    spawnGooseFlock();
-    const gooseTimer = setInterval(spawnGooseFlock, 5000);
-
     return () => {
       clearInterval(shootingStarTimer);
-      clearInterval(gooseTimer);
     };
   }, []);
 
@@ -312,7 +260,7 @@ function Hero() {
   const line2Ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (line1Ref.current) buildCharSpans("Đồng phục trường lớp ", line1Ref.current);
+    if (line1Ref.current) buildCharSpans("Áo trường lớp ", line1Ref.current);
     if (line2Ref.current) buildCharSpans("thiết kế theo cách của bạn", line2Ref.current);
   }, []);
 
@@ -332,7 +280,7 @@ function Hero() {
         <div className="hero__left">
           <span className="hero__badge">
             <span className="hero__badge-dot" />
-            Nền tảng Thiết kế Đồng Phục #1 Hòa Lạc
+            Nền tảng Thiết kế áo trường #1 Hòa Lạc
           </span>
 
           <h1 className="hero__heading">
@@ -345,19 +293,6 @@ function Hero() {
             sticker, thêm chữ, chọn màu &amp; AI hỗ trợ. Từ ý tưởng đến sản phẩm chỉ
             trong vài phút.
           </p>
-
-          <div className="hero__pills">
-            {[
-              { icon: "👆", label: "Kéo thả Sticker" },
-              { icon: "🔤", label: "Thêm chữ & Logo" },
-              { icon: "🎨", label: "Chọn màu tùy thích" },
-              { icon: "🤖", label: "AI gợi ý thiết kế" },
-            ].map((p) => (
-              <span key={p.label} className="hero__pill">
-                {p.icon} {p.label}
-              </span>
-            ))}
-          </div>
 
           <div className="hero__cta">
             <Link to="/customizer" className="btn-hero-primary">
@@ -747,7 +682,7 @@ function CtaBanner() {
 // ── Main export ───────────────────────────────────────────────────────
 export default function HomePage() {
   return (
-    <div style={{ fontFamily: "'Trebuchet MS','Lucida Sans Unicode','Lucida Grande','Lucida Sans',Arial,sans-serif", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif", minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Lớp animation toàn trang */}
       <FunCanvas />
 
