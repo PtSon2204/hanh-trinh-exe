@@ -303,22 +303,7 @@ function Hero() {
             </Link>
           </div>
 
-          <div className="hero__stats">
-            <div className="hero__stat">
-              <p className="hero__stat-num">500+</p>
-              <p className="hero__stat-lbl">Trường đối tác</p>
-            </div>
-            <div className="hero__stat-divider" />
-            <div className="hero__stat">
-              <p className="hero__stat-num">10K+</p>
-              <p className="hero__stat-lbl">Áo đã in</p>
-            </div>
-            <div className="hero__stat-divider" />
-            <div className="hero__stat">
-              <p className="hero__stat-num">100+</p>
-              <p className="hero__stat-lbl">Mẫu phôi sẵn</p>
-            </div>
-          </div>
+         
         </div>
 
         <div className="hero__right">
@@ -335,10 +320,10 @@ function Hero() {
             <div className="hero__mockup-body">
               <div className="hero__mockup-sidebar">
                 {[
-                  "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092149.png",
-                  "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092143.png",
-                  "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092125.png",
-                  "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092033.png",
+                  "/images/mockhoavit.jpg",
+                  "/images/mockhoaconcoc.jpg",
+                  "/images/cocpassed.jpg",
+                  "/images/mocFPTU.jpg",
                 ].map((src, i) => (
                   <div key={src} className={`hero__thumb ${i === 0 ? "hero__thumb--active" : ""}`}>
                     <img src={src} alt={`Mẫu ${i + 1}`} />
@@ -347,11 +332,7 @@ function Hero() {
               </div>
               <div className="hero__mockup-canvas">
                 <img src="/images/Áo_đã_thiet_ke/1.png" alt="Áo đang thiết kế" />
-                <div className="hero__mockup-tools">
-                  <span>⇔</span>
-                  <span>↻</span>
-                  <span>⊞</span>
-                </div>
+
               </div>
             </div>
             <div className="hero__mockup-footer">
@@ -360,10 +341,7 @@ function Hero() {
                   <span key={c} className="hero__swatch" style={{ background: c, border: c === "#fff" ? "2px solid #60a5fa" : "none" }} />
                 ))}
               </div>
-              <div className="hero__mockup-actions">
-                <span className="hero__undo">↺ Hoàn tác</span>
-                <span className="hero__order">🛒 Đặt hàng</span>
-              </div>
+
             </div>
           </div>
 
@@ -504,10 +482,10 @@ function HowItWorks() {
 
 // ── Design Gallery — rainbow border + shifting text ───────────────────
 const gallery = [
-  { src: "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092125.png", badge: "🔥 Hot", badgeCls: "badge--blue", title: "Mẫu Lớp A1", offset: false },
+  { src: "/images/Áo_đã_thiet_ke/AoConVitMauDen.jpg", badge: "🔥 Hot", badgeCls: "badge--blue", title: "Mẫu Lớp A1", offset: false },
   { src: "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092149.png", badge: "🚩 Sự kiện", badgeCls: "badge--red", title: "Sự Kiện Trắng Đỏ", offset: true },
-  { src: "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092131.png", badge: "❄️ Club", badgeCls: "badge--purple", title: "Áo Club Năng Động", offset: false },
-  { src: "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092137.png", badge: "⭐ Mới", badgeCls: "badge--green", title: "Áo Trường Cá Tính", offset: true },
+  { src: "/images/Áo_đã_thiet_ke/Screenshot 2026-03-10 092154.png", badge: "❄️ Club", badgeCls: "badge--purple", title: "Áo Club Năng Động", offset: false },
+  { src: "/images/Áo_đã_thiet_ke/theAlmaPolo.jpg", badge: "⭐ Mới", badgeCls: "badge--green", title: "Áo Trường Cá Tính", offset: true },
 ];
 
 function Gallery() {
