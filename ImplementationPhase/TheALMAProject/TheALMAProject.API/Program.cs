@@ -14,7 +14,11 @@ namespace TheALMAProject.API
         public static async Task Main(string[] args)
         {
 
-            DotNetEnv.Env.Load();
+            // Chỉ nạp file .env nếu file này thực sự tồn tại (tức là đang chạy ở máy tính của bạn)
+            if (File.Exists(".env"))
+            {
+                DotNetEnv.Env.Load();
+            }
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
