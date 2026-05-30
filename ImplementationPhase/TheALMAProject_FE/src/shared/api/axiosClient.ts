@@ -1,10 +1,10 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "https://localhost:7106/api",
-  headers: {
-    Accept: "application/json",
-  },
+    baseURL: "https://hanh-trinh-exe.onrender.com/api",
+    headers: {
+        Accept: "application/json",
+    },
 });
 
 function readServerMessage(data: unknown): string | null {
