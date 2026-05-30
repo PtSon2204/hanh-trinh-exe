@@ -1061,7 +1061,7 @@ export default function ProfilePage() {
                     onChange={e => handleAddressSearchChange(e.target.value)}
                   />
                   {addressSearchLoading && (
-                    <span className="spinner" style={{ position:'absolute', right:'.75rem', top:'35%', width:'16px', height:'16px', borderSize:'2px' }} />
+                    <span className="spinner" style={{ position:'absolute', right:'.75rem', top:'35%', width:'16px', height:'16px', borderWidth:'2px' }} />
                   )}
                 </div>
                 
