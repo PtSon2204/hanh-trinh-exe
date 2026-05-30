@@ -26,6 +26,24 @@ namespace TheALMAProject.API
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
+            // =====================================================
+            // CẤU HÌNH CORS 
+            // =====================================================
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowVercel", policy =>
+                {
+                    policy.WithOrigins(
+                            "https://hanh-trinh-exe-hgme.vercel.app", // Link Vercel
+                            "http://localhost:5173", // Link Local của React/Vite
+                            "http://localhost:3000"
+                          )
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
+
             //Đki db
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -128,7 +146,7 @@ namespace TheALMAProject.API
 
             app.UseHttpsRedirection();
 
-            app.UseCors("AllowReactApp");
+            app.UseCors("AllowVercel");
 
             // Phục vụ file tĩnh (avatar, images) từ wwwroot với cấu hình CORS
             app.UseStaticFiles(new StaticFileOptions
