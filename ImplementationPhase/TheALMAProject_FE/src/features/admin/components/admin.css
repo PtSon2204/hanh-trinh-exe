@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap");
 
 :root {
     --admin-bg: #070b14;
@@ -44,7 +43,7 @@
             transparent 30%
         ),
         linear-gradient(135deg, #060a12 0%, #0b1220 55%, #0f172a 100%);
-    font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     font-size: 15px;
     line-height: 1.35;
     text-align: left;

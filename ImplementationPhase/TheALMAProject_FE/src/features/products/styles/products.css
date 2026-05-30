@@ -135,7 +135,7 @@
 .search-overlay__input-wrap{display:flex;align-items:center;gap:.75rem;background:#fff;border-radius:1rem;padding:.75rem 1.25rem;box-shadow:0 24px 64px rgba(0,0,0,.25);border:2px solid #e2e8f0;transition:border-color .2s;}
 .search-overlay__input-wrap:focus-within{border-color:#3b82f6;}
 .search-overlay__icon{font-size:1.25rem;flex-shrink:0;}
-.search-overlay__input{flex:1;border:none;outline:none;font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:500;color:#1e293b;}
+.search-overlay__input{flex:1;border:none;outline:none;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:1.1rem;font-weight:500;color:#1e293b;}
 .search-overlay__input::placeholder{color:#94a3b8;}
 .search-overlay__close{background:none;border:none;font-size:1.25rem;color:#94a3b8;cursor:pointer;padding:.25rem;transition:color .2s;}
 .search-overlay__close:hover{color:#1e293b;}
