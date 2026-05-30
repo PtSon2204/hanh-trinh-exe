@@ -34,7 +34,7 @@ namespace TheALMAProject.API
                 options.AddPolicy("AllowVercel", policy =>
                 {
                     policy.WithOrigins(
-                            "https://hanh-trinh-exe-hgme.vercel.app", // Link Vercel
+                            "https://thealmastore.vercel.app", // Link Vercel
                             "http://localhost:5173", // Link Local của React/Vite
                             "http://localhost:3000"
                           )
