@@ -181,6 +181,39 @@ const drawContainedImage = (
     ctx.drawImage(image, left, top, width, height);
 };
 
+const FONTS_LIST = [
+    { name: 'Impact', label: 'Impact (Đậm)', group: 'Đậm & Mạnh' },
+    { name: 'Bebas Neue', label: 'Bebas Neue', group: 'Đậm & Mạnh' },
+    { name: 'Oswald', label: 'Oswald', group: 'Đậm & Mạnh' },
+    { name: 'Montserrat', label: 'Montserrat', group: 'Đậm & Mạnh' },
+    { name: 'Russo One', label: 'Russo One', group: 'Đậm & Mạnh' },
+    { name: 'Squada One', label: 'Squada One', group: 'Đậm & Mạnh' },
+    { name: 'Fjalla One', label: 'Fjalla One', group: 'Đậm & Mạnh' },
+    { name: 'Righteous', label: 'Righteous', group: 'Đậm & Mạnh' },
+    { name: 'Titan One', label: 'Titan One', group: 'Đậm & Mạnh' },
+    { name: 'Alfa Slab One', label: 'Alfa Slab One', group: 'Đậm & Mạnh' },
+    { name: 'Abril Fatface', label: 'Abril Fatface', group: 'Đậm & Mạnh' },
+    { name: 'Black Han Sans', label: 'Black Han Sans', group: 'Đậm & Mạnh' },
+    { name: 'Bangers', label: 'Bangers', group: 'Streetwear' },
+    { name: 'Boogaloo', label: 'Boogaloo', group: 'Streetwear' },
+    { name: 'Press Start 2P', label: 'Retro 8-bit', group: 'Streetwear' },
+    { name: 'Special Elite', label: 'Special Elite', group: 'Streetwear' },
+    { name: 'Permanent Marker', label: 'Marker', group: 'Streetwear' },
+    { name: 'Pacifico', label: 'Pacifico', group: 'Nghệ Thuật' },
+    { name: 'Lobster', label: 'Lobster', group: 'Nghệ Thuật' },
+    { name: 'Dancing Script', label: 'Dancing Script', group: 'Nghệ Thuật' },
+    { name: 'Raleway', label: 'Raleway', group: 'Nghệ Thuật' },
+    { name: 'Poppins', label: 'Poppins', group: 'Hiện Đại' },
+    { name: 'Roboto', label: 'Roboto', group: 'Hiện Đại' },
+    { name: 'Open Sans', label: 'Open Sans', group: 'Hiện Đại' },
+    { name: 'Nunito', label: 'Nunito', group: 'Hiện Đại' },
+    { name: 'Outfit', label: 'Outfit', group: 'Hiện Đại' },
+    { name: 'Playfair Display', label: 'Playfair Display', group: 'Cổ Điển' },
+    { name: 'Merriweather', label: 'Merriweather', group: 'Cổ Điển' },
+    { name: 'Georgia', label: 'Georgia', group: 'Cổ Điển' },
+    { name: 'Arial', label: 'Arial', group: 'Cổ Điển' }
+];
+
 export default function CustomizerPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -201,6 +234,9 @@ export default function CustomizerPage() {
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
     const [activeTab, setActiveTab] = useState<'base' | 'ai' | 'text' | 'upload'>('base');
+    const [selectedObj, setSelectedObj] = useState<fabric.Object | null>(null);
+    const [inputText, setInputText] = useState('ALMA Threads');
+    const [selectedFont, setSelectedFont] = useState('Impact');
     const [uploadedImages, setUploadedImages] = useState<string[]>([]);
     const [isDraggingOver, setIsDraggingOver] = useState(false);
     const [viewMode, setViewMode] = useState<'front' | 'back'>('front');
@@ -263,6 +299,14 @@ export default function CustomizerPage() {
     // Helper: trả về canvas đang active (dùng sau khi states đã khởi tạo)
     const getActiveCanvas = () =>
         viewMode === 'front' ? fabricCanvas.current : backFabricCanvas.current;
+
+    const handleSetViewMode = (mode: CanvasSide) => {
+        const currentCanvas = getActiveCanvas();
+        currentCanvas?.discardActiveObject();
+        currentCanvas?.renderAll();
+        setViewMode(mode);
+        setSelectedObj(null);
+    };
 
     const getRecommendedSize = () => {
         const h = parseFloat(userHeight);
@@ -419,6 +463,9 @@ export default function CustomizerPage() {
             width: w, height: h,
             backgroundColor: 'transparent', selection: true,
         });
+        const handleSelection = (canvas: fabric.Canvas) => {
+            setSelectedObj(canvas.getActiveObject() || null);
+        };
         fabricCanvas.current.on('object:added', updateLayers);
         fabricCanvas.current.on('object:removed', updateLayers);
         fabricCanvas.current.on('object:modified', updateLayers);
@@ -426,6 +473,9 @@ export default function CustomizerPage() {
         fabricCanvas.current.on('object:scaling', constrainFrontScale);
         fabricCanvas.current.on('object:rotating', constrainFrontScale);
         fabricCanvas.current.on('object:modified', constrainFrontMove);
+        fabricCanvas.current.on('selection:created', () => handleSelection(fabricCanvas.current!));
+        fabricCanvas.current.on('selection:updated', () => handleSelection(fabricCanvas.current!));
+        fabricCanvas.current.on('selection:cleared', () => setSelectedObj(null));
 
         // ── BACK canvas ──
         const bw = backWrapperRef.current.offsetWidth;
@@ -441,6 +491,9 @@ export default function CustomizerPage() {
         backFabricCanvas.current.on('object:scaling', constrainBackScale);
         backFabricCanvas.current.on('object:rotating', constrainBackScale);
         backFabricCanvas.current.on('object:modified', constrainBackMove);
+        backFabricCanvas.current.on('selection:created', () => handleSelection(backFabricCanvas.current!));
+        backFabricCanvas.current.on('selection:updated', () => handleSelection(backFabricCanvas.current!));
+        backFabricCanvas.current.on('selection:cleared', () => setSelectedObj(null));
 
         updateLayers();
 
@@ -679,6 +732,23 @@ export default function CustomizerPage() {
         }
     };
 
+    const updateSelectedObjectProp = (propName: string, value: any) => {
+        const ac = getActiveCanvas();
+        if (!ac) return;
+        const active = ac.getActiveObject();
+        if (!active) return;
+        
+        active.set(propName as any, value);
+        if (propName === 'fontSize' || propName === 'text') {
+            constrainObject(viewMode, active, ac, true);
+        } else {
+            constrainObject(viewMode, active, ac);
+        }
+        ac.renderAll();
+        // Force React to re-render layer/selection info
+        setLayerTrigger(prev => prev + 1);
+    };
+
     // 4. Các nút Toolbar nổi
     const handleFloatingAction = (action: string) => {
         const ac = getActiveCanvas();
@@ -691,7 +761,10 @@ export default function CustomizerPage() {
             case 'center': obj.set({ left: ac.width! / 2, originX: 'center' }); constrainObject(viewMode, obj, ac); break;
             case 'down': ac.sendBackwards(obj); break;
             case 'up': ac.bringForward(obj); break;
-            case 'delete': ac.remove(obj); break;
+            case 'delete': 
+                ac.remove(obj); 
+                setSelectedObj(null); 
+                break;
             case 'clone':
                 obj.clone((cloned: fabric.Object) => {
                     cloned.set({ left: obj.left! + 20, top: obj.top! + 20 });
@@ -1615,53 +1688,97 @@ Vui lòng thử lại sau..</p>
                                 <h4 className="text-xs font-bold text-green-600 uppercase tracking-widest mb-3 mt-2 flex items-center gap-2"><i className="fa-solid fa-font"></i> Thêm Chữ Lên Áo</h4>
                                 <div className="mb-3">
                                     <label className="text-xs font-medium text-gray-600 mb-1 block">Nội dung</label>
-                                    <input type="text" id="text-content-input" defaultValue="Text mới" className="w-full border border-gray-300 rounded-lg p-2.5 text-sm" />
+                                    <input
+                                        type="text"
+                                        id="text-content-input"
+                                        value={inputText}
+                                        onChange={e => setInputText(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm"
+                                    />
                                 </div>
                                 <div className="mb-3">
                                     <label className="text-xs font-medium text-gray-600 mb-1 block">Font chữ</label>
-                                    <select id="text-font-select" defaultValue="Impact" className="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white">
-                                        <optgroup label="── Đậm & Mạnh">
-                                            <option value="Impact">Impact</option>
-                                            <option value="Bebas Neue">Bebas Neue</option>
-                                            <option value="Oswald">Oswald</option>
-                                            <option value="Montserrat">Montserrat</option>
-                                            <option value="Russo One">Russo One</option>
-                                            <option value="Squada One">Squada One</option>
-                                            <option value="Fjalla One">Fjalla One</option>
-                                            <option value="Righteous">Righteous</option>
-                                            <option value="Titan One">Titan One</option>
-                                            <option value="Alfa Slab One">Alfa Slab One</option>
-                                            <option value="Abril Fatface">Abril Fatface</option>
-                                            <option value="Black Han Sans">Black Han Sans</option>
+                                    <select
+                                        id="text-font-select"
+                                        value={selectedFont}
+                                        onChange={e => setSelectedFont(e.target.value)}
+                                        className="w-full border border-gray-300 rounded-lg p-2.5 text-sm bg-white font-semibold"
+                                        style={{ fontFamily: selectedFont }}
+                                    >
+                                        <optgroup label="── Đậm & Mạnh" style={{ fontFamily: 'sans-serif' }}>
+                                            <option value="Impact" style={{ fontFamily: 'Impact' }}>Impact</option>
+                                            <option value="Bebas Neue" style={{ fontFamily: 'Bebas Neue' }}>Bebas Neue</option>
+                                            <option value="Oswald" style={{ fontFamily: 'Oswald' }}>Oswald</option>
+                                            <option value="Montserrat" style={{ fontFamily: 'Montserrat' }}>Montserrat</option>
+                                            <option value="Russo One" style={{ fontFamily: 'Russo One' }}>Russo One</option>
+                                            <option value="Squada One" style={{ fontFamily: 'Squada One' }}>Squada One</option>
+                                            <option value="Fjalla One" style={{ fontFamily: 'Fjalla One' }}>Fjalla One</option>
+                                            <option value="Righteous" style={{ fontFamily: 'Righteous' }}>Righteous</option>
+                                            <option value="Titan One" style={{ fontFamily: 'Titan One' }}>Titan One</option>
+                                            <option value="Alfa Slab One" style={{ fontFamily: 'Alfa Slab One' }}>Alfa Slab One</option>
+                                            <option value="Abril Fatface" style={{ fontFamily: 'Abril Fatface' }}>Abril Fatface</option>
+                                            <option value="Black Han Sans" style={{ fontFamily: 'Black Han Sans' }}>Black Han Sans</option>
                                         </optgroup>
-                                        <optgroup label="── Hiển Thị / Streetwear">
-                                            <option value="Bangers">Bangers</option>
-                                            <option value="Boogaloo">Boogaloo</option>
-                                            <option value="Press Start 2P">Press Start 2P</option>
-                                            <option value="Special Elite">Special Elite</option>
-                                            <option value="Permanent Marker">Permanent Marker</option>
+                                        <optgroup label="── Hiển Thị / Streetwear" style={{ fontFamily: 'sans-serif' }}>
+                                            <option value="Bangers" style={{ fontFamily: 'Bangers' }}>Bangers</option>
+                                            <option value="Boogaloo" style={{ fontFamily: 'Boogaloo' }}>Boogaloo</option>
+                                            <option value="Press Start 2P" style={{ fontFamily: 'Press Start 2P' }}>Press Start 2P</option>
+                                            <option value="Special Elite" style={{ fontFamily: 'Special Elite' }}>Special Elite</option>
+                                            <option value="Permanent Marker" style={{ fontFamily: 'Permanent Marker' }}>Permanent Marker</option>
                                         </optgroup>
-                                        <optgroup label="── Viết Tay / Nghệ Thuật">
-                                            <option value="Pacifico">Pacifico</option>
-                                            <option value="Lobster">Lobster</option>
-                                            <option value="Dancing Script">Dancing Script</option>
-                                            <option value="Raleway">Raleway</option>
+                                        <optgroup label="── Viết Tay / Nghệ Thuật" style={{ fontFamily: 'sans-serif' }}>
+                                            <option value="Pacifico" style={{ fontFamily: 'Pacifico' }}>Pacifico</option>
+                                            <option value="Lobster" style={{ fontFamily: 'Lobster' }}>Lobster</option>
+                                            <option value="Dancing Script" style={{ fontFamily: 'Dancing Script' }}>Dancing Script</option>
+                                            <option value="Raleway" style={{ fontFamily: 'Raleway' }}>Raleway</option>
                                         </optgroup>
-                                        <optgroup label="── Hiện Đại / Sạch">
-                                            <option value="Poppins">Poppins</option>
-                                            <option value="Roboto">Roboto</option>
-                                            <option value="Open Sans">Open Sans</option>
-                                            <option value="Nunito">Nunito</option>
-                                            <option value="Outfit">Outfit</option>
+                                        <optgroup label="── Hiện Đại / Sạch" style={{ fontFamily: 'sans-serif' }}>
+                                            <option value="Poppins" style={{ fontFamily: 'Poppins' }}>Poppins</option>
+                                            <option value="Roboto" style={{ fontFamily: 'Roboto' }}>Roboto</option>
+                                            <option value="Open Sans" style={{ fontFamily: 'Open Sans' }}>Open Sans</option>
+                                            <option value="Nunito" style={{ fontFamily: 'Nunito' }}>Nunito</option>
+                                            <option value="Outfit" style={{ fontFamily: 'Outfit' }}>Outfit</option>
                                         </optgroup>
-                                        <optgroup label="── Cổ Điển / Sang Trọng">
-                                            <option value="Playfair Display">Playfair Display</option>
-                                            <option value="Merriweather">Merriweather</option>
-                                            <option value="Georgia">Georgia</option>
-                                            <option value="Arial">Arial</option>
+                                        <optgroup label="── Cổ Điển / Sang Trọng" style={{ fontFamily: 'sans-serif' }}>
+                                            <option value="Playfair Display" style={{ fontFamily: 'Playfair Display' }}>Playfair Display</option>
+                                            <option value="Merriweather" style={{ fontFamily: 'Merriweather' }}>Merriweather</option>
+                                            <option value="Georgia" style={{ fontFamily: 'Georgia' }}>Georgia</option>
+                                            <option value="Arial" style={{ fontFamily: 'Arial' }}>Arial</option>
                                         </optgroup>
                                     </select>
                                 </div>
+
+                                {/* Font style preview grid */}
+                                <div className="mb-4">
+                                    <label className="text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2 block flex items-center gap-1">
+                                        <i className="fa-solid fa-eye text-green-500"></i> Xem trước kiểu chữ (Click chọn)
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1 border border-gray-150 rounded-xl p-2 bg-gray-50/50 custom-scrollbar">
+                                        {FONTS_LIST.map((font) => (
+                                            <button
+                                                key={font.name}
+                                                type="button"
+                                                onClick={() => setSelectedFont(font.name)}
+                                                className={`text-left p-2.5 rounded-lg border-2 transition-all hover:bg-white flex flex-col min-w-0 ${
+                                                    selectedFont === font.name
+                                                        ? 'border-green-500 bg-white shadow-sm ring-1 ring-green-100'
+                                                        : 'border-gray-200 bg-white hover:border-green-300'
+                                                }`}
+                                            >
+                                                <span className="text-[8px] text-gray-400 font-sans truncate mb-0.5" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                                                    {font.label}
+                                                </span>
+                                                <span
+                                                    className="text-sm text-gray-800 leading-none truncate py-1 w-full text-left"
+                                                    style={{ fontFamily: font.name }}
+                                                >
+                                                    {inputText || 'ALMA'}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-3 mb-3">
                                     <div><label className="text-xs font-medium text-gray-600 block">Cỡ chữ</label><input type="number" id="text-size-input" defaultValue="28" className="w-full border rounded-lg p-2.5 text-sm" /></div>
                                     <div><label className="text-xs font-medium text-gray-600 block">Màu chữ</label><input type="color" id="text-color-input" defaultValue="#000000" className="w-full h-[42px] border rounded-lg cursor-pointer" /></div>
@@ -1979,8 +2096,8 @@ Vui lòng thử lại sau..</p>
                     {/* Nút Chọn Mặt Trước/Sau */}
                     <div className="h-16 flex items-center justify-center shrink-0 mb-[70px] md:mb-6 z-20 w-full absolute bottom-4">
                         <div className="flex border border-gray-300 rounded overflow-hidden shadow-lg bg-white">
-                            <button onClick={() => setViewMode('front')} className={`px-6 py-2.5 text-xs sm:text-sm font-semibold transition ${viewMode === 'front' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>Mặt Trước</button>
-                            <button onClick={() => setViewMode('back')} className={`px-6 py-2.5 border-l border-gray-300 text-xs sm:text-sm font-medium transition ${viewMode === 'back' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>Mặt Sau</button>
+                            <button onClick={() => handleSetViewMode('front')} className={`px-6 py-2.5 text-xs sm:text-sm font-semibold transition ${viewMode === 'front' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>Mặt Trước</button>
+                            <button onClick={() => handleSetViewMode('back')} className={`px-6 py-2.5 border-l border-gray-300 text-xs sm:text-sm font-medium transition ${viewMode === 'back' ? 'bg-gray-800 text-white' : 'text-gray-600 hover:bg-gray-50'}`}>Mặt Sau</button>
                         </div>
                     </div>
                 </main>
@@ -1990,6 +2107,205 @@ Vui lòng thử lại sau..</p>
                     <button className="md:hidden absolute top-2 right-2 text-gray-400" onClick={() => setRightSidebarOpen(false)}><i className="fa-solid fa-xmark text-lg px-2"></i></button>
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar mt-12 md:mt-0">
+                        {/* BẢNG ĐIỀU KHIỂN CHI TIẾT ĐỐI TƯỢNG ĐANG CHỌN */}
+                        {selectedObj && (
+                            <div className="p-5 border-b bg-blue-50/20">
+                                {/* Nếu đối tượng được chọn là Chữ */}
+                                {(selectedObj.type === 'i-text' || selectedObj.type === 'text') ? (
+                                    <div className="space-y-4">
+                                        <p className="text-xs font-bold text-blue-600 uppercase tracking-widest flex items-center gap-1.5">
+                                            <i className="fa-solid fa-font"></i> Chỉnh Sửa Chữ Đang Chọn
+                                        </p>
+                                        
+                                        {/* Nội dung chữ */}
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Nội dung chữ</label>
+                                            <input
+                                                type="text"
+                                                value={(selectedObj as fabric.IText).text || ''}
+                                                onChange={(e) => updateSelectedObjectProp('text', e.target.value)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                            />
+                                        </div>
+
+                                        {/* Kiểu chữ (Font family) */}
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Kiểu chữ (Font)</label>
+                                            <select
+                                                value={(selectedObj as fabric.IText).fontFamily || 'Impact'}
+                                                onChange={(e) => updateSelectedObjectProp('fontFamily', e.target.value)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                                style={{ fontFamily: (selectedObj as fabric.IText).fontFamily }}
+                                            >
+                                                {FONTS_LIST.map(f => (
+                                                    <option key={f.name} value={f.name} style={{ fontFamily: f.name }}>{f.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Cỡ chữ (Size) */}
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Cỡ chữ (Size)</label>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="range"
+                                                    min="10"
+                                                    max="150"
+                                                    value={(selectedObj as fabric.IText).fontSize || 28}
+                                                    onChange={(e) => updateSelectedObjectProp('fontSize', parseInt(e.target.value))}
+                                                    className="flex-1 accent-blue-600 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    min="10"
+                                                    max="150"
+                                                    value={(selectedObj as fabric.IText).fontSize || 28}
+                                                    onChange={(e) => updateSelectedObjectProp('fontSize', parseInt(e.target.value) || 12)}
+                                                    className="w-16 border border-gray-300 rounded-lg p-1.5 text-center text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Màu chữ (Color) */}
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Màu sắc</label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="color"
+                                                    value={((selectedObj as fabric.IText).fill as string) || '#000000'}
+                                                    onChange={(e) => updateSelectedObjectProp('fill', e.target.value)}
+                                                    className="w-8 h-8 rounded cursor-pointer border border-gray-200 shrink-0"
+                                                />
+                                                <div className="flex flex-wrap gap-1 flex-1">
+                                                    {['#FFFFFF', '#000000', '#EF4444', '#F97316', '#F59E0B', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899'].map((colorCode) => (
+                                                        <button
+                                                            key={colorCode}
+                                                            type="button"
+                                                            onClick={() => updateSelectedObjectProp('fill', colorCode)}
+                                                            className={`w-5 h-5 rounded-full border border-gray-300 transition hover:scale-110 ${((selectedObj as fabric.IText).fill === colorCode) ? 'ring-2 ring-blue-500 scale-110' : ''}`}
+                                                            style={{ backgroundColor: colorCode }}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Định dạng (Formats) */}
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Định dạng & Căn lề</label>
+                                            <div className="flex gap-1.5">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateSelectedObjectProp('fontWeight', (selectedObj as fabric.IText).fontWeight === 'bold' ? 'normal' : 'bold')}
+                                                    className={`flex-1 py-1.5 border rounded-lg font-bold text-xs transition ${
+                                                        (selectedObj as fabric.IText).fontWeight === 'bold' ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    B
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => updateSelectedObjectProp('fontStyle', (selectedObj as fabric.IText).fontStyle === 'italic' ? 'normal' : 'italic')}
+                                                    className={`flex-1 py-1.5 border rounded-lg italic text-xs font-semibold transition ${
+                                                        (selectedObj as fabric.IText).fontStyle === 'italic' ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    I
+                                                </button>
+                                                <div className="w-px h-7 bg-gray-200 mx-1" />
+                                                {['left', 'center', 'right'].map((align) => (
+                                                    <button
+                                                        key={align}
+                                                        type="button"
+                                                        onClick={() => updateSelectedObjectProp('textAlign', align)}
+                                                        className={`flex-1 py-1.5 border rounded-lg text-xs transition ${
+                                                            (selectedObj as fabric.IText).textAlign === align ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                        }`}
+                                                    >
+                                                        <i className={`fa-solid fa-align-${align}`} />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    // Bảng chỉnh sửa sticker/image
+                                    <div className="space-y-4">
+                                        <p className="text-xs font-bold text-purple-600 uppercase tracking-widest flex items-center gap-1.5">
+                                            <i className="fa-solid fa-circle-info"></i> Tùy Chỉnh Họa Tiết Đang Chọn
+                                        </p>
+                                        
+                                        {/* Kích thước / Tỉ lệ */}
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Tỉ lệ kích thước (Scale)</label>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="range"
+                                                    min="5"
+                                                    max="200"
+                                                    value={Math.round((selectedObj.scaleX || 1) * 100)}
+                                                    onChange={(e) => {
+                                                        const pct = parseInt(e.target.value) / 100;
+                                                        const ac = getActiveCanvas();
+                                                        if (ac) {
+                                                            selectedObj.scaleX = pct;
+                                                            selectedObj.scaleY = pct;
+                                                            constrainObject(viewMode, selectedObj, ac, true);
+                                                            ac.renderAll();
+                                                            setLayerTrigger(prev => prev + 1);
+                                                        }
+                                                    }}
+                                                    className="flex-1 accent-purple-600 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                />
+                                                <span className="w-12 text-right text-xs font-bold text-gray-700">{Math.round((selectedObj.scaleX || 1) * 100)}%</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Góc xoay */}
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Góc xoay (Rotate)</label>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="360"
+                                                    value={Math.round(selectedObj.angle || 0)}
+                                                    onChange={(e) => {
+                                                        const deg = parseInt(e.target.value);
+                                                        const ac = getActiveCanvas();
+                                                        if (ac) {
+                                                            selectedObj.rotate(deg);
+                                                            constrainObject(viewMode, selectedObj, ac, true);
+                                                            ac.renderAll();
+                                                            setLayerTrigger(prev => prev + 1);
+                                                        }
+                                                    }}
+                                                    className="flex-1 accent-purple-600 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                />
+                                                <span className="w-12 text-right text-xs font-bold text-gray-700">{Math.round(selectedObj.angle || 0)}°</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Độ mờ (Opacity) */}
+                                        <div>
+                                            <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block mb-1">Độ trong suốt (Opacity)</label>
+                                            <div className="flex items-center gap-3">
+                                                <input
+                                                    type="range"
+                                                    min="10"
+                                                    max="100"
+                                                    value={Math.round((selectedObj.opacity || 1) * 100)}
+                                                    onChange={(e) => updateSelectedObjectProp('opacity', parseInt(e.target.value) / 100)}
+                                                    className="flex-1 accent-purple-600 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                                />
+                                                <span className="w-12 text-right text-xs font-bold text-gray-700">{Math.round((selectedObj.opacity || 1) * 100)}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         <div className="p-5 border-b">
                             <p className="text-sm text-gray-800 mt-2 mb-3 font-semibold flex items-center gap-2">
                                 <i className="fa-solid fa-palette text-blue-500"></i> Màu Áo
@@ -2322,7 +2638,7 @@ Vui lòng thử lại sau..</p>
                                     Zoom: {Math.round(shirtZoom * 100)}%
                                 </span>
                                 <button
-                                    onClick={() => { setPreviewOpen(false); setViewMode('back'); }}
+                                    onClick={() => { setPreviewOpen(false); handleSetViewMode('back'); }}
                                     className="text-white/60 hover:text-white text-[10px] transition flex items-center gap-1"
                                 >
                                     <i className="fa-solid fa-rotate text-[9px]"></i> Xem mặt sau

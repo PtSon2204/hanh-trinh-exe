@@ -533,9 +533,27 @@ export default function ProfilePage() {
       setAddressModal(prev => ({ ...prev, isOpen: false }));
       setAddressSearch('');
       fetchAddresses();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error('Lỗi khi lưu địa chỉ giao hàng.');
+      const axiosErr = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } | string } };
+      let errMsg = 'Lỗi khi lưu địa chỉ giao hàng.';
+      if (axiosErr.response?.data) {
+        const data = axiosErr.response.data;
+        if (typeof data === 'object') {
+          if (data.message) {
+            errMsg = data.message;
+          } else if (data.errors) {
+            const firstErrorKey = Object.keys(data.errors)[0];
+            const firstErrorMsg = data.errors[firstErrorKey]?.[0];
+            if (firstErrorMsg) {
+              errMsg = firstErrorMsg;
+            }
+          }
+        } else if (typeof data === 'string') {
+          errMsg = data;
+        }
+      }
+      toast.error(errMsg);
     }
   };
 
