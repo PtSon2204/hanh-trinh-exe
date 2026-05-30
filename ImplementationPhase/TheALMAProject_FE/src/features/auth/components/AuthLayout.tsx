@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 // ── Shared constants (same as HomePage) ─────────────────────────────
-const SCHOOL_EMOJIS = ['🎒','🎓','📚','✏️','📐','🖊️','📏','🏫','🎨','🔬','📝','⚽','🏆','🎭','🎵','🖌️','📌','💡','🌟'];
-const RAINBOW_COLORS = ['#ff4444','#ff8c00','#ffe000','#44dd44','#00bbff','#8844ff','#ff44cc','#ff6699','#00ffcc','#ff7700'];
+const SCHOOL_EMOJIS = ['🎒','✏️','📚','🎨','🌟'];
+const SOFT_COLORS = ['#3a9fbf','#4db8d6','#7dd3e8','#c9b896','#f5f0e0','#ddd0b0','#bde4f0','#a8d8ea'];
 
 // ── Fun Canvas: bubbles + color streaks (fixed, global layer) ────────
 function AuthFunCanvas() {
@@ -17,11 +17,11 @@ function AuthFunCanvas() {
 
     // 1. Spawn bubbles
     const bubbles: HTMLDivElement[] = [];
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 6; i++) {
       const b = document.createElement('div');
       b.className = 'auth-bubble';
       const size = 14 + Math.random() * 36;
-      const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+      const color = SOFT_COLORS[Math.floor(Math.random() * SOFT_COLORS.length)];
       const dur = 5 + Math.random() * 7;
       const delay = Math.random() * 10;
       const left = Math.random() * 100;
@@ -43,7 +43,7 @@ function AuthFunCanvas() {
     const spawnStreak = () => {
       const s = document.createElement('div');
       s.className = 'auth-streak';
-      const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+      const color = SOFT_COLORS[Math.floor(Math.random() * SOFT_COLORS.length)];
       const w = 50 + Math.random() * 150;
       const h = 2 + Math.random() * 5;
       const angle = (Math.random() - 0.5) * 60;
@@ -63,13 +63,12 @@ function AuthFunCanvas() {
     };
     let streakTimer: ReturnType<typeof setInterval>;
     streakTimer = setInterval(() => {
-      const count = 1 + Math.floor(Math.random() * 2);
-      for (let i = 0; i < count; i++) setTimeout(spawnStreak, i * 120);
-    }, 700 + Math.random() * 1000);
+      spawnStreak();
+    }, 2000 + Math.random() * 3000);
 
     // 3. Click pop effect
     const handleClick = (e: MouseEvent) => {
-      const color = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+      const color = SOFT_COLORS[Math.floor(Math.random() * SOFT_COLORS.length)];
       const size = 18 + Math.random() * 24;
       const pop = document.createElement('div');
       pop.className = 'auth-bubble-pop';
@@ -87,7 +86,7 @@ function AuthFunCanvas() {
         const ms = 5 + Math.random() * 10;
         const mx = e.clientX + (Math.random() - 0.5) * 50;
         const my = e.clientY + (Math.random() - 0.5) * 50;
-        const mc = RAINBOW_COLORS[Math.floor(Math.random() * RAINBOW_COLORS.length)];
+        const mc = SOFT_COLORS[Math.floor(Math.random() * SOFT_COLORS.length)];
         mini.style.cssText = `
           width:${ms}px; height:${ms}px;
           left:${mx - ms / 2}px; top:${my - ms / 2}px;
@@ -123,7 +122,7 @@ function AuthHeroCanvas() {
     const H = () => rect().height || 800;
 
     // A. Floating school objects
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 5; i++) {
       const obj = document.createElement('div');
       obj.className = 'auth-floating-obj';
       const emoji = SCHOOL_EMOJIS[Math.floor(Math.random() * SCHOOL_EMOJIS.length)];
@@ -173,13 +172,13 @@ function AuthHeroCanvas() {
       const count = Math.random() < 0.35 ? 2 : 1;
       for (let i = 0; i < count; i++)
         setTimeout(spawnShootingStar, i * 350 + Math.random() * 250);
-    }, 2000 + Math.random() * 2000);
+    }, 3500 + Math.random() * 3000);
     setTimeout(spawnShootingStar, 800);
 
     // C. Graduation-cap goose flock every 6 s
     const spawnGooseFlock = () => {
       const w = W();
-      const flockSize = 3 + Math.floor(Math.random() * 4);
+      const flockSize = 2 + Math.floor(Math.random() * 2);
       const fromRight = Math.random() < 0.5;
       const baseY = 10 + Math.random() * 65;
       const scale = 0.8 + Math.random() * 0.6;
@@ -222,7 +221,7 @@ function AuthHeroCanvas() {
     };
 
     spawnGooseFlock();
-    const gooseTimer = setInterval(spawnGooseFlock, 6000);
+    const gooseTimer = setInterval(spawnGooseFlock, 10000);
 
     return () => {
       clearInterval(shootingStarTimer);
@@ -236,10 +235,10 @@ function AuthHeroCanvas() {
 // ── Right panel floating blobs ────────────────────────────────────────
 function AuthRightBlobs() {
   const blobData = [
-    { color: '#bfdbfe', size: 220, left: 80, top: 5, bx: 30, by: -20, bx2: -15, by2: 10, dur: 12, delay: 0 },
-    { color: '#c7d2fe', size: 180, left: 5, top: 60, bx: -25, by: 20, bx2: 10, by2: -15, dur: 10, delay: 2 },
-    { color: '#bbf7d0', size: 160, left: 60, top: 75, bx: 20, by: -30, bx2: -10, by2: 20, dur: 14, delay: 4 },
-    { color: '#fde68a', size: 140, left: 20, top: 20, bx: -15, by: 15, bx2: 20, by2: -10, dur: 11, delay: 1 },
+    { color: '#bde4f0', size: 220, left: 80, top: 5, bx: 30, by: -20, bx2: -15, by2: 10, dur: 12, delay: 0 },
+    { color: '#f5f0e0', size: 180, left: 5, top: 60, bx: -25, by: 20, bx2: 10, by2: -15, dur: 10, delay: 2 },
+    { color: '#c8e8f4', size: 160, left: 60, top: 75, bx: 20, by: -30, bx2: -10, by2: 20, dur: 14, delay: 4 },
+    { color: '#ede3cc', size: 140, left: 20, top: 20, bx: -15, by: 15, bx2: 20, by2: -10, dur: 11, delay: 1 },
   ];
   return (
     <>
@@ -268,7 +267,7 @@ function AuthRightBlobs() {
 
 // ── Floating school objects (right panel) ────────────────────────────
 function AuthRightFloats() {
-  const objs = Array.from({ length: 10 }, (_, i) => {
+  const objs = Array.from({ length: 4 }, (_, i) => {
     const emoji = SCHOOL_EMOJIS[i % SCHOOL_EMOJIS.length];
     const size = 0.9 + (i * 0.17) % 0.8;
     const dur = 7 + (i * 1.3) % 7;

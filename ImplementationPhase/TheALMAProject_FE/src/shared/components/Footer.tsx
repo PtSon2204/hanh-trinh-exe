@@ -14,16 +14,16 @@ export default function Footer() {
         </div>
         <div className="alma-footer__contact">
           <h3 className="alma-footer__heading">Liên Hệ</h3>
-          <p>📍 Khu CNC Hòa Lạc, Thạch Thất, Hà Nội</p>
+          <p>📍Khu CNC Hòa Lạc, Thạch Thất, Hà Nội</p>
           <p>📞 <a href="tel:0123456789">0123 456 789</a></p>
           <p>✉️ <a href="mailto:contact@almacustom.vn">contact@almacustom.vn</a></p>
         </div>
         <div className="alma-footer__social">
           <h3 className="alma-footer__heading">Kết Nối</h3>
           <div className="alma-footer__socials">
-            <a href="https://facebook.com" className="alma-footer__social-btn" aria-label="Facebook">f</a>
+            <a href="https://www.facebook.com/profile.php?id=61590112661723" className="alma-footer__social-btn" aria-label="Facebook">f</a>
             <a href="https://instagram.com" className="alma-footer__social-btn" aria-label="Instagram">📷</a>
-            <a href="https://www.tiktok.com" className="alma-footer__social-btn" aria-label="TikTok">♪</a>
+            <a href="https://www.tiktok.com/@thealmaest2026" className="alma-footer__social-btn" aria-label="TikTok">♪</a>
           </div>
         </div>
       </div>

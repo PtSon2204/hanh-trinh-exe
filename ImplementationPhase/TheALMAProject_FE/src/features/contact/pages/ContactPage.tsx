@@ -48,9 +48,9 @@ const INFO_CARDS = [
 ];
 
 const SOCIAL_LINKS = [
-  { icon: "f", label: "Facebook", href: "https://facebook.com", color: "#1877F2" },
+  { icon: "f", label: "Facebook", href: "https://www.facebook.com/profile.php?id=61590112661723", color: "#1877F2" },
   { icon: "📷", label: "Instagram", href: "https://instagram.com", color: "#E4405F" },
-  { icon: "♪", label: "TikTok", href: "https://tiktok.com", color: "#000" },
+  { icon: "♪", label: "TikTok", href: "https://www.tiktok.com/@thealmaest2026", color: "#000" },
 ];
 
 function ContactBody() {

@@ -5,31 +5,31 @@ import "./StoryPage.css";
 // ── Data ──────────────────────────────────────────────────────────────
 const MEMBERS = [
   { id: 1, name: "Nguyễn Thị Hải Yến",  role: "CEO & Co-founder", avatar: "/images/members/haiyen.png",    desc: "Người đặt nền móng cho ALMA, với đam mê thiết kế và tầm nhìn xa về thời trang học đường." },
-  { id: 2, name: "Bùi Thị Thùy Dương", role: "CTO & Co-founder", avatar: "/images/members/thuyduong.png", desc: "Kiến trúc sư công nghệ, xây dựng nền tảng thiết kế trực tuyến từ những dòng code đầu tiên." },
+  { id: 2, name: "Bùi Thị Thùy Dương", role: "CFO & Co-founder", avatar: "/images/members/thuyduong.png", desc: "Đảm bảo mỗi chiếc áo đến tay khách hàng đúng hẹn, đúng chất lượng đã cam kết." },
   { id: 3, name: "Tăng Lan Anh",        role: "CMO & Co-founder", avatar: "/images/members/lananh.png",    desc: "Người kết nối ALMA với hàng nghìn trường học và cộng đồng sinh viên trên cả nước." },
-  { id: 4, name: "Nguyễn Phúc Lâm",    role: "COO & Co-founder", avatar: "/images/members/phuclam.png",   desc: "Đảm bảo mỗi chiếc áo đến tay khách hàng đúng hẹn, đúng chất lượng đã cam kết." },
+  { id: 4, name: "Nguyễn Phúc Lâm",    role: "CTO & Co-founder", avatar: "/images/members/phuclam.png",   desc: "Kiến trúc sư công nghệ, xây dựng nền tảng thiết kế trực tuyến từ những dòng code đầu tiên." },
   { id: 5, name: "Phạm Thế Sơn",       role: "CPO & Co-founder", avatar: "/images/members/theson.jpg",    desc: "Xây dựng mô hình tài chính bền vững, giúp ALMA tăng trưởng đúng hướng và hiệu quả." },
-  { id: 6, name: "Nguyễn Bá Sơn",      role: "CFO & Co-founder", avatar: "/images/members/bason.png",     desc: "Sáng tạo không ngừng để mỗi tính năng trên ALMA đều đơn giản, thú vị và hữu ích." },
+  { id: 6, name: "Nguyễn Bá Sơn",      role: "CDO & Co-founder", avatar: "/images/members/bason.png",     desc: "Sáng tạo không ngừng để mỗi tính năng trên ALMA đều đơn giản, thú vị và hữu ích." },
 ];
 
 const STORY_SECTIONS = [
   {
-    id: 1, year: "2023",
+    id: 1, year: "1/2026",
     title: "Bắt đầu từ một câu hỏi",
     text: "Tất cả bắt đầu từ một câu hỏi đơn giản: \"Tại sao đặt áo lớp lại phức tạp đến vậy?\" Sáu người bạn ngồi lại trong căn phòng ký túc xá nhỏ, chia sẻ nỗi khó chịu chung về quy trình đặt áo thủ công, rườm rà — và quyết định tự tay giải quyết.",
-    side: "right", img: "#", emoji: "💡",
+    side: "right", img: "/images/stories/IdeaStage.jpg", emoji: "💡",
   },
   {
-    id: 2, year: "2024",
+    id: 2, year: "3/2026",
     title: "Những ngày đầu xây dựng",
-    text: "Từ ý tưởng trên giấy đến dòng code đầu tiên, ALMA ra đời với công cụ thiết kế kéo-thả đơn giản nhất. Chúng tôi làm việc suốt đêm, chạy thử nghiệm trên 5 lớp học đầu tiên và nhận được phản hồi đầy cảm xúc từ các bạn sinh viên.",
-    side: "left",  img: "#", emoji: "🔨",
+    text: "Từ ý tưởng trên giấy đến dòng code đầu tiên, ALMA ra đời với công cụ thiết kế kéo-thả đơn giản nhất. Chúng tôi làm việc suốt đêm, chạy thử nghiệm những mẫu áo đầu tiên và nhận được phản hồi đầy cảm xúc từ các bạn sinh viên.",
+    side: "left",  img: "/images/stories/BuildingStage.jpg", emoji: "🔨",
   },
   {
-    id: 3, year: "2025",
+    id: 3, year: "5/2026",
     title: "ALMA — Hôm nay & Tương lai",
-    text: "Từ 5 lớp học ban đầu, ALMA đã phục vụ hơn 500 trường học, in hơn 10.000 chiếc áo chất lượng cao. Chúng tôi không dừng lại ở đây — AI thiết kế, giao hàng nhanh, và mở rộng ra khắp Việt Nam là những mục tiêu tiếp theo.",
-    side: "right", img: "#", emoji: "🌟",
+    text: "Chúng tôi không dừng lại ở đây — AI thiết kế, giao hàng nhanh, và mở rộng ra khắp Việt Nam là những mục tiêu tiếp theo.",
+    side: "right", img: "/images/stories/FutureStage.jpg", emoji: "🌟",
   },
 ];
 
@@ -204,10 +204,14 @@ function StorySections() {
             {/* Image */}
             <div className="journey-img-wrapper">
               <a href="#" className="journey-img-link">
-                <div className="journey-img-fallback">
-                  <span>{s.emoji}</span>
-                  <p>Ảnh {s.year}</p>
-                </div>
+                {s.img ? (
+                  <img src={s.img} alt={s.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div className="journey-img-fallback">
+                    <span>{s.emoji}</span>
+                    <p>Ảnh {s.year}</p>
+                  </div>
+                )}
               </a>
             </div>
 
