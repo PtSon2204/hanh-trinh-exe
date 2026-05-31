@@ -43,16 +43,29 @@ const ArrowRightIcon = () => (
   </svg>
 );
 
+// ── Password validation helpers ─────────────────────────────────────
+function getPasswordErrors(pw: string): string[] {
+  const errors: string[] = [];
+  if (pw.length < 8)            errors.push('ít nhất 8 ký tự');
+  if (!/[A-Z]/.test(pw))        errors.push('ít nhất 1 chữ in hoa');
+  if (!/[a-z]/.test(pw))        errors.push('ít nhất 1 chữ thường');
+  if (!/[0-9]/.test(pw))        errors.push('ít nhất 1 chữ số');
+  if (!/[^A-Za-z0-9]/.test(pw)) errors.push('ít nhất 1 ký tự đặc biệt (!@#$...)');
+  return errors;
+}
+
 // ── Password strength ────────────────────────────────────────────────
 function getStrength(pw: string): { score: number; label: string; color: string } {
   let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw)) score++;
-  if (/[0-9]/.test(pw)) score++;
-  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  if (pw.length >= 8)            score++;
+  if (/[A-Z]/.test(pw))          score++;
+  if (/[a-z]/.test(pw))          score++;
+  if (/[0-9]/.test(pw))          score++;
+  if (/[^A-Za-z0-9]/.test(pw))  score++;
   const map = [
     { label: '', color: '#e2e8f0' },
-    { label: 'Yếu', color: '#ef4444' },
+    { label: 'Rất yếu', color: '#ef4444' },
+    { label: 'Yếu', color: '#f97316' },
     { label: 'Trung bình', color: '#f59e0b' },
     { label: 'Khá', color: '#3b82f6' },
     { label: 'Mạnh', color: '#22c55e' },
@@ -192,8 +205,15 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate mật khẩu khớp với backend FluentValidation
+    const pwErrors = getPasswordErrors(form.password);
+    if (pwErrors.length > 0) {
+      setError(`Mật khẩu phải có: ${pwErrors.join(', ')}.`);
+      return;
+    }
     if (form.password !== form.confirm) { setError('Mật khẩu xác nhận không khớp.'); return; }
-    if (form.password.length < 6) { setError('Mật khẩu phải ít nhất 6 ký tự.'); return; }
+
     setLoading(true);
     try {
       await authApi.register({
@@ -206,8 +226,15 @@ export default function RegisterPage() {
       toast.success('Đã gửi mã OTP đến email!');
       setStep('otp');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.';
-      setError(msg);
+      const apiErr = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } };
+      const data = apiErr?.response?.data;
+      // FluentValidation trả errors object với nhiều field
+      if (data?.errors) {
+        const allErrors = Object.values(data.errors).flat().join(' ');
+        setError(allErrors);
+      } else {
+        setError(data?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+      }
     } finally {
       setLoading(false);
     }
@@ -271,7 +298,7 @@ export default function RegisterPage() {
             id="reg-password"
             className="form-input form-input--pr"
             type={showPw ? 'text' : 'password'}
-            placeholder="Mật khẩu (≥ 6 ký tự)"
+            placeholder="Mật khẩu (≥ 8 ký tự, hoa, số, ký tự đặc biệt)"
             value={form.password}
             onChange={handleChange('password')}
             required
@@ -284,14 +311,21 @@ export default function RegisterPage() {
           </span>
         </div>
 
-        {/* Password strength */}
+        {/* Password strength + hints */}
         {form.password && (
           <div className="pw-strength">
             <div className="pw-strength__bar">
-              <div className="pw-strength__fill" style={{ width: `${(strength.score / 4) * 100}%`, background: strength.color }} />
+              <div className="pw-strength__fill" style={{ width: `${(strength.score / 5) * 100}%`, background: strength.color }} />
             </div>
             <span className="pw-strength__label" style={{ color: strength.color }}>{strength.label}</span>
           </div>
+        )}
+        {form.password && getPasswordErrors(form.password).length > 0 && (
+          <ul className="pw-hints">
+            {getPasswordErrors(form.password).map((hint, i) => (
+              <li key={i} className="pw-hint-item">✗ {hint}</li>
+            ))}
+          </ul>
         )}
 
         {/* Confirm */}

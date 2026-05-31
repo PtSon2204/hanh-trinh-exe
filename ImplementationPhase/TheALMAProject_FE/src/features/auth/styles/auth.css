@@ -603,6 +603,25 @@ body {
 }
 .pw-strength__label { font-size:.6875rem; color:var(--gray-400); }
 
+/* ── Password requirement hints ─────────────────────────────── */
+.pw-hints {
+  list-style: none;
+  margin-top: .375rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .25rem .75rem;
+  position: relative; z-index: 1;
+}
+.pw-hint-item {
+  font-size: .6875rem;
+  color: #ef4444;
+  animation: hintFadeIn .2s ease-out;
+}
+@keyframes hintFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ═══════════════════════════════════════════════════════
    BUBBLE & FLOATING ANIMATIONS (matching HomePage)
 ═══════════════════════════════════════════════════════ */
