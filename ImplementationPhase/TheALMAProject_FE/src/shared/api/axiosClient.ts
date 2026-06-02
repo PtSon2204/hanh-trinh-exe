@@ -31,6 +31,10 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
 export function resolveApiAssetUrl(url: string | null) {
   if (!url) return null;
 
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+    return url;
+  }
+
   if (url.startsWith("/uploads/") || url.startsWith("uploads/")) {
     const cleanUrl = url.startsWith("/") ? url : `/${url}`;
     return new URL(cleanUrl, axiosClient.defaults.baseURL).href;
