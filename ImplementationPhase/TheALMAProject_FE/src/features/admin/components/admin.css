@@ -2282,3 +2282,35 @@
         padding: 20px;
     }
 }
+
+.admin-user-detail dl {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+.admin-user-detail dl > div {
+    min-height: 72px;
+    display: grid;
+    align-content: center;
+    gap: 6px;
+    padding: 12px;
+    border: 1px solid var(--admin-border-strong);
+    border-radius: 11px;
+    background: var(--admin-surface-lifted);
+}
+
+.admin-user-detail dt {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.admin-user-detail dd {
+    margin: 0;
+    color: var(--admin-text);
+    font-weight: 800;
+}

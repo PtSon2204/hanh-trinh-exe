@@ -1,10 +1,14 @@
 import axios from "axios";
 
+const apiBaseUrl = import.meta.env.DEV
+  ? "https://localhost:7106/api"
+  : "https://hanh-trinh-exe.onrender.com/api";
+
 const axiosClient = axios.create({
-    baseURL: "https://hanh-trinh-exe.onrender.com/api",
-    headers: {
-        Accept: "application/json",
-    },
+  baseURL: apiBaseUrl,
+  headers: {
+    Accept: "application/json",
+  },
 });
 
 function readServerMessage(data: unknown): string | null {
@@ -31,7 +35,11 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
 export function resolveApiAssetUrl(url: string | null) {
   if (!url) return null;
 
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("data:")
+  ) {
     return url;
   }
 
@@ -87,14 +95,14 @@ axiosClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token không hợp lệ hoặc hết hạn → xóa session và redirect về login
-      localStorage.removeItem('token');
-      localStorage.removeItem('userEmail');
-      localStorage.removeItem('userFullName');
-      localStorage.removeItem('userRole');
-      window.location.href = '/login';
+      localStorage.removeItem("token");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userFullName");
+      localStorage.removeItem("userRole");
+      window.location.href = "/login";
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosClient;
