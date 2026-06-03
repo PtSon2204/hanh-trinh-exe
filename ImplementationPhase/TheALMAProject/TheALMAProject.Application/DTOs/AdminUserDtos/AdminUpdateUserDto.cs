@@ -6,7 +6,7 @@ namespace TheALMAProject.Application.DTOs.AdminUserDtos
 
         public string Email { get; set; } = null!;
 
-        public string PasswordHash { get; set; } = null!;
+        public string? PasswordHash { get; set; }
 
         public string FullName { get; set; } = null!;
 
@@ -15,5 +15,7 @@ namespace TheALMAProject.Application.DTOs.AdminUserDtos
         public string? AvatarUrl { get; set; }
 
         public string Role { get; set; } = null!;
+
+        public bool IsActive { get; set; }
     }
 }

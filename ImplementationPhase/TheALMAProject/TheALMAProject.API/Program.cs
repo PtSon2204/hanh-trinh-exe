@@ -49,7 +49,7 @@ namespace TheALMAProject.API
            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             //Đăng kí repository
-            builder.Services.AddInfrastructure();
+            builder.Services.AddInfrastructure(builder.Environment);
 
             //Đăng kí service
             builder.Services.AddCustomServices(builder.Configuration);

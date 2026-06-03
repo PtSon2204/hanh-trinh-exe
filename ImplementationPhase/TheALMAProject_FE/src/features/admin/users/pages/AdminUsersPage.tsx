@@ -29,6 +29,7 @@ interface UserFormState {
   avatarUrl: string;
   email: string;
   fullName: string;
+  isActive: boolean;
   passwordHash: string;
   phone: string;
   role: UserRole;
@@ -38,6 +39,7 @@ const emptyUserForm: UserFormState = {
   avatarUrl: "",
   email: "",
   fullName: "",
+  isActive: true,
   passwordHash: "",
   phone: "",
   role: "Customer",
@@ -65,6 +67,7 @@ function toUserForm(user: AdminUserDto | null): UserFormState {
     avatarUrl: user.avatarUrl ?? "",
     email: user.email,
     fullName: user.fullName,
+    isActive: user.isActive,
     passwordHash: "",
     phone: user.phone ?? "",
     role: user.role,
@@ -96,17 +99,23 @@ function toCreatePayload(form: UserFormState): AdminCreateUserDto {
 
 function toUpdatePayload(userId: number, form: UserFormState): AdminUpdateUserDto {
   return {
-    ...toCreatePayload(form),
+    avatarUrl: form.avatarUrl.trim() || null,
+    email: form.email.trim(),
+    fullName: form.fullName.trim(),
+    isActive: form.isActive,
+    passwordHash: form.passwordHash.trim() || null,
+    phone: form.phone.trim() || null,
+    role: form.role,
     userId,
   };
 }
 
-function isValidMutationForm(form: UserFormState) {
+function isValidMutationForm(form: UserFormState, isUpdate: boolean) {
   return (
     form.fullName.trim().length > 0 &&
     form.email.trim().length > 0 &&
     /^[0-9]{10}$/.test(form.phone.trim()) &&
-    form.passwordHash.length >= 8
+    (isUpdate || form.passwordHash.length >= 8)
   );
 }
 
@@ -235,48 +244,6 @@ export function AdminUsersPage() {
     setAvatarFile(event.target.files?.[0] ?? null);
   };
 
-  const assignSelectedRole = async () => {
-    if (!selectedUser) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-      setMessage(null);
-      const result = await adminUserApi.assignRole(selectedUser.userId, {
-        role: form.role,
-      });
-      setMessage(result.message);
-      await Promise.all([loadUsers(), openUser(selectedUser.userId)]);
-    } catch (err) {
-      console.error("Failed to assign admin user role", err);
-      setError(getApiErrorMessage(err, "Không thể cập nhật vai trò."));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const deactivateSelectedUser = async () => {
-    if (!selectedUser) return;
-
-    const confirmed = window.confirm(
-      `Tắt tài khoản ${selectedUser.email}? Hành động này sẽ vô hiệu hoá người dùng.`,
-    );
-    if (!confirmed) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-      setMessage(null);
-      const result = await adminUserApi.deactivateUser(selectedUser.userId);
-      setMessage(result.message);
-      await Promise.all([loadUsers(), openUser(selectedUser.userId)]);
-    } catch (err) {
-      console.error("Failed to deactivate admin user", err);
-      setError(getApiErrorMessage(err, "Không thể tắt tài khoản."));
-    } finally {
-      setSaving(false);
-    }
-  };
 
   return (
     <section className="admin-orders-page admin-products-page admin-users-page">
@@ -526,11 +493,21 @@ export function AdminUsersPage() {
                 Vai trò
                 <select
                   value={form.role}
-                  onChange={(event) => setForm((current) => ({ ...current, role: event.target.value }))}
+                  onChange={(event) => setForm((current) => ({ ...current, role: event.target.value as UserRole }))}
                 >
                   {userRoleOptions.map((role) => (
                     <option key={role} value={role}>{getRoleLabel(role)}</option>
                   ))}
+                </select>
+              </label>
+              <label>
+                Trạng thái
+                <select
+                  value={form.isActive ? "active" : "inactive"}
+                  onChange={(event) => setForm((current) => ({ ...current, isActive: event.target.value === "active" }))}
+                >
+                  <option value="active">Đang hoạt động</option>
+                  <option value="inactive">Đã tắt</option>
                 </select>
               </label>
               <label className="admin-product-form__wide">
@@ -544,7 +521,9 @@ export function AdminUsersPage() {
                   placeholder="8-50 ký tự, có hoa/thường/số/ký tự đặc biệt"
                 />
                 <span className="admin-form-hint">
-                  Backend hiện yêu cầu mật khẩu cả khi cập nhật tài khoản.
+                  {selectedUser
+                    ? "Để trống nếu không muốn đổi mật khẩu."
+                    : "Bắt buộc khi tạo tài khoản mới."}
                 </span>
               </label>
               <label className="admin-product-form__wide">
@@ -569,7 +548,11 @@ export function AdminUsersPage() {
                     </div>
                     <div>
                       <dt>Trạng thái</dt>
-                      <dd>{selectedUser.isActive ? "Đang hoạt động" : "Đã tắt"}</dd>
+                      <dd>
+                        <span className={`admin-status admin-status--${selectedUser.isActive ? "success" : "danger"}`}>
+                          {selectedUser.isActive ? "Đang hoạt động" : "Đã tắt"}
+                        </span>
+                      </dd>
                     </div>
                     <div>
                       <dt>Ngày tạo</dt>
@@ -582,28 +565,10 @@ export function AdminUsersPage() {
                 <button
                   type="button"
                   onClick={() => void submitForm()}
-                  disabled={saving || !isValidMutationForm(form)}
+                  disabled={saving || !isValidMutationForm(form, Boolean(selectedUser))}
                 >
                   {saving ? "Đang lưu..." : selectedUser ? "Cập nhật tài khoản" : "Tạo tài khoản"}
                 </button>
-                {selectedUser ? (
-                  <button
-                    type="button"
-                    onClick={() => void assignSelectedRole()}
-                    disabled={saving || form.role === selectedUser.role}
-                  >
-                    Gán vai trò
-                  </button>
-                ) : null}
-                {selectedUser ? (
-                  <button
-                    type="button"
-                    onClick={() => void deactivateSelectedUser()}
-                    disabled={saving || !selectedUser.isActive}
-                  >
-                    Tắt tài khoản
-                  </button>
-                ) : null}
                 <button type="button" onClick={startCreate} disabled={saving}>
                   Làm mới form
                 </button>
