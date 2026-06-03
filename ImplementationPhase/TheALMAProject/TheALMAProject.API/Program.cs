@@ -6,6 +6,8 @@ using TheALMAProject.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace TheALMAProject.API
 {
@@ -68,6 +70,55 @@ namespace TheALMAProject.API
             // CẤU HÌNH MEMORY CACHE — Lưu OTP và Reset Token tạm
             // =====================================================
             builder.Services.AddMemoryCache();
+
+            // =====================================================
+            // CẤU HÌNH RATE LIMITING — Chống brute-force và spam
+            // =====================================================
+            // Dùng .NET 8 built-in rate limiting (không cần package ngoài)
+            // Giới hạn theo IP address để ngăn tấn công tự động.
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                // Giới hạn đăng ký: 5 lần / 15 phút / IP
+                // Ngăn kẻ tấn công tạo hàng loạt tài khoản giả
+                options.AddPolicy("register-limit", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromMinutes(15),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        }));
+
+                // Giới hạn đăng nhập: 10 lần / 15 phút / IP
+                // Ngăn brute-force password
+                options.AddPolicy("login-limit", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 10,
+                            Window = TimeSpan.FromMinutes(15),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        }));
+
+                // Giới hạn gửi lại OTP: 3 lần / 15 phút / IP
+                // Ngăn brute-force OTP qua nhiều lần gửi lại
+                options.AddPolicy("otp-limit", httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 3,
+                            Window = TimeSpan.FromMinutes(15),
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                            QueueLimit = 0
+                        }));
+            });
 
             // =====================================================
             // CẤU HÌNH JWT AUTHENTICATION
@@ -165,6 +216,9 @@ namespace TheALMAProject.API
 
             //Đăng kí middleware exception
             app.UseMiddleware<ExceptionMiddleware>();
+
+            // Kích hoạt Rate Limiting (phải đặt trước UseAuthentication)
+            app.UseRateLimiter();
 
             app.UseHttpsRedirection();
 
