@@ -1,0 +1,21 @@
+# Bỏ qua các file cấu hình môi trường chứa chuỗi kết nối
+appsettings.Development.json
+appsettings.Local.json
+.env
+
+# Bỏ qua các thư mục sinh ra khi build dự án (chứa file dll, exe)
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Dd]ebug/
+[Rr]elease/
+
+# Bỏ qua thư mục ẩn của Visual Studio/Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# Bỏ qua các file log
+*.log
+[Ll]ogs/
