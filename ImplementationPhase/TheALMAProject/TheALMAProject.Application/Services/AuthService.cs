@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
+using System.Security.Cryptography;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using TheALMAProject.Application.DTOs.AuthDtos;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Interfaces;
@@ -22,17 +24,20 @@ namespace TheALMAProject.Application.Services
         private readonly IJwtService _jwtService;
         private readonly IEmailService _emailService;
         private readonly IMemoryCache _cache;
+        private readonly IConfiguration _configuration;
 
         public AuthService(
             IUnitOfWork unitOfWork,
             IJwtService jwtService,
             IEmailService emailService,
-            IMemoryCache cache)
+            IMemoryCache cache,
+            IConfiguration configuration)
         {
             _unitOfWork = unitOfWork;
             _jwtService = jwtService;
             _emailService = emailService;
             _cache = cache;
+            _configuration = configuration;
         }
 
        
@@ -69,14 +74,14 @@ namespace TheALMAProject.Application.Services
        
         public async Task SendOtpAsync(string email)
         {
-            // Tạo mã OTP ngẫu nhiên 6 chữ số
-            var otp = new Random().Next(100000, 999999).ToString();
+            // Tạo mã OTP ngẫu nhiên 6 chữ số bằng cryptographic random
+            // RandomNumberGenerator an toàn hơn System.Random — không thể predict
+            var otp = RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
 
-            // Lưu OTP vào MemoryCache với key = "OTP_{email}", hết hạn sau 5 phút
-            // MemoryCache lưu trong RAM server → nhanh, đơn giản, phù hợp MVP
-            // Lưu ý: Nếu server restart → OTP mất. Production nên dùng Redis.
+            // Lưu OTP vào MemoryCache kèm số lần thử để giới hạn brute-force
+            // OTP Data: { Code, Attempts } — tối đa 5 lần nhập sai
             var cacheKey = $"OTP_{email}";
-            _cache.Set(cacheKey, otp, TimeSpan.FromMinutes(5));
+            _cache.Set(cacheKey, new OtpData { Code = otp, Attempts = 0 }, TimeSpan.FromMinutes(5));
 
             // Gửi OTP qua email
             var subject = "ALMA - Mã xác thực OTP";
@@ -97,18 +102,30 @@ namespace TheALMAProject.Application.Services
         {
             // Bước 1: Lấy OTP từ cache
             var cacheKey = $"OTP_{dto.Email}";
-            if (!_cache.TryGetValue(cacheKey, out string? cachedOtp))
+            if (!_cache.TryGetValue(cacheKey, out OtpData? otpData) || otpData == null)
             {
                 throw new Exception("Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại.");
             }
 
-            // Bước 2: So sánh OTP
-            if (cachedOtp != dto.OtpCode)
+            // Bước 2: Kiểm tra số lần thử (tối đa 5 lần)
+            // Ngăn brute-force: sau 5 lần nhập sai, OTP bị hủy luôn
+            if (otpData.Attempts >= 5)
             {
-                throw new Exception("Mã OTP không chính xác.");
+                _cache.Remove(cacheKey);
+                throw new Exception("OTP đã bị khóa do nhập sai quá 5 lần. Vui lòng yêu cầu gửi lại.");
             }
 
-            // Bước 3: Kích hoạt tài khoản
+            // Bước 3: So sánh OTP
+            if (otpData.Code != dto.OtpCode)
+            {
+                // Tăng số lần thử sai
+                otpData.Attempts++;
+                _cache.Set(cacheKey, otpData, TimeSpan.FromMinutes(5));
+                var remaining = 5 - otpData.Attempts;
+                throw new Exception($"Mã OTP không chính xác. Bạn còn {remaining} lần thử.");
+            }
+
+            // Bước 4: Kích hoạt tài khoản
             var user = await _unitOfWork.UserRepo.GetUserByEmail(dto.Email);
             if (user == null)
             {
@@ -119,10 +136,10 @@ namespace TheALMAProject.Application.Services
             _unitOfWork.UserRepo.UpdateUser(user);
             await _unitOfWork.SaveChangesAsync();
 
-            // Bước 4: Xóa OTP khỏi cache (đã dùng xong)
+            // Bước 5: Xóa OTP khỏi cache (đã dùng xong)
             _cache.Remove(cacheKey);
 
-            // Bước 5: Tạo JWT token và trả về
+            // Bước 6: Tạo JWT token và trả về
             var token = _jwtService.GenerateToken(user);
             return new AuthResponseDto
             {
@@ -307,7 +324,9 @@ namespace TheALMAProject.Application.Services
             _cache.Set(cacheKey, resetToken, TimeSpan.FromMinutes(15));
 
             // Gửi email chứa link reset (frontend sẽ gọi API reset-password kèm token này)
-            var resetLink = $"http://localhost:5173/reset-password?email={dto.Email}&token={resetToken}";
+            // Dùng biến môi trường để hỗ trợ cả local lẫn production
+            var frontendUrl = _configuration["AppSettings:FrontendUrl"] ?? "https://thealmastore.vercel.app";
+            var resetLink = $"{frontendUrl}/reset-password?email={Uri.EscapeDataString(dto.Email)}&token={resetToken}";
             var subject = "ALMA - Đặt lại mật khẩu";
             var body = $@"
                 <h2>Yêu cầu đặt lại mật khẩu</h2>
@@ -388,5 +407,14 @@ namespace TheALMAProject.Application.Services
         public string Id { get; set; } = null!;
         public string? Name { get; set; }
         public string? Email { get; set; }
+    }
+
+    /// <summary>
+    /// Lưu trữ OTP kèm số lần thử — dùng để giới hạn brute-force.
+    /// </summary>
+    internal class OtpData
+    {
+        public string Code { get; set; } = null!;
+        public int Attempts { get; set; } = 0;
     }
 }

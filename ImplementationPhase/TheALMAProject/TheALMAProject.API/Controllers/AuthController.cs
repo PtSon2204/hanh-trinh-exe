@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TheALMAProject.Application.DTOs.AuthDtos;
 using TheALMAProject.Application.Interfaces;
 
@@ -18,6 +19,8 @@ namespace TheALMAProject.API.Controllers
             _authService = authService;
         }
         // POST /api/auth/register
+        // Rate limit: 5 lần / 15 phút / IP — ngăn tạo tài khoản hàng loạt
+        [EnableRateLimiting("register-limit")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
@@ -34,6 +37,8 @@ namespace TheALMAProject.API.Controllers
         }
 
         // POST /api/auth/resend-otp?email=xxx
+        // Rate limit: 3 lần / 15 phút / IP — ngăn spam OTP
+        [EnableRateLimiting("otp-limit")]
         [HttpPost("resend-otp")]
         public async Task<IActionResult> ResendOtp([FromQuery] string email)
         {
@@ -43,6 +48,8 @@ namespace TheALMAProject.API.Controllers
 
 
         // POST /api/auth/login
+        // Rate limit: 10 lần / 15 phút / IP — ngăn brute-force password
+        [EnableRateLimiting("login-limit")]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {

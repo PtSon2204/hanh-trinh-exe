@@ -11,7 +11,7 @@ namespace TheALMAProject.Infrastructure.Data
         {
             //await context.Database.MigrateAsync();
 
-            string defaultPassword = "Password@123";
+            string defaultPassword = "";
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(defaultPassword);
 
             if (!await context.Users.AnyAsync())

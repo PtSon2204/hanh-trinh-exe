@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useState, useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
 import type { UserSession } from "../../../shared/types/auth.types";
 import axiosClient from "../../../shared/api/axiosClient";
 
@@ -11,29 +12,52 @@ interface AuthContextValue {
 	logout: () => void;
 }
 
+// ─── JWT Payload — khớp với claims được tạo trong JwtService.cs ───────────────
+interface JwtPayload {
+	nameid: string;       // ClaimTypes.NameIdentifier → UserId
+	email: string;        // ClaimTypes.Email
+	role: string;         // ClaimTypes.Role  ← đây là role thật, server ký
+	unique_name: string;  // ClaimTypes.Name  → FullName
+	exp: number;          // Expiration (Unix timestamp)
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// ─── Helper: hydrate from localStorage ────────────────────────────────────────
+// ─── Helper: Decode JWT và lấy role thật từ payload ──────────────────────────
+// SECURITY: Role được lấy từ JWT (được server ký bằng SecretKey),
+// KHÔNG từ localStorage (người dùng có thể sửa tùy ý qua DevTools).
+// Kẻ tấn công không thể giả mạo role vì JWT đã được ký số.
 function loadSession(): UserSession | null {
 	try {
 		const token = localStorage.getItem("token");
-		// Chỉ cần token là đủ để xác nhận đã đăng nhập.
-		// Các field khác fallback về "" nếu không có (tránh trường hợp BE
-		// không trả về role hoặc trả về null làm loadSession() return null
-		// dù user đã login hợp lệ).
-		if (token) {
-			return {
-				token,
-				email: localStorage.getItem("userEmail") ?? "",
-				fullName: localStorage.getItem("userFullName") ?? "",
-				role: localStorage.getItem("userRole") ?? "",
-				avatarUrl: localStorage.getItem("userAvatarUrl") || null,
-			};
+		if (!token) return null;
+
+		// Decode JWT để lấy claims thật — không cần verify signature ở đây
+		// vì mọi request API đều bị backend verify JWT lại.
+		// Mục đích: lấy role ĐÚNG để hiển thị UI, ngăn client-side spoofing.
+		const decoded = jwtDecode<JwtPayload>(token);
+
+		// Kiểm tra token có hết hạn chưa (exp là Unix timestamp tính bằng giây)
+		if (decoded.exp * 1000 < Date.now()) {
+			// Token hết hạn → xóa sạch localStorage và yêu cầu đăng nhập lại
+			localStorage.removeItem("token");
+			localStorage.removeItem("userAvatarUrl");
+			return null;
 		}
+
+		return {
+			token,
+			email: decoded.email ?? "",
+			fullName: decoded.unique_name ?? "",
+			role: decoded.role ?? "",           // ← LẤY TỪ JWT, không từ localStorage
+			avatarUrl: localStorage.getItem("userAvatarUrl") || null,
+		};
 	} catch {
-		// ignore
+		// Token bị lỗi format → xóa và yêu cầu đăng nhập lại
+		localStorage.removeItem("token");
+		localStorage.removeItem("userAvatarUrl");
+		return null;
 	}
-	return null;
 }
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
@@ -41,10 +65,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const [user, setUser] = useState<UserSession | null>(loadSession);
 
 	const login = useCallback((session: UserSession) => {
+		// Chỉ lưu token vào localStorage — role/email/fullName sẽ được
+		// decode từ JWT mỗi lần load, tránh việc người dùng sửa trực tiếp.
 		localStorage.setItem("token", session.token);
-		localStorage.setItem("userEmail", session.email);
-		localStorage.setItem("userFullName", session.fullName);
-		localStorage.setItem("userRole", session.role);
 		if (session.avatarUrl) {
 			localStorage.setItem("userAvatarUrl", session.avatarUrl);
 		} else {
@@ -55,9 +78,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 	const logout = useCallback(() => {
 		localStorage.removeItem("token");
-		localStorage.removeItem("userEmail");
-		localStorage.removeItem("userFullName");
-		localStorage.removeItem("userRole");
 		localStorage.removeItem("userAvatarUrl");
 		setUser(null);
 	}, []);
