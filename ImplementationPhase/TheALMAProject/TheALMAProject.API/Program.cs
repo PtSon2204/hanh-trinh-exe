@@ -46,7 +46,17 @@ namespace TheALMAProject.API
 
             //Đki db
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-           options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            {
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("DefaultConnection"),
+                    sqlOptions =>
+                    {
+                        sqlOptions.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorNumbersToAdd: null);
+                    });
+            });
 
             //Đăng kí repository
             builder.Services.AddInfrastructure(builder.Environment);
@@ -130,8 +140,20 @@ namespace TheALMAProject.API
             //SeedData
             using (var scope = app.Services.CreateScope())
             {
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                await DbInitializer.InitializeAsync(context);
+                var logger = scope.ServiceProvider
+                    .GetRequiredService<ILogger<Program>>();
+
+                try
+                {
+                    var context = scope.ServiceProvider
+                        .GetRequiredService<ApplicationDbContext>();
+
+                    await DbInitializer.InitializeAsync(context);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Database initialization failed");
+                }
             }
 
             // Configure the HTTP request pipeline.
