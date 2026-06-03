@@ -26,7 +26,10 @@ export interface AdminCreateUserDto {
 	role: UserRole;
 }
 
-export interface AdminUpdateUserDto extends AdminCreateUserDto {
+
+export interface AdminUpdateUserDto extends Omit<AdminCreateUserDto, "passwordHash"> {
+	passwordHash?: string | null;
+	isActive: boolean;
 	userId: number;
 }
 

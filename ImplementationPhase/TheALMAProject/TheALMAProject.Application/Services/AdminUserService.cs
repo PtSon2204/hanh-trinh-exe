@@ -87,13 +87,18 @@ namespace TheALMAProject.Application.Services
             var user = await GetUserOrThrow(id);
             await EnsureEmailAvailable(dto.Email, id);
             EnsureSafeSelfRoleChange(user, dto.Role, currentAdminUserId);
+            EnsureSafeSelfStatusChange(user, dto.IsActive, currentAdminUserId);
 
             user.Email = dto.Email;
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.PasswordHash);
+            if (!string.IsNullOrWhiteSpace(dto.PasswordHash))
+            {
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.PasswordHash);
+            }
             user.FullName = dto.FullName;
             user.Phone = dto.Phone;
             user.AvatarUrl = dto.AvatarUrl;
             user.Role = dto.Role;
+            user.IsActive = dto.IsActive;
 
             _unitOfWork.UserRepo.UpdateUser(user);
             await _unitOfWork.SaveChangesAsync();
@@ -165,6 +170,14 @@ namespace TheALMAProject.Application.Services
             if (user.UserId == currentAdminUserId && user.Role != requestedRole)
             {
                 throw new AppHttpException(StatusCodes.Status403Forbidden, "Admin cannot change their own role");
+            }
+        }
+
+        private static void EnsureSafeSelfStatusChange(User user, bool requestedIsActive, int currentAdminUserId)
+        {
+            if (user.UserId == currentAdminUserId && user.IsActive && !requestedIsActive)
+            {
+                throw new AppHttpException(StatusCodes.Status403Forbidden, "Admin cannot deactivate their own account");
             }
         }
 

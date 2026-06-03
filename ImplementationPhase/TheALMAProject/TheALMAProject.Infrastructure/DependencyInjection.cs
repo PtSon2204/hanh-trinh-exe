@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Infrastructure.Data;
 using TheALMAProject.Infrastructure.Repositories;
@@ -8,7 +10,7 @@ namespace TheALMAProject.Infrastructure
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IWebHostEnvironment environment)
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IUserRepository, UserRepository>();
@@ -17,7 +19,14 @@ namespace TheALMAProject.Infrastructure
             services.AddScoped<IIconRepository, IconRepository>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IEmailService, EmailService>();
-            services.AddScoped<IFileStorageService, CloudinaryFileStorageService>();
+            if (environment.IsDevelopment())
+            {
+                services.AddScoped<IFileStorageService, LocalFileStorageService>();
+            }
+            else
+            {
+                services.AddScoped<IFileStorageService, CloudinaryFileStorageService>();
+            }
             services.AddScoped<IOrderRepository, OrderRepository>();
             services.AddScoped<ICartRepository, CartRepository>();
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();

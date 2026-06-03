@@ -59,7 +59,7 @@ namespace TheALMAProject.API
             });
 
             //Đăng kí repository
-            builder.Services.AddInfrastructure();
+            builder.Services.AddInfrastructure(builder.Environment);
 
             //Đăng kí service
             builder.Services.AddCustomServices(builder.Configuration);
