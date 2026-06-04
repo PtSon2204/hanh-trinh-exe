@@ -1,12 +1,15 @@
 using TheALMAProject.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
-using MimeKit;
-using MimeKit.Text;
-using MailKit.Net.Smtp;
-using MailKit.Security;
+using SendGrid;
+using SendGrid.Helpers.Mail;
 
 namespace TheALMAProject.Infrastructure.Services
 {
+    /// <summary>
+    /// Email service sử dụng SendGrid API (HTTP).
+    /// Không dùng SMTP → không bị chặn port khi deploy lên cloud (Render, Azure, Railway...).
+    /// Hoạt động ổn định cả local lẫn production.
+    /// </summary>
     public class EmailService : IEmailService
     {
         private readonly IConfiguration _config;
@@ -18,44 +21,46 @@ namespace TheALMAProject.Infrastructure.Services
 
         public async Task SendEmailAsync(string toEmail, string subject, string htmlBody)
         {
-            var email = new MimeMessage();
-            email.From.Add(new MailboxAddress(
-                _config["Smtp:SenderName"] ?? "ALMA Custom Threads", 
-                _config["Smtp:SenderEmail"] ?? "noreply@almacustom.vn"));
-            email.To.Add(MailboxAddress.Parse(toEmail));
-            email.Subject = subject;
-            email.Body = new TextPart(TextFormat.Html) { Text = htmlBody };
+            var apiKey = _config["SendGrid:ApiKey"];
+            var senderEmail = _config["SendGrid:SenderEmail"] ?? "banhlo263@gmail.com";
+            var senderName = _config["SendGrid:SenderName"] ?? "ALMA Custom Threads";
 
-            using var smtp = new SmtpClient();
+            // Nếu chưa cấu hình API key → log mock ra console
+            if (string.IsNullOrEmpty(apiKey) || apiKey.StartsWith("<") || apiKey == "YOUR_SENDGRID_API_KEY")
+            {
+                Console.WriteLine("╔══════════════════════════════════════════════════════════╗");
+                Console.WriteLine("║  📧 MOCK EMAIL (Chưa cấu hình SendGrid API Key)         ║");
+                Console.WriteLine("╠══════════════════════════════════════════════════════════╣");
+                Console.WriteLine($"║ To:      {toEmail}");
+                Console.WriteLine($"║ Subject: {subject}");
+                Console.WriteLine("╠══════════════════════════════════════════════════════════╣");
+                Console.WriteLine($"║ Body:    {StripHtml(htmlBody)}");
+                Console.WriteLine("╚══════════════════════════════════════════════════════════╝");
+                return;
+            }
+
             try
             {
-                var host = _config["Smtp:Host"];
-                var port = int.Parse(_config["Smtp:Port"] ?? "587");
-                var user = _config["Smtp:Username"];
-                var pass = _config["Smtp:Password"];
+                var client = new SendGridClient(apiKey);
+                var from = new EmailAddress(senderEmail, senderName);
+                var to = new EmailAddress(toEmail);
+                var msg = MailHelper.CreateSingleEmail(from, to, subject, null, htmlBody);
 
-                // Bỏ qua nếu chưa cấu hình thật, log ra console
-                if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass) || user == "your_email@gmail.com")
+                var response = await client.SendEmailAsync(msg);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine("╔══════════════════════════════════════════════════════╗");
-                    Console.WriteLine("║        📧 MOCK EMAIL SERVICE (Chưa cấu hình SMTP)   ║");
-                    Console.WriteLine("╠══════════════════════════════════════════════════════╣");
-                    Console.WriteLine($"║ To:      {toEmail}");
-                    Console.WriteLine($"║ Subject: {subject}");
-                    Console.WriteLine("╠══════════════════════════════════════════════════════╣");
-                    Console.WriteLine($"║ Body:    {StripHtml(htmlBody)}");
-                    Console.WriteLine("╚══════════════════════════════════════════════════════╝");
-                    return;
+                    Console.WriteLine($"[SendGrid] ✅ Gửi email thành công đến {toEmail} | Subject: {subject}");
                 }
-
-                await smtp.ConnectAsync(host, port, SecureSocketOptions.StartTls);
-                await smtp.AuthenticateAsync(user, pass);
-                await smtp.SendAsync(email);
-                await smtp.DisconnectAsync(true);
+                else
+                {
+                    var responseBody = await response.Body.ReadAsStringAsync();
+                    Console.WriteLine($"[SendGrid] ❌ Gửi email thất bại đến {toEmail} | Status: {response.StatusCode} | Body: {responseBody}");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[Email Error]: Lỗi gửi mail đến {toEmail}. Chi tiết: {ex.Message}");
+                Console.WriteLine($"[SendGrid Error] Lỗi gửi mail đến {toEmail}. Chi tiết: {ex.Message}");
             }
         }
 
