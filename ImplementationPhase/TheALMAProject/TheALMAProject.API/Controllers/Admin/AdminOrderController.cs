@@ -45,6 +45,20 @@ namespace TheALMAProject.API.Controllers.Admin
             return Ok(result);
         }
 
+        [HttpGet("operations-statistics")]
+        public async Task<IActionResult> GetOperationStatistics([FromQuery] AdminOrderStatisticQuery query)
+        {
+            var result = await _adminOrderService.GetOperationStatistics(query);
+            return Ok(result);
+        }
+
+        [HttpGet("product-statistics")]
+        public async Task<IActionResult> GetProductStatistics([FromQuery] AdminOrderStatisticQuery query)
+        {
+            var result = await _adminOrderService.GetProductStatistics(query);
+            return Ok(result);
+        }
+
         [HttpPost("{id:int}/print-files")]
         public async Task<IActionResult> ExportPrintFiles(int id)
         {

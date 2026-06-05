@@ -918,6 +918,95 @@
     font-size: 15px;
 }
 
+.admin-stat-list__item {
+    border-radius: 14px;
+    padding-inline: 12px;
+    transition:
+        background 180ms ease,
+        border-color 180ms ease,
+        color 180ms ease;
+}
+
+.admin-stat-list__metric {
+    min-width: 92px;
+    text-align: center;
+}
+
+.admin-stat-list__item--danger {
+    border-bottom-color: rgba(251, 113, 133, 0.28);
+    background: linear-gradient(90deg, rgba(251, 113, 133, 0.16), rgba(251, 113, 133, 0.04));
+}
+
+.admin-stat-list__item--danger span,
+.admin-stat-list__item--danger small {
+    color: #fecdd3;
+}
+
+.admin-stat-list__item--danger .admin-stat-list__metric {
+    color: #fecdd3;
+    font-size: clamp(24px, 2.2vw, 36px);
+    font-weight: 950;
+    letter-spacing: -0.04em;
+    text-shadow: 0 0 22px rgba(251, 113, 133, 0.5);
+}
+
+.admin-stat-list__item--warning {
+    border-bottom-color: rgba(251, 191, 36, 0.28);
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.13), rgba(251, 191, 36, 0.035));
+}
+
+.admin-stat-list__item--warning span,
+.admin-stat-list__item--warning small {
+    color: #fde68a;
+}
+
+.admin-stat-list__item--warning .admin-stat-list__metric {
+    color: #fde68a;
+    font-size: clamp(20px, 1.8vw, 30px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.admin-stat-list__item--info .admin-stat-list__metric {
+    color: var(--admin-primary);
+    font-size: 18px;
+    font-weight: 850;
+}
+
+.admin-stat-list__item--neutral {
+    opacity: 0.72;
+}
+
+.admin-operation-alert-list .admin-stat-list__item--danger {
+    border: 1px solid rgba(251, 113, 133, 0.34);
+    box-shadow: inset 4px 0 0 rgba(251, 113, 133, 0.9);
+}
+
+.admin-operation-alert-list .admin-stat-list__item--warning {
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    box-shadow: inset 4px 0 0 rgba(251, 191, 36, 0.85);
+}
+
+.admin-operation-alert-list .admin-stat-list__item {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 120px minmax(220px, 1fr);
+    align-items: center;
+}
+
+.admin-operation-alert-list .admin-stat-list__item span {
+    justify-self: start;
+}
+
+.admin-operation-alert-list .admin-stat-list__metric {
+    justify-self: center;
+    min-width: 120px;
+}
+
+.admin-operation-alert-list .admin-stat-list__item small {
+    justify-self: end;
+    text-align: right;
+}
+
 .admin-empty-state,
 .admin-data-note {
     padding: 18px;

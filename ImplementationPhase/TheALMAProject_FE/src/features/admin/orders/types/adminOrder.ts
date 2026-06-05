@@ -117,6 +117,85 @@ export interface AdminOrderStatisticDto {
 	totalSubTotal: Decimal;
 }
 
+export interface AdminStatusBreakdownDto {
+	status: string;
+	orderCount: number;
+	itemCount: number;
+	revenue: Decimal;
+}
+
+export interface AdminAgingBucketDto {
+	label: string;
+	orderCount: number;
+}
+
+export interface AdminOperationalExceptionDto {
+	label: string;
+	count: number;
+	severity: "info" | "warning" | "danger" | string;
+}
+
+export interface AdminOperationStatisticsDto {
+	totalOrders: number;
+	totalItems: number;
+	totalRevenue: Decimal;
+	orderStatusBreakdown: AdminStatusBreakdownDto[];
+	paymentStatusBreakdown: AdminStatusBreakdownDto[];
+	agingBuckets: AdminAgingBucketDto[];
+	exceptions: AdminOperationalExceptionDto[];
+	ordersNeedingProduction: number;
+	ordersNeedingShipping: number;
+	customItemsNeedingExport: number;
+}
+
+export interface AdminTopProductDto {
+	productId: number | null;
+	productName: string;
+	universityName: string | null;
+	quantitySold: number;
+	orderCount: number;
+	revenue: Decimal;
+	customItemCount: number;
+}
+
+export interface AdminTopBaseProductDto {
+	baseProductId: number | null;
+	baseProductName: string;
+	category: string | null;
+	quantitySold: number;
+	orderCount: number;
+	revenue: Decimal;
+}
+
+export interface AdminTopUniversityDto {
+	universityId: number | null;
+	universityName: string;
+	quantitySold: number;
+	orderCount: number;
+	revenue: Decimal;
+}
+
+export interface AdminCustomizationTrendDto {
+	period: string;
+	customItemCount: number;
+	readyMadeItemCount: number;
+	customRevenue: Decimal;
+	readyMadeRevenue: Decimal;
+}
+
+export interface AdminProductStatisticsDto {
+	totalItemsSold: number;
+	totalOrders: number;
+	customItemCount: number;
+	readyMadeItemCount: number;
+	customRevenue: Decimal;
+	readyMadeRevenue: Decimal;
+	topStoreProducts: AdminTopProductDto[];
+	topBaseProducts: AdminTopBaseProductDto[];
+	topUniversities: AdminTopUniversityDto[];
+	customizationTrend: AdminCustomizationTrendDto[];
+}
+
 export interface AdminOrderQuery extends PaginationQuery {
 	orderStatus?: OrderStatus;
 	paymentStatus?: PaymentStatus;

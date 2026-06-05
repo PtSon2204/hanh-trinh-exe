@@ -8,8 +8,10 @@ import type {
 } from "../../invoices/types/adminInvoice";
 import { adminOrderApi } from "../../orders/api/adminOrderApi";
 import type {
+  AdminOperationStatisticsDto,
   AdminOrderStatisticDto,
   AdminOrderStatisticQuery,
+  AdminProductStatisticsDto,
 } from "../../orders/types/adminOrder";
 
 const currencyFormatter = new Intl.NumberFormat("vi-VN", {
@@ -57,7 +59,7 @@ const statisticsTabs: { id: StatisticsTab; label: string; description: string }[
   {
     id: "operations",
     label: "Vận hành",
-    description: "Số liệu hiện có; phân rã trạng thái bổ sung sau.",
+    description: "Trạng thái đơn, tuổi xử lý và ngoại lệ vận hành.",
   },
   {
     id: "products",
@@ -95,6 +97,32 @@ type ChartPoint = {
   linePoint: string;
 };
 
+const emptyOperationStatistics: AdminOperationStatisticsDto = {
+  agingBuckets: [],
+  customItemsNeedingExport: 0,
+  exceptions: [],
+  orderStatusBreakdown: [],
+  ordersNeedingProduction: 0,
+  ordersNeedingShipping: 0,
+  paymentStatusBreakdown: [],
+  totalItems: 0,
+  totalOrders: 0,
+  totalRevenue: 0,
+};
+
+const emptyProductStatistics: AdminProductStatisticsDto = {
+  customItemCount: 0,
+  customRevenue: 0,
+  customizationTrend: [],
+  readyMadeItemCount: 0,
+  readyMadeRevenue: 0,
+  topBaseProducts: [],
+  topStoreProducts: [],
+  topUniversities: [],
+  totalItemsSold: 0,
+  totalOrders: 0,
+};
+
 function toInputDate(date: Date) {
   return date.toISOString().slice(0, 10);
 }
@@ -109,6 +137,20 @@ function formatPercent(value: number) {
 
 function safeDivide(numerator: number, denominator: number) {
   return denominator > 0 ? numerator / denominator : 0;
+}
+
+function getAgingBucketTone(label: string, count: number) {
+  if (count <= 0) return "neutral";
+  if (label.includes("Trên 7")) return "danger";
+  if (label.includes("4-7")) return "warning";
+  return "info";
+}
+
+function getExceptionAction(label: string, severity: string) {
+  if (severity === "danger") return "Cần xử lý ngay";
+  if (severity === "warning") return "Cần kiểm tra trong ngày";
+  if (label.includes("thiếu file in")) return "Theo dõi file sản xuất";
+  return "Không cần hành động ngay";
 }
 
 function getDefaultFilters(): StatisticsFilterState {
@@ -139,6 +181,7 @@ function toOrderStatisticQuery(filters: StatisticsFilterState): AdminOrderStatis
 
 function toFinancialQuery(filters: StatisticsFilterState): AdminFinancialReportQuery {
   return {
+    currencyCode: filters.currencyCode,
     fromDate: filters.fromDate,
     groupBy: filters.groupBy,
     toDate: filters.toDate,
@@ -158,7 +201,9 @@ export function AdminStatisticsPage() {
   const [filters, setFilters] = useState<StatisticsFilterState>(getDefaultFilters);
   const [financialReport, setFinancialReport] = useState<AdminFinancialReportDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [operationStatistics, setOperationStatistics] = useState<AdminOperationStatisticsDto>(emptyOperationStatistics);
   const [orderStatistics, setOrderStatistics] = useState<AdminOrderStatisticDto[]>([]);
+  const [productStatistics, setProductStatistics] = useState<AdminProductStatisticsDto>(emptyProductStatistics);
   const [error, setError] = useState<string | null>(null);
 
   const loadStatistics = useCallback(async () => {
@@ -166,17 +211,23 @@ export function AdminStatisticsPage() {
       setLoading(true);
       setError(null);
 
-      const [orders, financials] = await Promise.all([
+      const [orders, financials, operations, products] = await Promise.all([
         adminOrderApi.getStatistics(toOrderStatisticQuery(filters)),
         adminInvoiceApi.getFinancialReport(toFinancialQuery(filters)),
+        adminOrderApi.getOperationStatistics(toOrderStatisticQuery(filters)),
+        adminOrderApi.getProductStatistics(toOrderStatisticQuery(filters)),
       ]);
 
       setOrderStatistics(orders);
       setFinancialReport(financials);
+      setOperationStatistics(operations);
+      setProductStatistics(products);
     } catch (err) {
       console.error("Failed to load admin statistics page", err);
       setOrderStatistics([]);
       setFinancialReport([]);
+      setOperationStatistics(emptyOperationStatistics);
+      setProductStatistics(emptyProductStatistics);
       setError(getApiErrorMessage(err, "Không thể tải dữ liệu thống kê admin."));
     } finally {
       setLoading(false);
@@ -814,113 +865,264 @@ export function AdminStatisticsPage() {
 
         {activeTab === "operations" ? (
           <>
-            <section className="admin-stat-grid" aria-label="Chỉ số vận hành hiện có">
+            <section className="admin-stat-grid" aria-label="Chỉ số vận hành">
               <article className="admin-stat-card">
                 <div>
-                  <p>Đơn theo bộ lọc</p>
-                  <strong>{loading ? "Đang tải..." : orderSummary.orderCount.toLocaleString("vi-VN")}</strong>
-                  <span>Lọc trạng thái: {statusLabelByValue.get(filters.orderStatus) ?? filters.orderStatus}</span>
+                  <p>Đơn trong kỳ</p>
+                  <strong>{loading ? "Đang tải..." : operationStatistics.totalOrders.toLocaleString("vi-VN")}</strong>
+                  <span>Tổng doanh thu {formatCurrency(operationStatistics.totalRevenue)}</span>
                 </div>
               </article>
               <article className="admin-stat-card">
                 <div>
-                  <p>Tổng theo lọc thanh toán</p>
-                  <strong>{loading ? "Đang tải..." : formatCurrency(orderSummary.totalRevenue)}</strong>
-                  <span>Lọc thanh toán: {statusLabelByValue.get(filters.paymentStatus) ?? filters.paymentStatus}</span>
+                  <p>Cần sản xuất</p>
+                  <strong>{loading ? "Đang tải..." : operationStatistics.ordersNeedingProduction.toLocaleString("vi-VN")}</strong>
+                  <span>Pending, Processing hoặc Printing</span>
                 </div>
               </article>
               <article className="admin-stat-card">
                 <div>
-                  <p>Sản phẩm cần xử lý</p>
-                  <strong>{loading ? "Đang tải..." : orderSummary.itemCount.toLocaleString("vi-VN")}</strong>
-                  <span>{unitsPerOrder.toFixed(1)} sản phẩm/đơn</span>
+                  <p>Cần giao hàng</p>
+                  <strong>{loading ? "Đang tải..." : operationStatistics.ordersNeedingShipping.toLocaleString("vi-VN")}</strong>
+                  <span>Đơn đang ở trạng thái Shipping</span>
                 </div>
               </article>
               <article className="admin-stat-card">
                 <div>
-                  <p>Phí vận chuyển</p>
-                  <strong>{loading ? "Đang tải..." : formatCurrency(orderSummary.totalShippingFee)}</strong>
-                  <span>Từ thống kê đơn hàng</span>
+                  <p>Custom thiếu file in</p>
+                  <strong>{loading ? "Đang tải..." : operationStatistics.customItemsNeedingExport.toLocaleString("vi-VN")}</strong>
+                  <span>{operationStatistics.totalItems.toLocaleString("vi-VN")} sản phẩm trong kỳ</span>
                 </div>
               </article>
             </section>
+
+            <div className="admin-orders-grid admin-statistics-breakdown-grid">
+              <section className="admin-panel">
+                <div className="admin-panel__header admin-orders-toolbar">
+                  <div>
+                    <p>Ngoại lệ vận hành</p>
+                    <h2>Cảnh báo cần xử lý ngay</h2>
+                    <span>Danh sách việc cụ thể cần admin kiểm tra; các dòng đỏ là vấn đề đang ảnh hưởng vận hành.</span>
+                  </div>
+                </div>
+                <ul className="admin-stat-list admin-stat-list--wide admin-operation-alert-list">
+                  {operationStatistics.exceptions.map((item) => (
+                    <li className={`admin-stat-list__item admin-stat-list__item--${item.count > 0 ? item.severity : "neutral"}`} key={item.label}>
+                      <span>{item.label}</span>
+                      <strong className="admin-stat-list__metric">
+                        {item.count.toLocaleString("vi-VN")}
+                      </strong>
+                      <small>{getExceptionAction(item.label, item.severity)}</small>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <aside className="admin-orders-side">
+                <section className="admin-panel">
+                  <div className="admin-panel__header admin-orders-toolbar">
+                    <div>
+                      <p>Phân bố SLA</p>
+                      <h2>Tuổi đơn đang mở</h2>
+                      <span>Cho biết backlog chưa hoàn tất đang nằm ở nhóm tuổi nào; chưa phải danh sách việc cần xử lý.</span>
+                    </div>
+                  </div>
+                  <ul className="admin-stat-list admin-stat-list--wide">
+                    {operationStatistics.agingBuckets.map((bucket) => {
+                      const tone = getAgingBucketTone(bucket.label, bucket.orderCount);
+
+                      return (
+                      <li className={`admin-stat-list__item admin-stat-list__item--${tone}`} key={bucket.label}>
+                        <span>{bucket.label}</span>
+                        <strong className="admin-stat-list__metric">
+                          {bucket.orderCount.toLocaleString("vi-VN")} đơn
+                        </strong>
+                        <small>{tone === "danger" ? "Quá SLA, cần ưu tiên" : "Theo dõi phân bố backlog"}</small>
+                      </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              </aside>
+            </div>
+
             <section className="admin-panel">
               <div className="admin-panel__header admin-orders-toolbar">
                 <div>
-                  <p>Cần bổ sung backend sau</p>
-                  <h2>Chưa có phân rã theo trạng thái</h2>
-                  <span>Tab này hiện dùng bộ lọc sẵn có. Endpoint sau nên trả về số lượng theo trạng thái thanh toán, trạng thái đơn và tuổi xử lý đơn.</span>
+                  <p>Phân rã trạng thái</p>
+                  <h2>Đơn hàng và thanh toán</h2>
+                  <span>Backend trả về tất cả trạng thái trong cùng kỳ, không phụ thuộc bộ lọc trạng thái đơn/thanh toán.</span>
                 </div>
               </div>
-              <ul className="admin-stat-list admin-stat-list--wide">
-                <li>
-                  <span>Đã thanh toán / chưa thanh toán / hoàn tiền / hủy</span>
-                  <strong>Cần API tổng hợp</strong>
-                  <small>API hiện tại lọc được một trạng thái, nhưng chưa trả về tất cả trạng thái cùng lúc.</small>
-                </li>
-                <li>
-                  <span>Timeline xử lý đơn</span>
-                  <strong>Cần mốc thời gian</strong>
-                  <small>Thời gian giao/xuất hàng cần timestamp theo vòng đời đơn, không chỉ trạng thái hiện tại.</small>
-                </li>
-              </ul>
+              <div className="admin-table-wrap">
+                <table className="admin-table admin-statistics-table">
+                  <thead>
+                    <tr>
+                      <th>Nhóm</th>
+                      <th>Trạng thái</th>
+                      <th>Đơn</th>
+                      <th>Sản phẩm</th>
+                      <th>Doanh thu</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {operationStatistics.orderStatusBreakdown.map((item) => (
+                      <tr key={`order-status-${item.status}`}>
+                        <td>Đơn hàng</td>
+                        <td><strong>{statusLabelByValue.get(item.status) ?? item.status}</strong></td>
+                        <td>{item.orderCount.toLocaleString("vi-VN")}</td>
+                        <td>{item.itemCount.toLocaleString("vi-VN")}</td>
+                        <td>{formatCurrency(item.revenue)}</td>
+                      </tr>
+                    ))}
+                    {operationStatistics.paymentStatusBreakdown.map((item) => (
+                      <tr key={`payment-status-${item.status}`}>
+                        <td>Thanh toán</td>
+                        <td><strong>{statusLabelByValue.get(item.status) ?? item.status}</strong></td>
+                        <td>{item.orderCount.toLocaleString("vi-VN")}</td>
+                        <td>{item.itemCount.toLocaleString("vi-VN")}</td>
+                        <td>{formatCurrency(item.revenue)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           </>
         ) : null}
 
         {activeTab === "products" ? (
           <>
-            <section className="admin-stat-grid" aria-label="Chỉ số sản phẩm và tùy chỉnh hiện có">
+            <section className="admin-stat-grid" aria-label="Chỉ số sản phẩm và tùy chỉnh">
               <article className="admin-stat-card">
                 <div>
                   <p>Tổng sản phẩm đã bán</p>
-                  <strong>{loading ? "Đang tải..." : orderSummary.itemCount.toLocaleString("vi-VN")}</strong>
-                  <span>Theo bộ lọc hiện tại</span>
+                  <strong>{loading ? "Đang tải..." : productStatistics.totalItemsSold.toLocaleString("vi-VN")}</strong>
+                  <span>{productStatistics.totalOrders.toLocaleString("vi-VN")} đơn trong kỳ</span>
                 </div>
               </article>
               <article className="admin-stat-card">
                 <div>
-                  <p>Sản phẩm mỗi đơn</p>
-                  <strong>{loading ? "Đang tải..." : unitsPerOrder.toFixed(1)}</strong>
-                  <span>Mật độ giỏ hàng</span>
+                  <p>Sản phẩm tùy chỉnh</p>
+                  <strong>{loading ? "Đang tải..." : productStatistics.customItemCount.toLocaleString("vi-VN")}</strong>
+                  <span>Doanh thu {formatCurrency(productStatistics.customRevenue)}</span>
                 </div>
               </article>
               <article className="admin-stat-card">
                 <div>
-                  <p>Doanh thu đơn hàng</p>
-                  <strong>{loading ? "Đang tải..." : formatCurrency(orderSummary.totalRevenue)}</strong>
-                  <span>Dùng để phân tích nhu cầu sản phẩm</span>
+                  <p>Sản phẩm có sẵn</p>
+                  <strong>{loading ? "Đang tải..." : productStatistics.readyMadeItemCount.toLocaleString("vi-VN")}</strong>
+                  <span>Doanh thu {formatCurrency(productStatistics.readyMadeRevenue)}</span>
                 </div>
               </article>
               <article className="admin-stat-card">
                 <div>
-                  <p>Giá trị trung bình mỗi đơn</p>
-                  <strong>{loading ? "Đang tải..." : formatCurrency(averageOrderValue)}</strong>
-                  <span>Từ thống kê đơn hàng hiện có</span>
+                  <p>Tỷ lệ tùy chỉnh</p>
+                  <strong>{loading ? "Đang tải..." : formatPercent(safeDivide(productStatistics.customItemCount, productStatistics.totalItemsSold) * 100)}</strong>
+                  <span>Custom / tổng sản phẩm đã bán</span>
                 </div>
               </article>
             </section>
-            <section className="admin-panel">
-              <div className="admin-panel__header admin-orders-toolbar">
-                <div>
-                  <p>Cần bổ sung backend sau</p>
-                  <h2>Bảng xếp hạng sản phẩm và tỷ lệ tùy chỉnh cần dữ liệu cấp sản phẩm</h2>
-                  <span>Thống kê hiện tại có tổng số sản phẩm, nhưng chưa có sản phẩm nền nào bán chạy hoặc sản phẩm nào dùng thiết kế tùy chỉnh.</span>
+            <div className="admin-orders-grid admin-statistics-breakdown-grid">
+              <section className="admin-panel">
+                <div className="admin-panel__header admin-orders-toolbar">
+                  <div>
+                    <p>Xếp hạng sản phẩm</p>
+                    <h2>Sản phẩm bán chạy</h2>
+                    <span>Gom theo store product, gồm số lượng bán, số đơn, doanh thu và lượng item custom.</span>
+                  </div>
                 </div>
-              </div>
-              <ul className="admin-stat-list admin-stat-list--wide">
-                <li>
-                  <span>Sản phẩm nền bán chạy</span>
-                  <strong>Cần tổng hợp theo sản phẩm</strong>
-                  <small>Gom sản phẩm trong đơn theo sản phẩm nền, kèm số lượng, doanh thu và số đơn.</small>
-                </li>
-                <li>
-                  <span>Tỷ lệ tùy chỉnh</span>
-                  <strong>Cần đếm thiết kế</strong>
-                  <small>Đếm sản phẩm trong đơn/đơn hàng có DesignId.</small>
-                </li>
-              </ul>
-            </section>
+                <div className="admin-table-wrap">
+                  <table className="admin-table admin-statistics-table">
+                    <thead>
+                      <tr>
+                        <th>Sản phẩm</th>
+                        <th>Trường</th>
+                        <th>Đã bán</th>
+                        <th>Đơn</th>
+                        <th>Custom</th>
+                        <th>Doanh thu</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {productStatistics.topStoreProducts.map((item) => (
+                        <tr key={`${item.productId ?? "custom"}-${item.productName}`}>
+                          <td><strong>{item.productName}</strong></td>
+                          <td>{item.universityName ?? "N/A"}</td>
+                          <td>{item.quantitySold.toLocaleString("vi-VN")}</td>
+                          <td>{item.orderCount.toLocaleString("vi-VN")}</td>
+                          <td>{item.customItemCount.toLocaleString("vi-VN")}</td>
+                          <td>{formatCurrency(item.revenue)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <aside className="admin-orders-side">
+                <section className="admin-panel">
+                  <div className="admin-panel__header admin-orders-toolbar">
+                    <div>
+                      <p>Thiết kế tùy chỉnh</p>
+                      <h2>Xu hướng custom</h2>
+                      <span>So sánh item custom và item có sẵn theo nhóm thời gian.</span>
+                    </div>
+                  </div>
+                  <ul className="admin-stat-list admin-stat-list--wide">
+                    {productStatistics.customizationTrend.map((item) => (
+                      <li key={item.period}>
+                        <span>{item.period}</span>
+                        <strong>{item.customItemCount.toLocaleString("vi-VN")} custom</strong>
+                        <small>{item.readyMadeItemCount.toLocaleString("vi-VN")} có sẵn · {formatCurrency(item.customRevenue)}</small>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </aside>
+            </div>
+
+            <div className="admin-orders-grid admin-statistics-breakdown-grid">
+              <section className="admin-panel">
+                <div className="admin-panel__header admin-orders-toolbar">
+                  <div>
+                    <p>Sản phẩm nền</p>
+                    <h2>Base product bán chạy</h2>
+                    <span>Gom theo mẫu nền để biết form áo/sản phẩm nào đang kéo nhu cầu.</span>
+                  </div>
+                </div>
+                <ul className="admin-stat-list admin-stat-list--wide">
+                  {productStatistics.topBaseProducts.map((item) => (
+                    <li key={`${item.baseProductId ?? "unknown"}-${item.baseProductName}`}>
+                      <span>{item.baseProductName}</span>
+                      <strong>{item.quantitySold.toLocaleString("vi-VN")} bán</strong>
+                      <small>{item.category ?? "N/A"} · {item.orderCount} đơn · {formatCurrency(item.revenue)}</small>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <aside className="admin-orders-side">
+                <section className="admin-panel">
+                  <div className="admin-panel__header admin-orders-toolbar">
+                    <div>
+                      <p>Trường học</p>
+                      <h2>Top trường theo sản lượng</h2>
+                      <span>Gom theo university của store product.</span>
+                    </div>
+                  </div>
+                  <ul className="admin-stat-list admin-stat-list--wide">
+                    {productStatistics.topUniversities.map((item) => (
+                      <li key={`${item.universityId ?? "unknown"}-${item.universityName}`}>
+                        <span>{item.universityName}</span>
+                        <strong>{item.quantitySold.toLocaleString("vi-VN")} bán</strong>
+                        <small>{item.orderCount} đơn · {formatCurrency(item.revenue)}</small>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              </aside>
+            </div>
           </>
         ) : null}
       </section>
