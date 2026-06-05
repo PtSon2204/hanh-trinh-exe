@@ -1,10 +1,11 @@
 import axiosClient from '../../../shared/api/axiosClient';
 import type { PagedResult } from '../../../shared/types/pagination';
 import type {
-  ProductListItem,
   ProductDetail,
-  SearchProduct,
+  ProductFilterOptions,
+  ProductListItem,
   ProductQuery,
+  SearchProduct,
 } from '../../../shared/types/product.types';
 
 const productApi = {
@@ -12,6 +13,12 @@ const productApi = {
   getProducts(query: ProductQuery = {}): Promise<PagedResult<ProductListItem>> {
     return axiosClient
       .get<PagedResult<ProductListItem>>('/Products', { params: query })
+      .then((res) => res.data);
+  },
+
+  getFilterOptions(): Promise<ProductFilterOptions> {
+    return axiosClient
+      .get<ProductFilterOptions>('/Products/filter-options')
       .then((res) => res.data);
   },
 

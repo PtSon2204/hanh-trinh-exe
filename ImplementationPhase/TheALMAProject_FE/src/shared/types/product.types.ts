@@ -60,6 +60,7 @@ export interface SearchProduct {
 
 /** Query params cho GET /api/Products */
 export interface ProductQuery {
+  keyword?: string;
   name?: string;
   category?: string;
   material?: string;
@@ -74,4 +75,17 @@ export interface ProductQuery {
   baseProductId?: number;
   isActive?: boolean;
   isCustomizable?: boolean;
+}
+
+export interface ProductFilterUniversityOption {
+  universityId: number;
+  name: string;
+}
+
+export interface ProductFilterOptions {
+  categories: string[];
+  materials: string[];
+  universities: ProductFilterUniversityOption[];
+  minPrice: number | null;
+  maxPrice: number | null;
 }

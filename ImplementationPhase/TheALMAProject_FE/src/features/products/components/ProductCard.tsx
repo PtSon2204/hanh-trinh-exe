@@ -6,14 +6,16 @@ interface Props {
   product: ProductListItem;
 }
 
+const STAR_KEYS = ['star-1', 'star-2', 'star-3', 'star-4', 'star-5'];
+
 function StarRating({ rating, count }: { rating: number; count: number }) {
   const full = Math.floor(rating);
   const hasHalf = rating - full >= 0.25;
   return (
     <div className="pc-rating">
-      {Array.from({ length: 5 }).map((_, i) => (
+      {STAR_KEYS.map((starKey, i) => (
         <span
-          key={i}
+          key={starKey}
           className={`pc-star ${i < full ? 'pc-star--full' : i === full && hasHalf ? 'pc-star--half' : ''}`}
         >
           ★
@@ -44,7 +46,7 @@ export default function ProductCard({ product }: Props) {
           onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder-product.png'; }}
         />
         {product.isCustomizable && (
-          <span className="product-card__badge product-card__badge--custom">✨ Tuỳ chỉnh</span>
+          <span className="product-card__badge product-card__badge--custom">Tuỳ chỉnh</span>
         )}
         {product.category && (
           <span className="product-card__badge product-card__badge--category">{product.category}</span>
@@ -57,7 +59,7 @@ export default function ProductCard({ product }: Props) {
       <div className="product-card__body">
         <h3 className="product-card__name">{product.name}</h3>
         {product.universityName && (
-          <p className="product-card__university">🏫 {product.universityName}</p>
+          <p className="product-card__university">{product.universityName}</p>
         )}
         <StarRating rating={product.averageRating} count={product.reviewCount} />
         <p className="product-card__price">{formatter.format(product.price)}</p>

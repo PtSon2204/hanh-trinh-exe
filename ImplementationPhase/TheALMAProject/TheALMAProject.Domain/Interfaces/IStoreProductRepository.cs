@@ -10,6 +10,8 @@ namespace TheALMAProject.Domain.Interfaces
 
         Task<StoreProduct?> GetById(int id);
 
+        Task<List<StoreProduct>> GetActiveStoreProductsForFilterOptions();
+
         Task<StoreProduct?> GetStoreProductByName(string name);
 
         // UC-09: Lấy chi tiết SP kèm BaseProduct, University, Reviews
