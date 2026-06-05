@@ -1,8 +1,8 @@
 namespace TheALMAProject.Domain.Interfaces
 {
     /// <summary>
-    /// Interface gửi email. Hiện tại dùng mock (log console).
-    /// Sau này thay bằng SendGrid, Mailgun, hoặc SMTP provider thật.
+    /// Interface gửi email. Sử dụng SendGrid API (HTTP).
+    /// Hoạt động ổn định cả khi chạy local và deploy (không bị chặn port SMTP).
     /// </summary>
     public interface IEmailService
     {
