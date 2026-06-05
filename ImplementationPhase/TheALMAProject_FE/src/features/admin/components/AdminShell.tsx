@@ -6,7 +6,7 @@ import {
   faCartPlus,
   faChartLine,
   faFaceSmile,
-  faGear,
+  faFileInvoiceDollar,
   faHouse,
   faMagnifyingGlass,
   faMoon,
@@ -149,6 +149,11 @@ export function AdminShell({
             label: "Tất cả Đơn hàng",
           },
           {
+            href: "/admin/invoices",
+            icon: faFileInvoiceDollar,
+            label: "Hóa đơn",
+          },
+          {
             href: "/admin/designs",
             icon: faPalette,
             label: "Mẫu thiết kế User",
@@ -184,7 +189,6 @@ export function AdminShell({
             icon: faBell,
             label: "Gửi Thông Báo",
           },
-          { href: "/admin/settings", icon: faGear, label: "Cài đặt hệ thống" },
         ],
       },
     ],
