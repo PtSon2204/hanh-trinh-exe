@@ -136,6 +136,11 @@ namespace TheALMAProject.Application.Services
                 return "day";
             }
 
+            if (string.Equals(groupBy, "week", StringComparison.OrdinalIgnoreCase))
+            {
+                return "week";
+            }
+
             return string.Equals(groupBy, "year", StringComparison.OrdinalIgnoreCase) ? "year" : "month";
         }
 
@@ -144,6 +149,7 @@ namespace TheALMAProject.Application.Services
             return groupBy switch
             {
                 "day" => issueDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+                "week" => $"{issueDate.Year}-W{ISOWeek.GetWeekOfYear(issueDate):00}",
                 "year" => issueDate.ToString("yyyy", CultureInfo.InvariantCulture),
                 _ => issueDate.ToString("yyyy-MM", CultureInfo.InvariantCulture)
             };

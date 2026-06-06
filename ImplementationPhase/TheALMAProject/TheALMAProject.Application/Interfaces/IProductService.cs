@@ -15,6 +15,8 @@ namespace TheALMAProject.Application.Interfaces
         /// </summary>
         Task<PagedResult<ProductListItemDto>> GetProductsAsync(StoreProductQuery query);
 
+        Task<ProductFilterOptionsDto> GetProductFilterOptionsAsync();
+
         /// <summary>
         /// UC-09: Chi tiết SP (gallery, size, màu, reviews, thông số)
         /// </summary>

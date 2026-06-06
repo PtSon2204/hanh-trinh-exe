@@ -31,6 +31,16 @@ namespace TheALMAProject.Infrastructure.Repositories
                 products = products.Where(x => x.Name.ToLower().Contains(query.Name.ToLower()));
             }
 
+            if (!string.IsNullOrWhiteSpace(query.Keyword))
+            {
+                var keyword = query.Keyword.ToLower();
+                products = products.Where(x => x.Name.ToLower().Contains(keyword)
+                    || (x.Description != null && x.Description.ToLower().Contains(keyword))
+                    || (x.BaseProduct != null && x.BaseProduct.Category.ToLower().Contains(keyword))
+                    || (x.BaseProduct != null && x.BaseProduct.Material.ToLower().Contains(keyword))
+                    || (x.University != null && x.University.Name.ToLower().Contains(keyword)));
+            }
+
             if (query.BaseProductId.HasValue)
             {
                 products = products.Where(x => x.BaseProductId == query.BaseProductId.Value);
@@ -112,6 +122,16 @@ namespace TheALMAProject.Infrastructure.Repositories
         public async Task<StoreProduct?> GetById(int id)
         {
             return await _context.StoreProducts.FindAsync(id);
+        }
+
+        public async Task<List<StoreProduct>> GetActiveStoreProductsForFilterOptions()
+        {
+            return await _context.StoreProducts
+                .Include(x => x.BaseProduct)
+                .Include(x => x.University)
+                .AsNoTracking()
+                .Where(x => x.IsActive)
+                .ToListAsync();
         }
 
         // UC-09: Lấy chi tiết SP kèm BaseProduct, University, Reviews → User

@@ -1,11 +1,13 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using TheALMAProject.Application.DTOs.AdminOrderDtos;
+using TheALMAProject.Application.DTOs.AdminStatisticsDtos;
 using TheALMAProject.Application.Exceptions;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Common;
 using TheALMAProject.Domain.Interfaces;
 using TheALMAProject.Domain.Queries;
+using TheALMAProject.Infrastructure.Models;
 using TheALMAProject.Infrastructure.Services;
 
 namespace TheALMAProject.Application.Services
@@ -15,6 +17,22 @@ namespace TheALMAProject.Application.Services
         private const int MaxFabricUploadItems = 50;
         private const int MaxGeneratedPngBytes = 5 * 1024 * 1024;
         private const string PngDataUrlPrefix = "data:image/png;base64,";
+        private static readonly HashSet<string> ProductionStatuses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Pending",
+            "Processing",
+            "Printing"
+        };
+        private static readonly HashSet<string> ShippingStatuses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Shipping"
+        };
+        private static readonly HashSet<string> FinalOrderStatuses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Delivered",
+            "Completed",
+            "Cancelled"
+        };
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -102,6 +120,71 @@ namespace TheALMAProject.Application.Services
             }
 
             return result;
+        }
+
+        public async Task<AdminOperationStatisticsDto> GetOperationStatistics(AdminOrderStatisticQuery query)
+        {
+            var dateRangeQuery = new AdminOrderStatisticQuery
+            {
+                FromDate = query.FromDate,
+                ToDate = query.ToDate,
+                GroupBy = query.GroupBy
+            };
+            var orders = await _unitOfWork.OrderRepo.GetAdminOrdersForStatisticsAsync(dateRangeQuery);
+
+            var totalOrders = orders.Count;
+            var totalItems = orders.Sum(GetOrderItemCount);
+            var totalRevenue = orders.Sum(order => order.TotalAmount);
+            var ordersNeedingProduction = orders.Count(order => ProductionStatuses.Contains(order.OrderStatus));
+            var ordersNeedingShipping = orders.Count(order => ShippingStatuses.Contains(order.OrderStatus));
+            var customItemsNeedingExport = orders
+                .SelectMany(order => order.OrderItems)
+                .Where(item => item.DesignId.HasValue)
+                .Sum(item => IsCustomItemMissingExport(item) ? item.Quantity : 0);
+
+            return new AdminOperationStatisticsDto
+            {
+                TotalOrders = totalOrders,
+                TotalItems = totalItems,
+                TotalRevenue = totalRevenue,
+                OrderStatusBreakdown = BuildStatusBreakdown(orders, order => order.OrderStatus),
+                PaymentStatusBreakdown = BuildStatusBreakdown(orders, order => order.PaymentStatus),
+                AgingBuckets = BuildAgingBuckets(orders),
+                Exceptions = BuildOperationalExceptions(orders, customItemsNeedingExport),
+                OrdersNeedingProduction = ordersNeedingProduction,
+                OrdersNeedingShipping = ordersNeedingShipping,
+                CustomItemsNeedingExport = customItemsNeedingExport
+            };
+        }
+
+        public async Task<AdminProductStatisticsDto> GetProductStatistics(AdminOrderStatisticQuery query)
+        {
+            var groupBy = NormalizeGroupBy(query.GroupBy);
+            var orders = await _unitOfWork.OrderRepo.GetAdminOrdersForStatisticsAsync(query);
+            var orderItems = orders
+                .SelectMany(order => order.OrderItems.Select(item => new ProductStatisticItem(
+                    order,
+                    item,
+                    item.Quantity * item.UnitPrice,
+                    item.DesignId.HasValue)))
+                .ToList();
+
+            var customItems = orderItems.Where(item => item.IsCustom).ToList();
+            var readyMadeItems = orderItems.Where(item => !item.IsCustom).ToList();
+
+            return new AdminProductStatisticsDto
+            {
+                TotalItemsSold = orderItems.Sum(item => item.Item.Quantity),
+                TotalOrders = orders.Count,
+                CustomItemCount = customItems.Sum(item => item.Item.Quantity),
+                ReadyMadeItemCount = readyMadeItems.Sum(item => item.Item.Quantity),
+                CustomRevenue = customItems.Sum(item => item.Revenue),
+                ReadyMadeRevenue = readyMadeItems.Sum(item => item.Revenue),
+                TopStoreProducts = BuildTopStoreProducts(orderItems),
+                TopBaseProducts = BuildTopBaseProducts(orderItems),
+                TopUniversities = BuildTopUniversities(orderItems),
+                CustomizationTrend = BuildCustomizationTrend(orderItems, groupBy)
+            };
         }
 
         public async Task<IEnumerable<AdminOrderPrintFileDto>> ExportPrintFiles(int id)
@@ -237,6 +320,220 @@ namespace TheALMAProject.Application.Services
                     Console.WriteLine($"[Admin Refund Email Error]: Lỗi gửi email thông báo hoàn tiền: {ex.Message}");
                 }
             }
+        }
+
+        private static List<AdminStatusBreakdownDto> BuildStatusBreakdown(
+            IEnumerable<Order> orders,
+            Func<Order, string> statusSelector)
+        {
+            return orders
+                .GroupBy(statusSelector, StringComparer.OrdinalIgnoreCase)
+                .Select(group => new AdminStatusBreakdownDto
+                {
+                    Status = group.Key,
+                    OrderCount = group.Count(),
+                    ItemCount = group.Sum(GetOrderItemCount),
+                    Revenue = group.Sum(order => order.TotalAmount)
+                })
+                .OrderByDescending(item => item.OrderCount)
+                .ThenBy(item => item.Status)
+                .ToList();
+        }
+
+        private static List<AdminAgingBucketDto> BuildAgingBuckets(IEnumerable<Order> orders)
+        {
+            var now = DateTime.Now;
+            var activeOrders = orders
+                .Where(order => order.CreatedAt.HasValue && !FinalOrderStatuses.Contains(order.OrderStatus))
+                .ToList();
+
+            return new List<AdminAgingBucketDto>
+            {
+                new()
+                {
+                    Label = "0-1 ngày",
+                    OrderCount = activeOrders.Count(order => GetOrderAgeInDays(order, now) <= 1)
+                },
+                new()
+                {
+                    Label = "2-3 ngày",
+                    OrderCount = activeOrders.Count(order => GetOrderAgeInDays(order, now) >= 2 && GetOrderAgeInDays(order, now) <= 3)
+                },
+                new()
+                {
+                    Label = "4-7 ngày",
+                    OrderCount = activeOrders.Count(order => GetOrderAgeInDays(order, now) >= 4 && GetOrderAgeInDays(order, now) <= 7)
+                },
+                new()
+                {
+                    Label = "Trên 7 ngày",
+                    OrderCount = activeOrders.Count(order => GetOrderAgeInDays(order, now) > 7)
+                }
+            };
+        }
+
+        private static int GetOrderItemCount(Order order)
+        {
+            return order.OrderItems.Sum(item => item.Quantity);
+        }
+
+        private sealed record ProductStatisticItem(Order Order, OrderItem Item, decimal Revenue, bool IsCustom);
+
+        private static List<AdminTopProductDto> BuildTopStoreProducts(IEnumerable<ProductStatisticItem> orderItems)
+        {
+            return orderItems
+                .GroupBy(item => new
+                {
+                    item.Item.ProductId,
+                    ProductName = item.Item.Product?.Name ?? item.Item.Design?.DesignName ?? "Sản phẩm tùy chỉnh",
+                    UniversityName = item.Item.Product?.University?.Name
+                })
+                .Select(group => new AdminTopProductDto
+                {
+                    ProductId = group.Key.ProductId,
+                    ProductName = group.Key.ProductName,
+                    UniversityName = group.Key.UniversityName,
+                    QuantitySold = group.Sum(item => item.Item.Quantity),
+                    OrderCount = group.Select(item => item.Order.OrderId).Distinct().Count(),
+                    Revenue = group.Sum(item => item.Revenue),
+                    CustomItemCount = group.Where(item => item.IsCustom).Sum(item => item.Item.Quantity)
+                })
+                .OrderByDescending(item => item.QuantitySold)
+                .ThenByDescending(item => item.Revenue)
+                .Take(10)
+                .ToList();
+        }
+
+        private static List<AdminTopBaseProductDto> BuildTopBaseProducts(IEnumerable<ProductStatisticItem> orderItems)
+        {
+            return orderItems
+                .GroupBy(item => new
+                {
+                    BaseProductId = item.Item.Product?.BaseProductId ?? item.Item.Design?.BaseProductId,
+                    BaseProductName = item.Item.Product?.BaseProduct?.Name ?? item.Item.Design?.BaseProduct?.Name ?? "Chưa xác định",
+                    Category = item.Item.Product?.BaseProduct?.Category ?? item.Item.Design?.BaseProduct?.Category
+                })
+                .Select(group => new AdminTopBaseProductDto
+                {
+                    BaseProductId = group.Key.BaseProductId,
+                    BaseProductName = group.Key.BaseProductName,
+                    Category = group.Key.Category,
+                    QuantitySold = group.Sum(item => item.Item.Quantity),
+                    OrderCount = group.Select(item => item.Order.OrderId).Distinct().Count(),
+                    Revenue = group.Sum(item => item.Revenue)
+                })
+                .OrderByDescending(item => item.QuantitySold)
+                .ThenByDescending(item => item.Revenue)
+                .Take(10)
+                .ToList();
+        }
+
+        private static List<AdminTopUniversityDto> BuildTopUniversities(IEnumerable<ProductStatisticItem> orderItems)
+        {
+            return orderItems
+                .Where(item => item.Item.Product?.UniversityId != null)
+                .GroupBy(item => new
+                {
+                    item.Item.Product!.UniversityId,
+                    UniversityName = item.Item.Product!.University?.Name ?? "Chưa xác định"
+                })
+                .Select(group => new AdminTopUniversityDto
+                {
+                    UniversityId = group.Key.UniversityId,
+                    UniversityName = group.Key.UniversityName,
+                    QuantitySold = group.Sum(item => item.Item.Quantity),
+                    OrderCount = group.Select(item => item.Order.OrderId).Distinct().Count(),
+                    Revenue = group.Sum(item => item.Revenue)
+                })
+                .OrderByDescending(item => item.QuantitySold)
+                .ThenByDescending(item => item.Revenue)
+                .Take(10)
+                .ToList();
+        }
+
+        private static List<AdminCustomizationTrendDto> BuildCustomizationTrend(IEnumerable<ProductStatisticItem> orderItems, string groupBy)
+        {
+            return orderItems
+                .Where(item => item.Order.CreatedAt.HasValue)
+                .GroupBy(item => GetPeriodKey(item.Order.CreatedAt!.Value, groupBy))
+                .OrderBy(group => group.Key.SortValue)
+                .Select(group => new AdminCustomizationTrendDto
+                {
+                    Period = group.Key.Label,
+                    CustomItemCount = group.Where(item => item.IsCustom).Sum(item => item.Item.Quantity),
+                    ReadyMadeItemCount = group.Where(item => !item.IsCustom).Sum(item => item.Item.Quantity),
+                    CustomRevenue = group.Where(item => item.IsCustom).Sum(item => item.Revenue),
+                    ReadyMadeRevenue = group.Where(item => !item.IsCustom).Sum(item => item.Revenue)
+                })
+                .ToList();
+        }
+
+        private static List<AdminOperationalExceptionDto> BuildOperationalExceptions(
+            IEnumerable<Order> orders,
+            int customItemsNeedingExport)
+        {
+            var orderList = orders.ToList();
+            var now = DateTime.Now;
+            var oldActiveOrderCount = orderList.Count(order =>
+                order.CreatedAt.HasValue
+                && !FinalOrderStatuses.Contains(order.OrderStatus)
+                && GetOrderAgeInDays(order, now) > 7);
+            var unpaidOrderCount = orderList.Count(order => order.PaymentStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase));
+            var failedPaymentCount = orderList.Count(order => order.PaymentStatus.Equals("Failed", StringComparison.OrdinalIgnoreCase));
+            var refundedOrderCount = orderList.Count(order => order.PaymentStatus.Equals("Refunded", StringComparison.OrdinalIgnoreCase));
+            var cancelledOrderCount = orderList.Count(order => order.OrderStatus.Equals("Cancelled", StringComparison.OrdinalIgnoreCase));
+
+            return new List<AdminOperationalExceptionDto>
+            {
+                new()
+                {
+                    Label = "Đơn đang xử lý quá 7 ngày",
+                    Count = oldActiveOrderCount,
+                    Severity = oldActiveOrderCount > 0 ? "danger" : "info"
+                },
+                new()
+                {
+                    Label = "Đơn chờ thanh toán",
+                    Count = unpaidOrderCount,
+                    Severity = unpaidOrderCount > 0 ? "warning" : "info"
+                },
+                new()
+                {
+                    Label = "Thanh toán lỗi",
+                    Count = failedPaymentCount,
+                    Severity = failedPaymentCount > 0 ? "danger" : "info"
+                },
+                new()
+                {
+                    Label = "Đơn đã hoàn tiền",
+                    Count = refundedOrderCount,
+                    Severity = refundedOrderCount > 0 ? "warning" : "info"
+                },
+                new()
+                {
+                    Label = "Đơn đã hủy",
+                    Count = cancelledOrderCount,
+                    Severity = cancelledOrderCount > 0 ? "warning" : "info"
+                },
+                new()
+                {
+                    Label = "Sản phẩm tùy chỉnh thiếu file in",
+                    Count = customItemsNeedingExport,
+                    Severity = customItemsNeedingExport > 0 ? "danger" : "info"
+                }
+            };
+        }
+
+        private static int GetOrderAgeInDays(Order order, DateTime now)
+        {
+            return order.CreatedAt.HasValue ? Math.Max(0, (now.Date - order.CreatedAt.Value.Date).Days) : 0;
+        }
+
+        private static bool IsCustomItemMissingExport(OrderItem item)
+        {
+            return item.Design == null
+                || string.IsNullOrWhiteSpace(item.Design.PrintFileUrl)
+                || string.IsNullOrWhiteSpace(item.Design.PlacementGuideUrl);
         }
 
         private async Task<string> SaveGeneratedPngAsync(byte[] pngBytes, string fileName, string folderName)

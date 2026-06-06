@@ -61,9 +61,18 @@ export interface AdminFinancialReportDto {
 }
 
 export interface AdminInvoiceQuery extends PaginationQuery {
-	invoiceStatus?: InvoiceStatus;
+	orderId?: number;
+	userId?: number;
+	invoiceNumber?: string;
+	status?: InvoiceStatus;
+	fromDate?: IsoDateString;
+	toDate?: IsoDateString;
+	minAmount?: Decimal;
+	maxAmount?: Decimal;
+	currencyCode?: string;
 }
 
 export interface AdminFinancialReportQuery extends DateRangeQuery {
-	groupBy?: "day" | "week" | "month";
+	groupBy?: "day" | "week" | "month" | "year";
+	currencyCode?: string;
 }

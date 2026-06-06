@@ -6,6 +6,8 @@ namespace TheALMAProject.Domain.Queries
     {
         public string? Name { get; set; }
 
+        public string? Keyword { get; set; }
+
         public int? BaseProductId { get; set; }
 
         public int? UniversityId { get; set; }

@@ -57,6 +57,42 @@ namespace TheALMAProject.Application.Services
             };
         }
 
+        public async Task<ProductFilterOptionsDto> GetProductFilterOptionsAsync()
+        {
+            var products = await _unitOfWork.StoreProductRepo.GetActiveStoreProductsForFilterOptions();
+
+            return new ProductFilterOptionsDto
+            {
+                Categories = products
+                    .Select(p => p.BaseProduct?.Category)
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Select(value => value!)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(value => value)
+                    .ToList(),
+                Materials = products
+                    .Select(p => p.BaseProduct?.Material)
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Select(value => value!)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(value => value)
+                    .ToList(),
+                Universities = products
+                    .Where(p => p.UniversityId.HasValue && p.University != null)
+                    .Select(p => new ProductFilterUniversityOptionDto
+                    {
+                        UniversityId = p.UniversityId!.Value,
+                        Name = p.University!.Name
+                    })
+                    .GroupBy(option => option.UniversityId)
+                    .Select(group => group.First())
+                    .OrderBy(option => option.Name)
+                    .ToList(),
+                MinPrice = products.Count > 0 ? products.Min(p => p.Price) : null,
+                MaxPrice = products.Count > 0 ? products.Max(p => p.Price) : null
+            };
+        }
+
         /// <summary>
         /// UC-09: Chi tiết SP — gallery ảnh, thông số, bảng size, màu, đánh giá
         /// </summary>

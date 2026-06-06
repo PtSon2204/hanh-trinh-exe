@@ -2,6 +2,7 @@ import axiosClient from "../../../../shared/api/axiosClient";
 import type { PagedResult } from "../../../../shared/types/pagination";
 import type {
 	AdminCreateOrderDto,
+	AdminOperationStatisticsDto,
 	AdminOrderDto,
 	AdminOrderFabricPrintFileUploadDto,
 	AdminOrderListDto,
@@ -9,6 +10,7 @@ import type {
 	AdminOrderStatisticDto,
 	AdminOrderStatisticQuery,
 	AdminOrderStatusUpdateResponse,
+	AdminProductStatisticsDto,
 	AdminUpdateOrderStatusDto,
 } from "../types/adminOrder";
 
@@ -46,6 +48,18 @@ export const adminOrderApi = {
 	getStatistics(params: AdminOrderStatisticQuery) {
 		return axiosClient
 			.get<AdminOrderStatisticDto[]>("/admin/orders/statistics", { params })
+			.then((res) => res.data);
+	},
+
+	getOperationStatistics(params: AdminOrderStatisticQuery) {
+		return axiosClient
+			.get<AdminOperationStatisticsDto>("/admin/orders/operations-statistics", { params })
+			.then((res) => res.data);
+	},
+
+	getProductStatistics(params: AdminOrderStatisticQuery) {
+		return axiosClient
+			.get<AdminProductStatisticsDto>("/admin/orders/product-statistics", { params })
 			.then((res) => res.data);
 	},
 

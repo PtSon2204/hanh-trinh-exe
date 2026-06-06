@@ -1,31 +1,21 @@
-import type { ProductQuery } from '../../../shared/types/product.types';
+import type { ProductFilterOptions, ProductQuery } from '../../../shared/types/product.types';
 
 interface Props {
+  filterOptions: ProductFilterOptions | null;
+  loading: boolean;
   query: ProductQuery;
   onChange: (q: ProductQuery) => void;
 }
 
-const CATEGORIES = ['Áo thun', 'Áo Polo', 'Áo Hoodie', 'Áo sơ mi', 'Áo khoác'];
-const MATERIALS = ['Cotton', 'Polyester', 'Cotton Pha', 'Thun Lạnh', 'Nỉ'];
-const UNIVERSITIES = [
-  'FPT University',
-  'Đại học Quốc gia Hà Nội (VNU)',
-  'Học viện Tài chính (AOF)',
-  'Đại học Luật Hà Nội (HLU)',
-  'Đại học Kinh tế Quốc dân (NEU)',
-  'Đại học Ngoại thương (FTU)',
-  'Đại học Bách khoa Hà Nội (HUST)',
-  'Đại học Thương mại (TMU)',
-];
 const PRICE_RANGES = [
-  { label: 'Tất cả', min: undefined, max: undefined },
-  { label: 'Dưới 100K', min: undefined, max: 100000 },
-  { label: '100K – 200K', min: 100000, max: 200000 },
-  { label: '200K – 500K', min: 200000, max: 500000 },
-  { label: 'Trên 500K', min: 500000, max: undefined },
+  { key: 'all', label: 'Tất cả', min: undefined, max: undefined },
+  { key: 'under-150', label: 'Dưới 150K', min: undefined, max: 150000 },
+  { key: '150-250', label: '150K – 250K', min: 150000, max: 250000 },
+  { key: '250-400', label: '250K – 400K', min: 250000, max: 400000 },
+  { key: 'over-400', label: 'Trên 400K', min: 400000, max: undefined },
 ];
 
-export default function ProductFilters({ query, onChange }: Props) {
+export default function ProductFilters({ filterOptions, loading, query, onChange }: Props) {
   const setField = (fields: Partial<ProductQuery>) =>
     onChange({ ...query, ...fields, pageNumber: 1 });
 
@@ -37,18 +27,22 @@ export default function ProductFilters({ query, onChange }: Props) {
     onChange({
       pageNumber: 1,
       pageSize: query.pageSize,
+      keyword: query.keyword,
       sortBy: query.sortBy,
       sortDescending: query.sortDescending,
     });
 
-  const hasFilters = query.category || query.material || query.university || query.minPrice != null || query.maxPrice != null;
+  const hasFilters = query.category || query.material || query.universityId || query.isCustomizable != null || query.minPrice != null || query.maxPrice != null;
+  const categories = filterOptions?.categories ?? [];
+  const materials = filterOptions?.materials ?? [];
+  const universities = filterOptions?.universities ?? [];
 
   return (
     <aside className="pf-sidebar" id="product-filters">
       <div className="pf-sidebar__header">
-        <h3 className="pf-sidebar__title">🔍 Bộ lọc</h3>
+        <h3 className="pf-sidebar__title">Bộ lọc</h3>
         {hasFilters && (
-          <button className="pf-sidebar__clear" onClick={clearAll}>
+          <button className="pf-sidebar__clear" type="button" onClick={clearAll}>
             Xoá tất cả
           </button>
         )}
@@ -63,7 +57,7 @@ export default function ProductFilters({ query, onChange }: Props) {
           onChange={(e) => setField({ category: e.target.value ? e.target.value : undefined })}
         >
           <option value="">Tất cả kiểu dáng</option>
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
             </option>
@@ -80,7 +74,7 @@ export default function ProductFilters({ query, onChange }: Props) {
           onChange={(e) => setField({ material: e.target.value ? e.target.value : undefined })}
         >
           <option value="">Tất cả chất liệu</option>
-          {MATERIALS.map((mat) => (
+          {materials.map((mat) => (
             <option key={mat} value={mat}>
               {mat}
             </option>
@@ -93,24 +87,39 @@ export default function ProductFilters({ query, onChange }: Props) {
         <h4 className="pf-group__title">Trường học</h4>
         <select
           className="pf-select"
-          value={query.university || ""}
-          onChange={(e) => setField({ university: e.target.value ? e.target.value : undefined })}
+          value={query.universityId || ""}
+          onChange={(e) => setField({ universityId: e.target.value ? Number(e.target.value) : undefined, university: undefined })}
         >
           <option value="">Tất cả trường học</option>
-          {UNIVERSITIES.map((uni) => (
-            <option key={uni} value={uni}>
-              {uni}
+          {universities.map((uni) => (
+            <option key={uni.universityId} value={uni.universityId}>
+              {uni.name}
             </option>
           ))}
+        </select>
+      </div>
+
+      {/* Tùy chỉnh */}
+      <div className="pf-group">
+        <h4 className="pf-group__title">Tùy chỉnh</h4>
+        <select
+          className="pf-select"
+          value={query.isCustomizable == null ? "" : String(query.isCustomizable)}
+          onChange={(e) => setField({ isCustomizable: e.target.value ? e.target.value === 'true' : undefined })}
+        >
+          <option value="">Tất cả sản phẩm</option>
+          <option value="true">Có thể tùy chỉnh</option>
+          <option value="false">Sản phẩm bán sẵn</option>
         </select>
       </div>
 
       {/* Khoảng giá */}
       <div className="pf-group">
         <h4 className="pf-group__title">Khoảng giá</h4>
+        {loading && !filterOptions ? <p className="pf-group__hint">Đang tải bộ lọc...</p> : null}
         <div className="pf-group__radios">
           {PRICE_RANGES.map((r, i) => (
-            <label key={i} className={`pf-radio ${activePriceIdx === i ? 'pf-radio--active' : ''}`}>
+            <label key={r.key} className={`pf-radio ${activePriceIdx === i ? 'pf-radio--active' : ''}`}>
               <input
                 type="radio"
                 name="priceRange"

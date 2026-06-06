@@ -28,6 +28,13 @@ namespace TheALMAProject.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("filter-options")]
+        public async Task<IActionResult> GetFilterOptions()
+        {
+            var result = await _productService.GetProductFilterOptionsAsync();
+            return Ok(result);
+        }
+
         /// <summary>
         ///Chi tiết sản phẩm 
         /// </summary>

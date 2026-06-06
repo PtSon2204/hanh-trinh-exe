@@ -114,6 +114,14 @@ namespace TheALMAProject.Infrastructure.Repositories
         {
             var query = _context.Orders
                 .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.Design)
+                        .ThenInclude(d => d!.BaseProduct)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.Product)
+                        .ThenInclude(p => p!.BaseProduct)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(i => i.Product)
+                        .ThenInclude(p => p!.University)
                 .AsQueryable();
 
             if (queryParams.FromDate.HasValue)

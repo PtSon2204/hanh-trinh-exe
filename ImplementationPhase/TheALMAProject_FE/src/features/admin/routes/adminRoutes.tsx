@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth";
 import { AdminDashboardPage } from "../dashboard/pages/AdminDashboardPage";
 import AdminIconsPage from "../icons/pages/AdminIconsPage";
+import AdminInvoicesPage from "../invoices/pages/AdminInvoicesPage";
 import AdminNotificationsPage from "../notifications/pages/AdminNotificationsPage";
 import { AdminLayout } from "../orders/components/AdminLayout";
 import AdminNewOrderPage from "../orders/pages/AdminNewOrderPage";
@@ -60,6 +61,14 @@ export function AdminRoutes() {
           element={
             <AdminLayout>
               <AdminOrdersPage />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="invoices"
+          element={
+            <AdminLayout activePath="/admin/invoices">
+              <AdminInvoicesPage />
             </AdminLayout>
           }
         />
