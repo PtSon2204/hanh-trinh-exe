@@ -94,6 +94,7 @@ export default function ProductDetailPage() {
         quantity,
       });
       toast.success(`Đã thêm "${product.name}" (Size ${selectedSize}) x${quantity} vào giỏ hàng!`);
+      window.dispatchEvent(new Event("cart-updated"));
     } catch (err: any) {
       if (err.response?.status === 401) {
         toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');

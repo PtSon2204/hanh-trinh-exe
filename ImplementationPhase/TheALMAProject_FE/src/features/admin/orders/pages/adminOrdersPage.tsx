@@ -70,9 +70,9 @@ type SideImage = {
 const FABRIC_EXPORT_WIDTH = 800;
 const FABRIC_EXPORT_HEIGHT = 1000;
 const FABRIC_ARTWORK_MULTIPLIER = 2;
-const PLACEMENT_GUIDE_WIDTH = 800;
-const PLACEMENT_GUIDE_HEIGHT = 1000;
-const MAX_FABRIC_UPLOAD_PNG_BYTES = 5 * 1024 * 1024;
+const PLACEMENT_GUIDE_WIDTH = 1200;
+const PLACEMENT_GUIDE_HEIGHT = 1500;
+const MAX_FABRIC_UPLOAD_PNG_BYTES = 15 * 1024 * 1024; // 15MB
 
 const adminOrdersPanels: Array<{ id: AdminOrdersPanel; label: string }> = [
   { id: "orders", label: "Danh sách đơn hàng" },
@@ -388,12 +388,14 @@ async function createPreviewPlacementGuide(
   ctx.fillRect(0, 0, guideCanvas.width, guideCanvas.height);
 
   const previewImage = await loadImage(previewUrl);
-  drawContainedImage(ctx, previewImage, 0, 64, guideCanvas.width, guideCanvas.height - 64);
+  // Vẽ ảnh áo từ vị trí y = 90 để chừa khoảng trống cho text cỡ chữ lớn hơn ở trên đầu
+  drawContainedImage(ctx, previewImage, 0, 90, guideCanvas.width, guideCanvas.height - 90);
 
   ctx.fillStyle = "#111827";
-  ctx.font = "20px sans-serif";
-  ctx.fillText(getOrderItemBacktrackLabel(orderCode, item), 24, 32);
-  ctx.fillText(`${getSideLabel(side)} · Size ${item.size} · SL ${item.quantity}`, 24, 58);
+  ctx.font = "bold 28px sans-serif";
+  ctx.fillText(getOrderItemBacktrackLabel(orderCode, item), 24, 40);
+  ctx.font = "24px sans-serif";
+  ctx.fillText(`${getSideLabel(side)} · Size ${item.size} · SL ${item.quantity}`, 24, 75);
 
   const placementGuidePngDataUrl = guideCanvas.toDataURL("image/png");
   assertGeneratedPngSize(placementGuidePngDataUrl, "Placement guide PNG");
@@ -421,7 +423,7 @@ async function createFabricPrintFile(item: AdminOrderItemDto, orderCode: string)
         top: bounds.top,
         width: bounds.width,
         height: bounds.height,
-        multiplier: sides.length > 1 ? 1 : FABRIC_ARTWORK_MULTIPLIER,
+        multiplier: FABRIC_ARTWORK_MULTIPLIER,
       });
       assertGeneratedPngSize(artworkPngDataUrl, `${getSideLabel(sideExport.side)} artwork PNG`);
       artworkImages.push({
