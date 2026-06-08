@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { Link, useLocation } from "react-router-dom";
 import authApi from "../../features/auth/api/authApi";
@@ -17,18 +17,36 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartCount, setCartCount] = useState<number>(0);
 
-  useEffect(() => {
+  const fetchCartCount = useCallback(() => {
     if (!user) {
       setCartCount(0);
       return;
     }
     cartApi.getMyCart()
       .then(cart => {
-        const totalQty = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-        setCartCount(totalQty);
+        if (cart && cart.items) {
+          setCartCount(cart.items.length);
+        } else {
+          setCartCount(0);
+        }
       })
-      .catch(() => {});
+      .catch(() => {
+        setCartCount(0);
+      });
   }, [user]);
+
+  useEffect(() => {
+    fetchCartCount();
+
+    const handleCartUpdate = () => {
+      fetchCartCount();
+    };
+
+    window.addEventListener("cart-updated", handleCartUpdate);
+    return () => {
+      window.removeEventListener("cart-updated", handleCartUpdate);
+    };
+  }, [user, fetchCartCount]);
 
   const handleLogout = async () => {
     try {

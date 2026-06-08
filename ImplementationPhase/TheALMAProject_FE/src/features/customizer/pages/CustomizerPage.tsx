@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { fabric } from 'fabric';
 import toast from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { customizerApi } from '../api/customizerApi';
 import { useAuth } from '../../auth/context/AuthContext';
+import { cartApi } from '../../cart/api/cartApi';
 import type { BaseProductDto, IconDto, PrintAreaRect } from '../types';
 import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
 import './CustomizerPage.css';
@@ -152,8 +153,8 @@ const clampObjectScaleToBounds = (obj: fabric.Object | undefined, bounds: Canvas
 };
 
 const DEFAULT_BASE_PRICE = 150000;
-const PRODUCT_PREVIEW_WIDTH = 800;
-const PRODUCT_PREVIEW_HEIGHT = 1000;
+const PRODUCT_PREVIEW_WIDTH = 1200;
+const PRODUCT_PREVIEW_HEIGHT = 1500;
 
 const loadPreviewImage = (url: string) => new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
@@ -294,7 +295,10 @@ export default function CustomizerPage() {
     // --- States Zoom & Preview ---
     const [shirtZoom, setShirtZoom] = useState(1);
     const [previewOpen, setPreviewOpen] = useState(false);
-    const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+    const [previewFrontUrl, setPreviewFrontUrl] = useState<string | null>(null);
+    const [previewBackUrl, setPreviewBackUrl] = useState<string | null>(null);
+    const [previewSide, setPreviewSide] = useState<'front' | 'back'>('front');
+    const [cartItemCount, setCartItemCount] = useState(0);
 
     // Helper: trả về canvas đang active (dùng sau khi states đã khởi tạo)
     const getActiveCanvas = () =>
@@ -355,7 +359,7 @@ export default function CustomizerPage() {
             outputCanvas.width = PRODUCT_PREVIEW_WIDTH;
             outputCanvas.height = PRODUCT_PREVIEW_HEIGHT;
             const ctx = outputCanvas.getContext('2d');
-            if (!ctx) return designCanvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+            if (!ctx) return designCanvas.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 });
 
             ctx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
             // Nền trắng cho JPEG (tránh nền đen khi transparent)
@@ -387,14 +391,16 @@ export default function CustomizerPage() {
                 drawContainedImage(ctx, shirtImage, shirtBox.left, shirtBox.top, shirtBox.width, shirtBox.height);
             }
 
-            const designUrl = designCanvas.toDataURL({ format: 'png', multiplier: 0.5 });
+            // Tính toán multiplier động để đạt độ sắc nét tuyệt đối theo kích thước phôi preview
+            const multiplier = PRODUCT_PREVIEW_WIDTH / (designCanvas.getWidth() || 1);
+            const designUrl = designCanvas.toDataURL({ format: 'png', multiplier });
             const designImage = await loadPreviewImage(designUrl);
             ctx.drawImage(designImage, 0, 0, PRODUCT_PREVIEW_WIDTH, PRODUCT_PREVIEW_HEIGHT);
 
-            return outputCanvas.toDataURL('image/jpeg', 0.6);
+            return outputCanvas.toDataURL('image/jpeg', 0.95);
         } catch (err) {
             console.warn('[createCompositePreview] Fallback to simple canvas export:', err);
-            return designCanvas.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+            return designCanvas.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 });
         }
     };
 
@@ -405,13 +411,13 @@ export default function CustomizerPage() {
             frontPreviewImageUrl = await createCompositePreview('front');
         } catch (err) {
             console.warn('[createSidePreviewImages] Front preview failed:', err);
-            frontPreviewImageUrl = fabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 }) ?? '';
+            frontPreviewImageUrl = fabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 }) ?? '';
         }
         try {
             backPreviewImageUrl = await createCompositePreview('back');
         } catch (err) {
             console.warn('[createSidePreviewImages] Back preview failed:', err);
-            backPreviewImageUrl = backFabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 }) ?? '';
+            backPreviewImageUrl = backFabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 }) ?? '';
         }
         return { frontPreviewImageUrl, backPreviewImageUrl };
     };
@@ -564,6 +570,39 @@ export default function CustomizerPage() {
                 setBaseProductsLoading(false);
             });
     }, []);
+
+    const fetchCartItemCount = useCallback(() => {
+        if (!user) {
+            setCartItemCount(0);
+            return;
+        }
+        cartApi.getMyCart()
+            .then(data => {
+                if (data && data.items) {
+                    setCartItemCount(data.items.length);
+                } else {
+                    setCartItemCount(0);
+                }
+            })
+            .catch(err => {
+                console.warn('[CustomizerPage] Không thể lấy giỏ hàng:', err);
+                setCartItemCount(0);
+            });
+    }, [user]);
+
+    // Tải số lượng thiết kế thực tế trong giỏ hàng
+    useEffect(() => {
+        fetchCartItemCount();
+
+        const handleCartUpdate = () => {
+            fetchCartItemCount();
+        };
+
+        window.addEventListener("cart-updated", handleCartUpdate);
+        return () => {
+            window.removeEventListener("cart-updated", handleCartUpdate);
+        };
+    }, [user, fetchCartItemCount]);
 
     // 2. Chức năng Thêm Chữ
     const handleAddText = () => {
@@ -983,7 +1022,7 @@ QUAN TRỌNG về svgCode:
                 const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
                 canvasDataURL = fabricCanvas.current.getObjects().length > 0 ? frontPreviewImageUrl : backPreviewImageUrl;
             } catch {
-                canvasDataURL = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+                canvasDataURL = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 });
             }
 
             const frontJSON = fabricCanvas.current.toJSON(['id', 'selectable']);
@@ -1048,8 +1087,8 @@ QUAN TRỌNG về svgCode:
                 return;
             }
 
-            const COMPOSITE_W = 400;
-            const COMPOSITE_H = 500;
+            const COMPOSITE_W = 800;
+            const COMPOSITE_H = 1000;
 
             // Lấy ảnh áo đã xử lý (bỏ nền) hoặc ảnh gốc
             const shirtImgSrc = processedImages[activeProductUrl] ?? activeProductUrl;
@@ -1098,16 +1137,17 @@ QUAN TRỌNG về svgCode:
                     }
 
                     // Export design từ Fabric canvas và đặt lên cùng product-stage frame.
-                    const designDataUrl = fabricCanvas.current!.toDataURL({ format: 'png', multiplier: 0.5 });
+                    const multiplier = COMPOSITE_W / (fabricCanvas.current!.getWidth() || 1);
+                    const designDataUrl = fabricCanvas.current!.toDataURL({ format: 'png', multiplier });
                     const designImg = new Image();
                     designImg.src = designDataUrl;
                     designImg.onload = () => {
                         ctx.drawImage(designImg, 0, 0, COMPOSITE_W, COMPOSITE_H);
-                        resolve(offscreen.toDataURL('image/jpeg', 0.6));
+                        resolve(offscreen.toDataURL('image/jpeg', 0.95));
                     };
                     designImg.onerror = () => {
                         // Nếu không load được design, vẫn trả về ảnh áo
-                        resolve(offscreen.toDataURL('image/jpeg', 0.6));
+                        resolve(offscreen.toDataURL('image/jpeg', 0.95));
                     };
                 } catch (e) {
                     reject(e);
@@ -1116,7 +1156,7 @@ QUAN TRỌNG về svgCode:
 
             shirtImg.onerror = () => {
                 // Fallback: nếu không load được ảnh áo, dùng canvas gốc
-                const fallback = fabricCanvas.current!.toDataURL({ format: 'jpeg', quality: 0.6, multiplier: 0.5 });
+                const fallback = fabricCanvas.current!.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 });
                 resolve(fallback);
             };
         });
@@ -1143,8 +1183,8 @@ QUAN TRỌNG về svgCode:
                 backPreviewImageUrl = sideImages.backPreviewImageUrl;
             } catch (previewErr) {
                 console.warn('[handleConfirmAddToCart] Side preview failed, using fallback:', previewErr);
-                frontPreviewImageUrl = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.5, multiplier: 0.4 });
-                backPreviewImageUrl = backFabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.5, multiplier: 0.4 }) ?? '';
+                frontPreviewImageUrl = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 });
+                backPreviewImageUrl = backFabricCanvas.current?.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 }) ?? '';
             }
             try {
                 previewDataUrl = await generateCompositePreview();
@@ -1171,6 +1211,7 @@ QUAN TRỌNG về svgCode:
             );
             const summary = Object.entries(sizeQty).filter(([, q]) => q > 0).map(([s, q]) => `${s}×${q}`).join(', ');
             toast.success(`Đã thêm vào giỏ hàng! (${summary})`);
+            window.dispatchEvent(new Event("cart-updated"));
             setCartModalOpen(false);
             setSizeQty({ S: 0, M: 0, L: 0, XL: 0, XXL: 0 });
             navigate('/cart');
@@ -1348,7 +1389,11 @@ QUAN TRỌNG về svgCode:
                 <div className="flex gap-4 items-center">
                     <Link to="/cart" className="text-gray-500 hover:text-gray-800 relative mr-4">
                         <i className="fa-solid fa-cart-shopping text-lg"></i>
-                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">1</span>
+                        {cartItemCount > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                                {cartItemCount}
+                            </span>
+                        )}
                     </Link>
                     <button onClick={() => setHistoryOpen(true)} className="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
                         <i className="fa-solid fa-clock-rotate-left"></i>
@@ -2073,8 +2118,10 @@ Vui lòng thử lại sau..</p>
                                 title="Xem trước thiết kế"
                                 onClick={async () => {
                                     try {
-                                        const { frontPreviewImageUrl } = await createSidePreviewImages();
-                                        setPreviewImageUrl(frontPreviewImageUrl);
+                                        const { frontPreviewImageUrl, backPreviewImageUrl } = await createSidePreviewImages();
+                                        setPreviewFrontUrl(frontPreviewImageUrl);
+                                        setPreviewBackUrl(backPreviewImageUrl);
+                                        setPreviewSide(viewMode);
                                         setPreviewOpen(true);
                                     } catch {
                                         toast.error('Không thể tạo preview!');
@@ -2583,7 +2630,7 @@ Vui lòng thử lại sau..</p>
                     onClick={() => setPreviewOpen(false)}
                 >
                     <div
-                        className="relative max-w-lg w-full mx-4 flex flex-col items-center gap-4"
+                        className="relative max-w-3xl w-full mx-4 flex flex-col items-center gap-4"
                         onClick={e => e.stopPropagation()}
                     >
                         {/* Header */}
@@ -2592,11 +2639,28 @@ Vui lòng thử lại sau..</p>
                                 <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></div>
                                 <span className="text-white font-bold text-sm tracking-wide">Xem Trước Thiết Kế</span>
                             </div>
+
+                            {/* Tabs chuyển đổi giữa mặt trước và mặt sau trên modal */}
+                            <div className="flex bg-white/10 rounded-lg p-0.5 border border-white/10">
+                                <button
+                                    onClick={() => setPreviewSide('front')}
+                                    className={`px-3 py-1 text-xs font-semibold rounded-md transition ${previewSide === 'front' ? 'bg-indigo-600 text-white shadow' : 'text-white/60 hover:text-white'}`}
+                                >
+                                    Mặt Trước
+                                </button>
+                                <button
+                                    onClick={() => setPreviewSide('back')}
+                                    className={`px-3 py-1 text-xs font-semibold rounded-md transition ${previewSide === 'back' ? 'bg-indigo-600 text-white shadow' : 'text-white/60 hover:text-white'}`}
+                                >
+                                    Mặt Sau
+                                </button>
+                            </div>
+
                             <div className="flex items-center gap-2">
-                                {previewImageUrl && (
+                                {(previewSide === 'front' ? previewFrontUrl : previewBackUrl) && (
                                     <a
-                                        href={previewImageUrl}
-                                        download="alma-design-preview.png"
+                                        href={previewSide === 'front' ? previewFrontUrl! : previewBackUrl!}
+                                        download={`alma-design-${previewSide === 'front' ? 'front' : 'back'}.png`}
                                         className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-white/20"
                                         onClick={e => e.stopPropagation()}
                                     >
@@ -2622,12 +2686,12 @@ Vui lòng thử lại sau..</p>
                             {/* Decorative dots */}
                             <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
 
-                            <div className="relative z-10 flex items-center justify-center p-8 min-h-[380px]">
-                                {previewImageUrl ? (
+                            <div className="relative z-10 flex items-center justify-center p-8 min-h-[500px] sm:min-h-[600px]">
+                                {(previewSide === 'front' ? previewFrontUrl : previewBackUrl) ? (
                                     <img
-                                        src={previewImageUrl}
-                                        alt="Design Preview"
-                                        className="max-w-full max-h-[400px] object-contain drop-shadow-2xl rounded-lg"
+                                        src={previewSide === 'front' ? previewFrontUrl! : previewBackUrl!}
+                                        alt={`Design ${previewSide === 'front' ? 'Front' : 'Back'} Preview`}
+                                        className="max-w-full max-h-[500px] sm:max-h-[620px] object-contain drop-shadow-2xl rounded-lg"
                                         style={{ filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))' }}
                                     />
                                 ) : (
@@ -2642,16 +2706,16 @@ Vui lòng thử lại sau..</p>
                             <div className="relative z-10 px-5 py-3 bg-black/30 border-t border-white/10 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <span className="w-3 h-3 rounded-full border-2 border-white/40 inline-block" style={{ backgroundColor: shirtColorHex }}></span>
-                                    <span className="text-white/70 text-xs">{selectedProduct?.name ?? 'Phôi áo'}</span>
+                                    <span className="text-white/70 text-xs">{selectedProduct?.name ?? 'Phôi áo'} ({previewSide === 'front' ? 'Mặt trước' : 'Mặt sau'})</span>
                                 </div>
                                 <span className="text-white/50 text-[10px] font-mono">
                                     Zoom: {Math.round(shirtZoom * 100)}%
                                 </span>
                                 <button
-                                    onClick={() => { setPreviewOpen(false); handleSetViewMode('back'); }}
+                                    onClick={() => setPreviewSide(prev => prev === 'front' ? 'back' : 'front')}
                                     className="text-white/60 hover:text-white text-[10px] transition flex items-center gap-1"
                                 >
-                                    <i className="fa-solid fa-rotate text-[9px]"></i> Xem mặt sau
+                                    <i className="fa-solid fa-rotate text-[9px]"></i> Xem {previewSide === 'front' ? 'mặt sau' : 'mặt trước'}
                                 </button>
                             </div>
                         </div>

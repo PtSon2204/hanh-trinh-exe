@@ -64,6 +64,7 @@ export default function CartPage() {
                     return prev.filter(id => validIds.includes(id));
                 });
             }
+            window.dispatchEvent(new Event("cart-updated"));
         } catch (error: any) {
             if (error?.response?.status === 401) {
                 toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!');
@@ -89,6 +90,7 @@ export default function CartPage() {
 
         try {
             await cartApi.updateCartItem(item.cartItemId, { quantity: newQuantity, size: item.size });
+            window.dispatchEvent(new Event("cart-updated"));
         } catch (error) {
             toast.error('Có lỗi xảy ra, đang tải lại giỏ hàng...');
             fetchCart();
