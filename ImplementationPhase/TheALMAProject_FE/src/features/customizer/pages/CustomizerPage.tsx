@@ -219,6 +219,17 @@ export default function CustomizerPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
 
+    // --- Login Gate ---
+    const [loginPromptOpen, setLoginPromptOpen] = useState(false);
+    const requireLogin = (action?: () => void): boolean => {
+        if (!user) {
+            setLoginPromptOpen(true);
+            return false;
+        }
+        action?.();
+        return true;
+    };
+
     // --- Refs (Front) ---
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -606,6 +617,7 @@ export default function CustomizerPage() {
 
     // 2. Chức năng Thêm Chữ
     const handleAddText = () => {
+        if (!requireLogin()) return;
         const ac = getActiveCanvas();
         if (!ac) return;
         const inputContent = (document.getElementById('text-content-input') as HTMLInputElement)?.value || 'Text mới';
@@ -627,6 +639,7 @@ export default function CustomizerPage() {
 
     // 3. Thêm Icon/Sticker lên canvas (track iconId)
     const handleAddIcon = (icon: IconDto) => {
+        if (!requireLogin()) return;
         const ac = getActiveCanvas();
         if (!ac) return;
         const resolvedUrl = resolveApiAssetUrl(icon.imageUrl) || icon.imageUrl;
@@ -651,6 +664,7 @@ export default function CustomizerPage() {
 
     // 3b. Thêm SVG icon từ AI gợi ý lên canvas
     const handleAddSvgIconToCanvas = (svgCode: string, idx: number) => {
+        if (!requireLogin()) return;
         const ac = getActiveCanvas();
         if (!ac) return;
         setAddingIconIdx(idx);
@@ -819,6 +833,7 @@ export default function CustomizerPage() {
 
     // 5. Call Gemini AI để gợi ý thiết kế
     const handleGenerateAI = async () => {
+        if (!requireLogin()) return;
         if (!aiPrompt.trim()) { toast.error('Vui lòng nhập mô tả ý tưởng!'); return; }
         setIsAiLoading(true);
         setAiSuggestion(null);
@@ -1061,6 +1076,16 @@ QUAN TRỌNG về svgCode:
         setShirtColorHex(entry.shirtColor || '#FFFFFF');
         setHistoryOpen(false);
         toast.success('Đã tải lại thiết kế!');
+    };
+
+    // 8b. Xóa một mục trong lịch sử
+    const [deleteConfirmIdx, setDeleteConfirmIdx] = useState<number | null>(null);
+    const deleteHistoryEntry = (idx: number) => {
+        const updated = historyList.filter((_, i) => i !== idx);
+        setHistoryList(updated);
+        localStorage.setItem('alma_design_history', JSON.stringify(updated));
+        setDeleteConfirmIdx(null);
+        toast.success('Đã xóa bản thiết kế!');
     };
 
     // 9. Mở modal chọn size & số lượng rồi thêm vào giỏ
@@ -1374,6 +1399,7 @@ QUAN TRỌNG về svgCode:
     const activePrintAreaStyle = getPrintAreaOverlayStyle(selectedProduct?.printArea?.[viewMode]);
 
     return (
+        <>
         <div className="bg-gray-50 h-screen overflow-hidden flex flex-col font-['Outfit']">
             {/* --- NAVBAR --- */}
             <nav className="bg-white border-b px-4 sm:px-6 py-3 flex justify-between items-center shrink-0 shadow-sm z-50 relative h-16">
@@ -1419,14 +1445,17 @@ QUAN TRỌNG về svgCode:
                         <div onClick={() => setActiveTab('base')} className={`flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer rounded-t-lg transition ${activeTab === 'base' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
                             <i className="fa-solid fa-shirt w-5 text-center text-blue-500 text-lg"></i> Kiểu Dáng (Phôi Áo)
                         </div>
-                        <div onClick={() => setActiveTab('ai')} className={`flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer transition ${activeTab === 'ai' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
+                        <div onClick={() => requireLogin(() => setActiveTab('ai'))} className={`flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer transition ${activeTab === 'ai' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
                             <i className="fa-solid fa-wand-magic-sparkles w-5 text-center text-purple-500 text-lg"></i> AI Thiết Kế
+                            {!user && <i className="fa-solid fa-lock ml-auto text-gray-300 text-xs"></i>}
                         </div>
-                        <div onClick={() => setActiveTab('text')} className={`flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer transition ${activeTab === 'text' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
+                        <div onClick={() => requireLogin(() => setActiveTab('text'))} className={`flex items-center gap-3 p-3.5 border border-gray-200 border-b-0 cursor-pointer transition ${activeTab === 'text' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
                             <i className="fa-solid fa-font w-5 text-center text-green-500 text-lg"></i> Thêm Chữ
+                            {!user && <i className="fa-solid fa-lock ml-auto text-gray-300 text-xs"></i>}
                         </div>
-                        <div onClick={() => setActiveTab('upload')} className={`flex items-center gap-3 p-3.5 border border-gray-200 rounded-b-lg cursor-pointer transition ${activeTab === 'upload' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
+                        <div onClick={() => requireLogin(() => setActiveTab('upload'))} className={`flex items-center gap-3 p-3.5 border border-gray-200 rounded-b-lg cursor-pointer transition ${activeTab === 'upload' ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
                             <i className="fa-solid fa-image w-5 text-center text-orange-500 text-lg"></i> Tải Ảnh Lên
+                            {!user && <i className="fa-solid fa-lock ml-auto text-gray-300 text-xs"></i>}
                         </div>
                     </div>
 
@@ -2375,7 +2404,7 @@ Vui lòng thử lại sau..</p>
                                     <button
                                         key={c.code}
                                         title={c.label}
-                                        onClick={() => setShirtColorHex(c.code)}
+                                        onClick={() => requireLogin(() => setShirtColorHex(c.code))}
                                         className={`w-10 h-10 rounded-xl border-2 shadow-sm flex items-center justify-center transition-all hover:scale-110 ${shirtColorHex === c.code
                                             ? 'border-blue-500 scale-110 ring-2 ring-blue-300'
                                             : 'border-gray-200 hover:border-gray-400'
@@ -2393,12 +2422,12 @@ Vui lòng thử lại sau..</p>
                                 <input
                                     type="color"
                                     value={shirtColorHex}
-                                    onChange={e => setShirtColorHex(e.target.value)}
+                                    onChange={e => requireLogin(() => setShirtColorHex(e.target.value))}
                                     className="w-8 h-8 rounded cursor-pointer border border-gray-200"
                                 />
                                 <span className="text-xs text-gray-400 font-mono">{shirtColorHex.toUpperCase()}</span>
                                 <button
-                                    onClick={() => setShirtColorHex('#FFFFFF')}
+                                    onClick={() => requireLogin(() => setShirtColorHex('#FFFFFF'))}
                                     className="ml-auto text-xs text-blue-500 hover:underline"
                                 >Reset</button>
                             </div>
@@ -2601,8 +2630,8 @@ Vui lòng thử lại sau..</p>
                             </div>
                         ) : (
                             historyList.map((entry, idx) => (
-                                <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden p-3">
-                                    <div className="flex gap-3">
+                                <div key={idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                                    <div className="flex gap-3 p-3">
                                         <div className="shrink-0 w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center relative">
                                             <div className="absolute inset-0" style={{ backgroundColor: entry.shirtColor }}></div>
                                             <img src={entry.thumbnail} className="w-full h-full object-contain relative z-10" alt="thumb" />
@@ -2610,11 +2639,45 @@ Vui lòng thử lại sau..</p>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-semibold text-gray-800 text-sm truncate">{entry.name}</p>
                                             <p className="text-gray-400 text-xs mt-0.5">{entry.time}</p>
-                                            <button onClick={() => loadDesignFromHistory(entry)} className="mt-3 py-1.5 w-full text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition">
-                                                <i className="fa-solid fa-rotate-left"></i> Tải lại bản này
-                                            </button>
+                                            <div className="flex gap-2 mt-3">
+                                                <button
+                                                    onClick={() => loadDesignFromHistory(entry)}
+                                                    className="flex-1 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition"
+                                                >
+                                                    <i className="fa-solid fa-rotate-left"></i> Tải lại
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteConfirmIdx(idx)}
+                                                    className="py-1.5 px-3 text-xs font-semibold text-red-500 bg-red-50 rounded hover:bg-red-100 transition"
+                                                >
+                                                    <i className="fa-solid fa-trash"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
+                                    {/* Confirm delete bar */}
+                                    {deleteConfirmIdx === idx && (
+                                        <div className="border-t border-red-100 bg-red-50 px-3 py-2.5 flex items-center justify-between gap-2">
+                                            <p className="text-xs text-red-600 font-medium flex items-center gap-1.5">
+                                                <i className="fa-solid fa-triangle-exclamation"></i>
+                                                Xóa bản thiết kế này?
+                                            </p>
+                                            <div className="flex gap-2 shrink-0">
+                                                <button
+                                                    onClick={() => setDeleteConfirmIdx(null)}
+                                                    className="text-xs px-3 py-1 rounded-lg bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 transition font-medium"
+                                                >
+                                                    Hủy
+                                                </button>
+                                                <button
+                                                    onClick={() => deleteHistoryEntry(idx)}
+                                                    className="text-xs px-3 py-1 rounded-lg bg-red-500 hover:bg-red-600 text-white transition font-semibold"
+                                                >
+                                                    Xóa
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))
                         )}
@@ -2719,12 +2782,86 @@ Vui lòng thử lại sau..</p>
                                 </button>
                             </div>
                         </div>
-
                         {/* Hint */}
                         <p className="text-white/30 text-[10px] text-center">Nhấn ra ngoài để đóng</p>
                     </div>
                 </div>
             )}
         </div>
+        {/* ── Login Prompt Modal ── */}
+        {loginPromptOpen && (
+            <div
+                className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+                style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+                onClick={() => setLoginPromptOpen(false)}
+            >
+                <div
+                    className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden"
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* Header gradient */}
+                    <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 px-8 pt-10 pb-16 text-center">
+                        <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                            <i className="fa-solid fa-wand-magic-sparkles text-white text-4xl"></i>
+                        </div>
+                        <h2 className="text-2xl font-black text-white mb-1">Mở Khóa Thiết Kế!</h2>
+                        <p className="text-white/80 text-sm">Những tính năng sáng tạo đang chờ bạn khám phá</p>
+                    </div>
+
+                    {/* Feature list */}
+                    <div className="relative -mt-8 mx-6">
+                        <div className="bg-white rounded-2xl shadow-lg p-4 flex flex-col gap-2.5">
+                            {[
+                                { icon: 'fa-palette', color: 'text-blue-500', bg: 'bg-blue-50', label: 'Đổi màu áo theo ý thích' },
+                                { icon: 'fa-wand-magic-sparkles', color: 'text-purple-500', bg: 'bg-purple-50', label: 'AI tạo gợi ý thiết kế' },
+                                { icon: 'fa-font', color: 'text-green-500', bg: 'bg-green-50', label: 'Thêm chữ và slogan độc đáo' },
+                                { icon: 'fa-image', color: 'text-orange-500', bg: 'bg-orange-50', label: 'Tải ảnh của bạn lên áo' },
+                                { icon: 'fa-icons', color: 'text-pink-500', bg: 'bg-pink-50', label: 'Thêm sticker và họa tiết' },
+                            ].map((f, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <div className={`w-9 h-9 rounded-xl ${f.bg} flex items-center justify-center shrink-0`}>
+                                        <i className={`fa-solid ${f.icon} ${f.color} text-sm`}></i>
+                                    </div>
+                                    <span className="text-sm text-gray-700 font-medium">{f.label}</span>
+                                    <i className="fa-solid fa-check text-green-400 text-xs ml-auto"></i>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* CTA buttons */}
+                    <div className="px-6 pt-5 pb-7 flex flex-col gap-3">
+                        <button
+                            onClick={() => { setLoginPromptOpen(false); navigate('/login', { state: { from: location.pathname } }); }}
+                            className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-md transition flex items-center justify-center gap-2 text-sm"
+                        >
+                            <i className="fa-solid fa-right-to-bracket"></i>
+                            Đăng Nhập để Thiết Kế Ngay
+                        </button>
+                        <button
+                            onClick={() => { setLoginPromptOpen(false); navigate('/register'); }}
+                            className="w-full py-3 border-2 border-gray-200 hover:border-indigo-400 text-gray-700 hover:text-indigo-600 font-semibold rounded-2xl transition text-sm"
+                        >
+                            Tạo Tài Khoản Miễn Phí
+                        </button>
+                        <button
+                            onClick={() => setLoginPromptOpen(false)}
+                            className="text-center text-xs text-gray-400 hover:text-gray-600 transition mt-1"
+                        >
+                            Tiếp tục xem không cần đăng nhập
+                        </button>
+                    </div>
+
+                    {/* Close button */}
+                    <button
+                        onClick={() => setLoginPromptOpen(false)}
+                        className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white transition"
+                    >
+                        <i className="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        )}
+        </>
     );
 }
