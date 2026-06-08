@@ -794,7 +794,10 @@ export default function CustomizerPage() {
 
         const SYSTEM_PROMPT = `Bạn là chuyên gia thiết kế áo thun custom tại Việt Nam. Hãy gợi ý thiết kế áo in dựa trên ý tưởng của khách hàng.
 
-Trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào khác, không có comment):
+NẾU ý tưởng của khách hàng KHÔNG liên quan đến thiết kế áo, logo, thời trang hoặc yêu cầu bạn làm việc khác (như tìm kiếm thông tin, giải toán, viết code,...), bạn KHÔNG trả về định dạng thiết kế. Thay vào đó, bạn PHẢI trả về chuỗi JSON chứa lỗi sau:
+{ "error": "AI chỉ hỗ trợ tạo logo" }
+
+NẾU ý tưởng hợp lệ, hãy trả về ĐÚNG định dạng JSON sau (không thêm bất kỳ text nào khác, không có comment):
 {
   "concept": "Mô tả concept thiết kế tổng thể 2-3 câu",
   "style": "Tên phong cách ví dụ: Streetwear",
@@ -917,6 +920,13 @@ QUAN TRỌNG về svgCode:
             }
 
             const parsed = JSON.parse(jsonStr);
+
+            if (parsed.error) {
+                setAiError(parsed.error);
+                toast.error(parsed.error);
+                return;
+            }
+
             setAiSuggestion(parsed);
             toast.success('AI đã tạo gợi ý thiết kế thành công!');
         } catch (err: unknown) {
