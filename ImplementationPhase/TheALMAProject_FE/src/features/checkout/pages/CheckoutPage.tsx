@@ -826,6 +826,7 @@ const CheckoutPage = () => {
             // Nếu BE chưa có /Cart/clear thì bỏ qua, không crash app
             console.warn("[Checkout] clearCart endpoint chưa có hoặc bị lỗi.");
         }
+        window.dispatchEvent(new Event("cart-updated"));
 
         // Khôi phục lại các sản phẩm KHÔNG được chọn từ localStorage sau khi thanh toán thành công
         const backup = localStorage.getItem("cart_unchecked_backup");
