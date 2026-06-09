@@ -37,6 +37,19 @@ namespace TheALMAProject.Infrastructure
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IAddressRepository, AddressRepository>();
 
+            // =====================================================
+            // KEEP-ALIVE SERVICE — Chống Render free tier tắt server
+            // Chỉ chạy trên Production (không cần khi dev local)
+            // =====================================================
+            if (!environment.IsDevelopment())
+            {
+                services.AddHttpClient("KeepAlive", client =>
+                {
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                });
+                services.AddHostedService<KeepAliveService>();
+            }
+
             return services;
         }
     }
