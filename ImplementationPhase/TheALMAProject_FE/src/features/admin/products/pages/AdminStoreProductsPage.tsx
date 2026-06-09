@@ -391,7 +391,7 @@ export function AdminStoreProductsPage() {
                   setPageNumber(1);
                   setNameFilter(event.target.value);
                 }}
-                placeholder="Áo FPT, hoodie..."
+                placeholder="Áo FPT, polo..."
               />
             </label>
             <label>
@@ -655,7 +655,7 @@ export function AdminStoreProductsPage() {
                 ) : previewImageUrls.length > 0 ? (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                     {previewImageUrls.map((url, idx) => (
-                      <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
+                      <div key={url} style={{ position: 'relative', width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
                         <img src={url || ''} alt={`Ảnh ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         {idx === 0 && (
                           <span style={{

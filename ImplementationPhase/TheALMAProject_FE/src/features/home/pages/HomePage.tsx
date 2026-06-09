@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import { type CSSProperties, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import Navbar from "../../../shared/components/Navbar";
 import Footer from "../../../shared/components/Footer";
+import Navbar from "../../../shared/components/Navbar";
 import "./HomePage.css";
 
 // ── Char spans (Hero heading effect) ────────────────────────────────
@@ -172,7 +172,9 @@ function FunCanvas() {
     return () => {
       clearInterval(streakTimer);
       document.removeEventListener("click", handleClick);
-      bubbles.forEach(b => b.remove());
+      bubbles.forEach((b) => {
+        b.remove();
+      });
     };
   }, []);
 
@@ -381,7 +383,7 @@ function SectionFloats({ emojis, blobColors, count = 10 }: SectionFloatsProps) {
     <div className="section-floats" aria-hidden="true">
       {/* Color blobs */}
       {blobList.slice(0, 4).map((c, i) => (
-        <div key={`blob-${i}`} className="section-blob" style={{
+        <div key={`blob-${c}`} className="section-blob" style={{
           width:  `${160 + i * 60}px`,
           height: `${160 + i * 60}px`,
           background: c,
@@ -391,7 +393,7 @@ function SectionFloats({ emojis, blobColors, count = 10 }: SectionFloatsProps) {
           '--bdelay': `${i * 1.5}s`,
           '--bx':     `${(i % 2 === 0 ? 1 : -1) * (30 + i * 10)}px`,
           '--by':     `${(i % 2 === 0 ? -1 : 1) * (20 + i * 8)}px`,
-        } as React.CSSProperties} />
+        } as CSSProperties} />
       ))}
 
       {/* Floating emoji objects */}
@@ -409,7 +411,7 @@ function SectionFloats({ emojis, blobColors, count = 10 }: SectionFloatsProps) {
         const r1    = ((i % 2 === 0 ? 1 : -1) * (10 + (i * 6) % 30));
         const r2    = ((i % 2 === 0 ? -1 : 1) * (5 + (i * 4) % 20));
         return (
-          <span key={i} className="section-obj" style={{
+          <span key={`${emoji}-${left}-${top}`} className="section-obj" style={{
             left: `${left}%`, top: `${top}%`,
             fontSize: `${size}rem`,
             '--dur':   `${dur}s`,
@@ -417,7 +419,7 @@ function SectionFloats({ emojis, blobColors, count = 10 }: SectionFloatsProps) {
             '--dx': `${dx}px`, '--dy': `${dy}px`,
             '--dx2': `${dx2}px`, '--dy2': `${dy2}px`,
             '--r1': `${r1}deg`, '--r2': `${r2}deg`,
-          } as React.CSSProperties}>
+          } as CSSProperties}>
             {emoji}
           </span>
         );
@@ -434,7 +436,7 @@ function HowItWorks() {
       color: "linear-gradient(135deg,#3b82f6,#2563eb)",
       badge: "Bước 1", badge_color: "#dbeafe", badge_text: "#2563eb",
       title: "Chọn Phôi Áo",
-      desc: "Hơn 100 mẫu phôi từ áo thun, polo, sơ mi đến hoodie. Đa dạng kiểu dáng để bạn lựa chọn.",
+      desc: "Hơn 100 mẫu phôi từ áo thun, polo đến sơ mi. Đa dạng kiểu dáng để bạn lựa chọn.",
     },
     {
       icon: "🎨",

@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/context/AuthContext';
 import { cartApi } from '../../cart/api/cartApi';
 import type { BaseProductDto, IconDto, PrintAreaRect } from '../types';
 import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
+import { Shirt3DPreview } from '../components/Shirt3DPreview';
 import './CustomizerPage.css';
 
 // ── Custom types ────────────────────────────────────────────────────────────
@@ -61,6 +62,7 @@ const groupSVGElements = (objects: fabric.Object[], options: SVGOptions): fabric
 // ────────────────────────────────────────────────────────────────────────────
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const DESIGN_TEXTURE_EXPORT_MULTIPLIER = 3;
 
 const getFabricEventTarget = (event: FabricTransformEvent) => event.target ?? event.transform?.target;
 
@@ -155,6 +157,8 @@ const clampObjectScaleToBounds = (obj: fabric.Object | undefined, bounds: Canvas
 const DEFAULT_BASE_PRICE = 150000;
 const PRODUCT_PREVIEW_WIDTH = 1200;
 const PRODUCT_PREVIEW_HEIGHT = 1500;
+const SHIRT_3D_MODEL_URL = '/models/base-products/tshirt_operational_v1.1.glb';
+const CALIBRATION_ROLES = ['Admin', 'Product Manager'];
 
 const loadPreviewImage = (url: string) => new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
@@ -261,6 +265,9 @@ export default function CustomizerPage() {
     const [baseProductsLoading, setBaseProductsLoading] = useState(true);
     const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
     const selectedProduct = baseProducts.find(p => p.baseProductId === selectedProductId) ?? baseProducts[0];
+    const selected3DConfig = selectedProduct?.threeDConfig;
+    const selected3DModelUrl = resolveApiAssetUrl(selected3DConfig?.modelUrl ?? null) ?? SHIRT_3D_MODEL_URL;
+    const canCalibrate3D = !!user?.role && CALIBRATION_ROLES.includes(user.role);
     const printAreaRef = useRef<BaseProductDto['printArea']>(null);
 
 
@@ -310,6 +317,10 @@ export default function CustomizerPage() {
     const [previewBackUrl, setPreviewBackUrl] = useState<string | null>(null);
     const [previewSide, setPreviewSide] = useState<'front' | 'back'>('front');
     const [cartItemCount, setCartItemCount] = useState(0);
+    const [preview3DOpen, setPreview3DOpen] = useState(false);
+    const [preview3DResetKey, setPreview3DResetKey] = useState(0);
+    const [front3DDesignTextureUrl, setFront3DDesignTextureUrl] = useState<string | null>(null);
+    const [back3DDesignTextureUrl, setBack3DDesignTextureUrl] = useState<string | null>(null);
 
     // Helper: trả về canvas đang active (dùng sau khi states đã khởi tạo)
     const getActiveCanvas = () =>
@@ -321,6 +332,18 @@ export default function CustomizerPage() {
         currentCanvas?.renderAll();
         setViewMode(mode);
         setSelectedObj(null);
+    };
+
+    const handleOpen3DPreview = async () => {
+        try {
+            const { frontDesignTextureUrl, backDesignTextureUrl } = createSideDesignTextureImages();
+            setFront3DDesignTextureUrl(frontDesignTextureUrl || null);
+            setBack3DDesignTextureUrl(backDesignTextureUrl || null);
+            setPreview3DResetKey(prev => prev + 1);
+            setPreview3DOpen(true);
+        } catch {
+            toast.error('Không thể tạo preview 3D!');
+        }
     };
 
     const getRecommendedSize = () => {
@@ -355,6 +378,21 @@ export default function CustomizerPage() {
             : selectedProduct?.backImageUrl ?? selectedProduct?.frontImageUrl;
         return resolveApiAssetUrl(sourceUrl) ?? undefined;
     };
+
+    const createDesignTexture = (side: CanvasSide) => {
+        const designCanvas = side === 'front' ? fabricCanvas.current : backFabricCanvas.current;
+        if (!designCanvas) return '';
+
+        designCanvas.discardActiveObject();
+        designCanvas.renderAll();
+
+        return designCanvas.toDataURL({ format: 'png', multiplier: DESIGN_TEXTURE_EXPORT_MULTIPLIER });
+    };
+
+    const createSideDesignTextureImages = () => ({
+        frontDesignTextureUrl: createDesignTexture('front'),
+        backDesignTextureUrl: createDesignTexture('back'),
+    });
 
     const createCompositePreview = async (side: CanvasSide) => {
         const designCanvas = side === 'front' ? fabricCanvas.current : backFabricCanvas.current;
@@ -2160,6 +2198,15 @@ Vui lòng thử lại sau..</p>
                             >
                                 <i className="fa-regular fa-eye text-sm"></i>
                             </button>
+                            {/* 3D Preview */}
+                            <button
+                                type="button"
+                                title="Xem trước 3D"
+                                onClick={handleOpen3DPreview}
+                                className="h-11 text-purple-500 hover:text-purple-700 hover:bg-purple-50 border-b flex items-center justify-center transition"
+                            >
+                                <i className="fa-solid fa-cube text-sm"></i>
+                            </button>
                             {/* Delete */}
                             <button
                                 title="Xóa đối tượng"
@@ -2783,6 +2830,60 @@ Vui lòng thử lại sau..</p>
                             </div>
                         </div>
                         {/* Hint */}
+                        <p className="text-white/30 text-[10px] text-center">Nhấn ra ngoài để đóng</p>
+                    </div>
+                </div>
+            )}
+
+            {/* ===== MODAL XEM TRƯỚC 3D ===== */}
+            {preview3DOpen && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5"
+                >
+                    <button
+                        type="button"
+                        aria-label="Đóng preview 3D"
+                        className="absolute inset-0 cursor-default"
+                        style={{ backgroundColor: 'rgba(10,10,20,0.88)', backdropFilter: 'blur(8px)' }}
+                        onClick={() => setPreview3DOpen(false)}
+                    />
+                    <div
+                        className="relative w-[min(96vw,1500px)] max-h-[94vh] flex flex-col items-center gap-4"
+                    >
+                        <div className="w-full flex items-center justify-between px-1">
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
+                                <span className="text-white font-bold text-sm tracking-wide">Xem Trước 3D</span>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setPreview3DOpen(false)}
+                                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition border border-white/20"
+                            >
+                                <i className="fa-solid fa-xmark text-sm"></i>
+                            </button>
+                        </div>
+
+                        <Shirt3DPreview
+                            key={preview3DResetKey}
+                            modelUrl={selected3DModelUrl}
+                            shirtColorHex={shirtColorHex}
+                            canCalibrate={canCalibrate3D}
+                            centerOffset={selected3DConfig?.centerOffset}
+                            frontPrintPlane={selected3DConfig?.frontPrintPlane}
+                            backPrintPlane={selected3DConfig?.backPrintPlane}
+                            frontDesignTextureUrl={front3DDesignTextureUrl}
+                            backDesignTextureUrl={back3DDesignTextureUrl}
+                        />
+
+                        <div className="w-full rounded-2xl border border-white/10 bg-black/25 px-5 py-3 text-xs text-white/70 backdrop-blur flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <span className="w-3 h-3 rounded-full border-2 border-white/40 inline-block" style={{ backgroundColor: shirtColorHex }}></span>
+                                <span>{selectedProduct?.name ?? 'Phôi áo'} · {shirtColorHex.toUpperCase()}</span>
+                            </div>
+                            <span className="text-white/45">Preview 3D chỉ dùng để hình dung, file in vẫn lấy từ canvas 2D.</span>
+                        </div>
+
                         <p className="text-white/30 text-[10px] text-center">Nhấn ra ngoài để đóng</p>
                     </div>
                 </div>

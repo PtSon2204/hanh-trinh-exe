@@ -27,6 +27,8 @@ public partial class BaseProduct
 
     public bool IsActive { get; set; }
 
+    public virtual BaseProduct3DConfig? ThreeDConfig { get; set; }
+
     public virtual ICollection<StoreProduct> StoreProducts { get; set; } = new List<StoreProduct>();
 
     public virtual ICollection<UserDesign> UserDesigns { get; set; } = new List<UserDesign>();

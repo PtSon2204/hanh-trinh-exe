@@ -7,6 +7,116 @@ namespace TheALMAProject.Infrastructure.Data
 {
     public static class DbInitializer
     {
+        private const string LegacyShirt3DModelUrl = "/models/base-products/shirt_hangar_operational.glb";
+
+        private const string PreviousTShirt3DModelUrl = "/models/base-products/tshirt_operational.glb";
+
+        private const string DefaultTShirt3DModelUrl = "/models/base-products/tshirt_operational_v1.1.glb";
+
+        private const string DefaultPolo3DModelUrl = "/models/base-products/polo_operation_v1.1.glb";
+
+        private const string DefaultShirt3DCenterOffsetJson = "[-9.443575220313505,620.7378559796042,30.46297532832287]";
+
+        private const string DefaultShirt3DFrontPrintPlaneJson = """
+        {
+          "position": [0, -620, 119],
+          "rotation": [0, 0, 0],
+          "size": [1150, 1438],
+          "renderMode": "sampledDepth",
+          "segments": [24, 32],
+          "projectionDirection": [0, 0, -1],
+          "maxProjectionDistance": 320,
+          "surfaceOffset": 1.8,
+          "projectionStrength": 0.68,
+          "fallbackBend": 0.08,
+          "smoothIterations": 1
+        }
+        """;
+
+        private const string DefaultShirt3DBackPrintPlaneJson = """
+        {
+          "position": [0, -620, -179],
+          "rotation": [0, 3.141592653589793, 0],
+          "size": [1150, 1438],
+          "renderMode": "sampledDepth",
+          "segments": [24, 32],
+          "projectionDirection": [0, 0, 1],
+          "maxProjectionDistance": 320,
+          "surfaceOffset": 1.2,
+          "projectionStrength": 0.68,
+          "fallbackBend": 0.08,
+          "smoothIterations": 1
+        }
+        """;
+
+        private const string DefaultTShirt3DFrontPrintPlaneJson = """
+        {
+          "position": [0, -620, 119],
+          "rotation": [0, 0, 0],
+          "size": [1150, 1438],
+          "renderMode": "sampledDepth",
+          "segments": [24, 32],
+          "projectionDirection": [0, 0, -1],
+          "maxProjectionDistance": 320,
+          "surfaceOffset": 1.8,
+          "projectionStrength": 0.68,
+          "fallbackBend": 0.08,
+          "smoothIterations": 1,
+          "authoredTextureOffset": [0.28, 0.11],
+          "authoredTextureRepeat": [1.3, 1.1]
+        }
+        """;
+
+        private const string DefaultTShirt3DBackPrintPlaneJson = """
+        {
+          "position": [0, -620, -179],
+          "rotation": [0, 3.141592653589793, 0],
+          "size": [1150, 1438],
+          "renderMode": "sampledDepth",
+          "segments": [24, 32],
+          "projectionDirection": [0, 0, 1],
+          "maxProjectionDistance": 320,
+          "surfaceOffset": 1.2,
+          "projectionStrength": 0.68,
+          "fallbackBend": 0.08,
+          "smoothIterations": 1,
+          "authoredTextureOffset": [-0.32, 0.1],
+          "authoredTextureRepeat": [1.3, 1.1]
+        }
+        """;
+
+        private const string DefaultPolo3DFrontPrintPlaneJson = """
+        {
+          "position": [0, -700, 255],
+          "rotation": [0, 0, 0],
+          "size": [640, 860],
+          "renderMode": "sampledDepth",
+          "segments": [36, 48],
+          "projectionDirection": [0, 0, -1],
+          "maxProjectionDistance": 760,
+          "surfaceOffset": 1.4,
+          "projectionStrength": 0.82,
+          "fallbackBend": 0.035,
+          "smoothIterations": 2
+        }
+        """;
+
+        private const string DefaultPolo3DBackPrintPlaneJson = """
+        {
+          "position": [0, -700, -285],
+          "rotation": [0, 3.141592653589793, 0],
+          "size": [680, 900],
+          "renderMode": "sampledDepth",
+          "segments": [36, 48],
+          "projectionDirection": [0, 0, 1],
+          "maxProjectionDistance": 760,
+          "surfaceOffset": 1.4,
+          "projectionStrength": 0.82,
+          "fallbackBend": 0.035,
+          "smoothIterations": 2
+        }
+        """;
+
         public static async Task InitializeAsync(ApplicationDbContext context)
         {
             //await context.Database.MigrateAsync();
@@ -82,19 +192,6 @@ namespace TheALMAProject.Infrastructure.Data
                         AvailableColors = "#FFFFFF,#000000,#800000",
                         AvailableSizes = "M,L,XL,XXL",
                         IsActive = true
-                    },
-                    new BaseProduct
-                    {
-                        Name = "Áo Hoodie mùa đông form Boxy",
-                        BasePrice = 220000.00m,
-                        FrontImageUrl = "/images/blanks/hoodie-front.png",
-                        BackImageUrl = "/images/blanks/hoodie-back.png",
-                        PrintAreaJson = "{\"front\":{\"x\":180,\"y\":280,\"width\":240,\"height\":300},\"back\":{\"x\":150,\"y\":200,\"width\":300,\"height\":450}}",
-                        Category = "Hoodie",
-                        Material = "Nỉ bông định lượng 350gsm",
-                        AvailableColors = "#000000,#808080,#006400",
-                        AvailableSizes = "M,L,XL",
-                        IsActive = true
                     }
                 };
 
@@ -102,6 +199,21 @@ namespace TheALMAProject.Infrastructure.Data
             }
 
             await context.SaveChangesAsync();
+
+            await EnsureBaseProduct3DConfigAsync(
+                context,
+                "TShirt",
+                DefaultTShirt3DModelUrl,
+                DefaultTShirt3DFrontPrintPlaneJson,
+                DefaultTShirt3DBackPrintPlaneJson,
+                migrateLegacyModelUrl: LegacyShirt3DModelUrl,
+                migrateAdditionalModelUrl: PreviousTShirt3DModelUrl);
+            await EnsureBaseProduct3DConfigAsync(
+                context,
+                "Polo",
+                DefaultPolo3DModelUrl,
+                frontPrintPlaneJson: DefaultPolo3DFrontPrintPlaneJson,
+                backPrintPlaneJson: DefaultPolo3DBackPrintPlaneJson);
 
             if (!await context.StoreProducts.AnyAsync())
             {
@@ -122,11 +234,6 @@ namespace TheALMAProject.Infrastructure.Data
 
                 var poloBaseProductId = await context.BaseProducts
                     .Where(x => x.Name == "Áo Polo dáng suông viền cổ")
-                    .Select(x => x.BaseProductId)
-                    .FirstAsync();
-
-                var hoodieBaseProductId = await context.BaseProducts
-                    .Where(x => x.Name == "Áo Hoodie mùa đông form Boxy")
                     .Select(x => x.BaseProductId)
                     .FirstAsync();
 
@@ -152,17 +259,6 @@ namespace TheALMAProject.Infrastructure.Data
                         Price = 189000.00m,
                         ImageUrl = "/images/store-products/fpt-premium-polo.png",
                         IsCustomizable = false,
-                        IsActive = true
-                    },
-                    new StoreProduct
-                    {
-                        BaseProductId = hoodieBaseProductId,
-                        UniversityId = vnuUniversityId,
-                        Name = "VNU Heritage Hoodie",
-                        Description = "Hoodie form boxy cho mùa đông với nhận diện VNU, hỗ trợ custom nhẹ.",
-                        Price = 269000.00m,
-                        ImageUrl = "/images/store-products/vnu-heritage-hoodie.png",
-                        IsCustomizable = true,
                         IsActive = true
                     }
                 };
@@ -314,6 +410,56 @@ namespace TheALMAProject.Infrastructure.Data
                     await context.Invoices.AddAsync(invoice);
                     await context.SaveChangesAsync();
                 }
+            }
+        }
+
+        private static async Task EnsureBaseProduct3DConfigAsync(
+            ApplicationDbContext context,
+            string category,
+            string modelUrl,
+            string? frontPrintPlaneJson = null,
+            string? backPrintPlaneJson = null,
+            string? migrateLegacyModelUrl = null,
+            string? migrateAdditionalModelUrl = null)
+        {
+            var baseProduct = await context.BaseProducts
+                .Include(x => x.ThreeDConfig)
+                .FirstOrDefaultAsync(x => x.Category == category);
+
+            if (baseProduct == null)
+            {
+                return;
+            }
+
+            if (baseProduct.ThreeDConfig == null)
+            {
+                await context.BaseProduct3DConfigs.AddAsync(new BaseProduct3DConfig
+                {
+                    BaseProductId = baseProduct.BaseProductId,
+                    ModelUrl = modelUrl,
+                    CenterOffsetJson = DefaultShirt3DCenterOffsetJson,
+                    FrontPrintPlaneJson = frontPrintPlaneJson ?? DefaultShirt3DFrontPrintPlaneJson,
+                    BackPrintPlaneJson = backPrintPlaneJson ?? DefaultShirt3DBackPrintPlaneJson
+                });
+
+                await context.SaveChangesAsync();
+                return;
+            }
+
+            if ((!string.IsNullOrWhiteSpace(migrateLegacyModelUrl) && baseProduct.ThreeDConfig.ModelUrl == migrateLegacyModelUrl) ||
+                (!string.IsNullOrWhiteSpace(migrateAdditionalModelUrl) && baseProduct.ThreeDConfig.ModelUrl == migrateAdditionalModelUrl))
+            {
+                baseProduct.ThreeDConfig.ModelUrl = modelUrl;
+                await context.SaveChangesAsync();
+            }
+
+            if (!string.IsNullOrWhiteSpace(frontPrintPlaneJson) || !string.IsNullOrWhiteSpace(backPrintPlaneJson))
+            {
+                baseProduct.ThreeDConfig.ModelUrl = modelUrl;
+                baseProduct.ThreeDConfig.CenterOffsetJson = DefaultShirt3DCenterOffsetJson;
+                baseProduct.ThreeDConfig.FrontPrintPlaneJson = frontPrintPlaneJson ?? DefaultShirt3DFrontPrintPlaneJson;
+                baseProduct.ThreeDConfig.BackPrintPlaneJson = backPrintPlaneJson ?? DefaultShirt3DBackPrintPlaneJson;
+                await context.SaveChangesAsync();
             }
         }
     }

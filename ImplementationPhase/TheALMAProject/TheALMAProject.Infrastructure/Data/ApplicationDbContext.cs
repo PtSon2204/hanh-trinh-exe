@@ -16,6 +16,8 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<BaseProduct> BaseProducts { get; set; } = null!;
 
+    public DbSet<BaseProduct3DConfig> BaseProduct3DConfigs { get; set; } = null!;
+
     public DbSet<Cart> Carts { get; set; } = null!;
 
     public DbSet<CartItem> CartItems { get; set; } = null!;
@@ -74,6 +76,23 @@ public class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasDefaultValue("100% Premium Cotton");
             entity.Property(e => e.Name).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<BaseProduct3DConfig>(entity =>
+        {
+            entity.HasKey(e => e.BaseProduct3DConfigId).HasName("PK__BaseProduct3DConfigs");
+
+            entity.HasIndex(e => e.BaseProductId, "UQ__BaseProduct3DConfigs__BaseProductId").IsUnique();
+
+            entity.Property(e => e.ModelUrl).HasMaxLength(500);
+            entity.Property(e => e.CenterOffsetJson).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.FrontPrintPlaneJson).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.BackPrintPlaneJson).HasColumnType("nvarchar(max)");
+
+            entity.HasOne(d => d.BaseProduct).WithOne(p => p.ThreeDConfig)
+                .HasForeignKey<BaseProduct3DConfig>(d => d.BaseProductId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK__BaseProduct3DConfigs__BaseProductId");
         });
 
         modelBuilder.Entity<Cart>(entity =>

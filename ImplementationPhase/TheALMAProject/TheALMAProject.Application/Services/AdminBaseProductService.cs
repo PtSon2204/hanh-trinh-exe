@@ -49,6 +49,10 @@ namespace TheALMAProject.Application.Services
             }
 
             var newBaseProduct = _mapper.Map<BaseProduct>(dto);
+            if (dto.ThreeDConfig != null)
+            {
+                newBaseProduct.ThreeDConfig = _mapper.Map<BaseProduct3DConfig>(dto.ThreeDConfig);
+            }
 
             await _unitOfWork.BaseProductRepo.CreateBaseProduct(newBaseProduct);
             await _unitOfWork.SaveChangesAsync();
@@ -79,6 +83,22 @@ namespace TheALMAProject.Application.Services
             baseProduct.AvailableColors = dto.AvailableColors;
             baseProduct.AvailableSizes = dto.AvailableSizes;
             baseProduct.IsActive = dto.IsActive;
+
+            if (dto.ThreeDConfig == null)
+            {
+                baseProduct.ThreeDConfig = null;
+            }
+            else if (baseProduct.ThreeDConfig == null)
+            {
+                baseProduct.ThreeDConfig = _mapper.Map<BaseProduct3DConfig>(dto.ThreeDConfig);
+            }
+            else
+            {
+                baseProduct.ThreeDConfig.ModelUrl = dto.ThreeDConfig.ModelUrl;
+                baseProduct.ThreeDConfig.CenterOffsetJson = dto.ThreeDConfig.CenterOffsetJson;
+                baseProduct.ThreeDConfig.FrontPrintPlaneJson = dto.ThreeDConfig.FrontPrintPlaneJson;
+                baseProduct.ThreeDConfig.BackPrintPlaneJson = dto.ThreeDConfig.BackPrintPlaneJson;
+            }
 
             _unitOfWork.BaseProductRepo.UpdateBaseProduct(baseProduct);
             await _unitOfWork.SaveChangesAsync();

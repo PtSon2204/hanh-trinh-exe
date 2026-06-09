@@ -49,8 +49,15 @@ export function resolveApiAssetUrl(url: string | null) {
   }
 
   // If it's a frontend public asset path or backend seed path starting with /images
-  if (url.startsWith("/images/") || url.startsWith("images/")) {
+  if (
+    url.startsWith("/images/") ||
+    url.startsWith("images/") ||
+    url.startsWith("/models/") ||
+    url.startsWith("models/")
+  ) {
     const cleanUrl = url.startsWith("/") ? url : `/${url}`;
+
+    if (cleanUrl.startsWith("/models/")) return cleanUrl;
 
     if (cleanUrl.startsWith("/images/icons/")) {
       return new URL(cleanUrl, axiosClient.defaults.baseURL).href;

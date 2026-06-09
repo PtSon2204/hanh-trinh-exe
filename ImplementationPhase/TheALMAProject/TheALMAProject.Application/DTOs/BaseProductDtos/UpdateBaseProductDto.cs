@@ -21,5 +21,7 @@ namespace TheALMAProject.Application.DTOs.BaseProductDtos
         public string? AvailableSizes { get; set; }
 
         public bool IsActive { get; set; }
+
+        public BaseProduct3DConfigDto? ThreeDConfig { get; set; }
     }
 }
