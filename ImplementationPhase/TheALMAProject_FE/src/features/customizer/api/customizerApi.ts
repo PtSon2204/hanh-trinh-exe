@@ -1,5 +1,5 @@
 import axiosClient, { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
-import type { BaseProductDto, CreateDesignRequest, IconDto, PrintAreaRect, ProductPrintArea } from '../types';
+import type { BaseProduct3DConfigDto, BaseProductDto, CreateDesignRequest, IconDto, PrintAreaRect, PrintPlane3DConfig, ProductPrintArea } from '../types';
 
 type PagedResponse<T> = {
     data?: T[];
@@ -18,6 +18,16 @@ type BaseProductResponse = Partial<BaseProductDto> & {
     printAreaJson?: string | null;
     isActive?: boolean;
     IsActive?: boolean;
+    threeDConfig?: BaseProduct3DConfigResponse | null;
+    ThreeDConfig?: BaseProduct3DConfigResponse | null;
+};
+
+type BaseProduct3DConfigResponse = Partial<BaseProduct3DConfigDto> & {
+    BaseProduct3DConfigId?: number;
+    ModelUrl?: string;
+    CenterOffsetJson?: string;
+    FrontPrintPlaneJson?: string | null;
+    BackPrintPlaneJson?: string | null;
 };
 
 const isPrintAreaRect = (value: unknown): value is PrintAreaRect => {
@@ -39,6 +49,105 @@ const parsePrintAreaJson = (json?: string | null): ProductPrintArea | null => {
     } catch {
         return null;
     }
+};
+
+const isNumberTuple = (value: unknown, length: number): value is number[] =>
+    Array.isArray(value) && value.length === length && value.every((item) => typeof item === 'number' && Number.isFinite(item));
+
+const readFiniteNumber = (value: unknown): number | undefined =>
+    typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+
+const TSHIRT_OLD_MODEL_URL = '/models/base-products/tshirt_operational.glb';
+const TSHIRT_AUTHORED_MODEL_URL = '/models/base-products/tshirt_operational_v1.1.glb';
+const TSHIRT_AUTHORED_TEXTURE_REPEAT: [number, number] = [1.3, 1.1];
+const TSHIRT_AUTHORED_FRONT_TEXTURE_OFFSET: [number, number] = [0.28, 0.11];
+const TSHIRT_AUTHORED_BACK_TEXTURE_OFFSET: [number, number] = [-0.32, 0.1];
+
+const normalize3DModelUrl = (modelUrl: string) =>
+    modelUrl === TSHIRT_OLD_MODEL_URL ? TSHIRT_AUTHORED_MODEL_URL : modelUrl;
+
+const withTShirtAuthoredDefaults = (
+    plane: PrintPlane3DConfig | null,
+    offset: [number, number],
+): PrintPlane3DConfig | null => {
+    if (!plane) return null;
+    return {
+        ...plane,
+        authoredTextureOffset: plane.authoredTextureOffset ?? offset,
+        authoredTextureRepeat: plane.authoredTextureRepeat ?? TSHIRT_AUTHORED_TEXTURE_REPEAT,
+    };
+};
+
+const readRenderMode = (value: unknown): PrintPlane3DConfig['renderMode'] | undefined =>
+    value === 'plane' || value === 'sampledDepth' ? value : undefined;
+
+const parseNumberTuple = (json?: string | null): [number, number, number] | null => {
+    if (!json) return null;
+    try {
+        const parsed: unknown = JSON.parse(json);
+        return isNumberTuple(parsed, 3) ? [parsed[0], parsed[1], parsed[2]] : null;
+    } catch {
+        return null;
+    }
+};
+
+const parsePrintPlaneJson = (json?: string | null): PrintPlane3DConfig | null => {
+    if (!json) return null;
+    try {
+        const parsed: unknown = JSON.parse(json);
+        if (!parsed || typeof parsed !== 'object') return null;
+        const source = parsed as Record<string, unknown>;
+        if (!isNumberTuple(source.position, 3) || !isNumberTuple(source.rotation, 3) || !isNumberTuple(source.size, 2)) return null;
+        return {
+            position: [source.position[0], source.position[1], source.position[2]],
+            rotation: [source.rotation[0], source.rotation[1], source.rotation[2]],
+            size: [source.size[0], source.size[1]],
+            renderMode: readRenderMode(source.renderMode),
+            segments: isNumberTuple(source.segments, 2) ? [source.segments[0], source.segments[1]] : undefined,
+            projectionDirection: isNumberTuple(source.projectionDirection, 3)
+                ? [source.projectionDirection[0], source.projectionDirection[1], source.projectionDirection[2]]
+                : undefined,
+            maxProjectionDistance: readFiniteNumber(source.maxProjectionDistance),
+            surfaceOffset: readFiniteNumber(source.surfaceOffset),
+            projectionStrength: readFiniteNumber(source.projectionStrength),
+            fallbackBend: readFiniteNumber(source.fallbackBend),
+            smoothIterations: readFiniteNumber(source.smoothIterations),
+            authoredTextureOffset: isNumberTuple(source.authoredTextureOffset, 2)
+                ? [source.authoredTextureOffset[0], source.authoredTextureOffset[1]]
+                : undefined,
+            authoredTextureRepeat: isNumberTuple(source.authoredTextureRepeat, 2)
+                ? [source.authoredTextureRepeat[0], source.authoredTextureRepeat[1]]
+                : undefined,
+        };
+    } catch {
+        return null;
+    }
+};
+
+const mapBaseProduct3DConfig = (config?: BaseProduct3DConfigResponse | null): BaseProduct3DConfigDto | null => {
+    if (!config) return null;
+    const modelUrl = normalize3DModelUrl(config.modelUrl ?? config.ModelUrl ?? '');
+    const centerOffsetJson = config.centerOffsetJson ?? config.CenterOffsetJson ?? '';
+    const frontPrintPlaneJson = config.frontPrintPlaneJson ?? config.FrontPrintPlaneJson ?? null;
+    const backPrintPlaneJson = config.backPrintPlaneJson ?? config.BackPrintPlaneJson ?? null;
+    if (!modelUrl || !centerOffsetJson) return null;
+    const frontPrintPlane = parsePrintPlaneJson(frontPrintPlaneJson);
+    const backPrintPlane = parsePrintPlaneJson(backPrintPlaneJson);
+    const isAuthoredTShirt = modelUrl === TSHIRT_AUTHORED_MODEL_URL;
+    return {
+        baseProduct3DConfigId: config.baseProduct3DConfigId ?? config.BaseProduct3DConfigId,
+        modelUrl,
+        centerOffsetJson,
+        frontPrintPlaneJson,
+        backPrintPlaneJson,
+        centerOffset: parseNumberTuple(centerOffsetJson),
+        frontPrintPlane: isAuthoredTShirt
+            ? withTShirtAuthoredDefaults(frontPrintPlane, TSHIRT_AUTHORED_FRONT_TEXTURE_OFFSET)
+            : frontPrintPlane,
+        backPrintPlane: isAuthoredTShirt
+            ? withTShirtAuthoredDefaults(backPrintPlane, TSHIRT_AUTHORED_BACK_TEXTURE_OFFSET)
+            : backPrintPlane,
+    };
 };
 
 const readCollection = <T>(payload: unknown): T[] => {
@@ -64,6 +173,7 @@ const mapBaseProduct = (p: BaseProductResponse): BaseProductDto => {
         availableColors: p.availableColors ?? p.AvailableColors ?? '#FFFFFF,#000000',
         printAreaJson,
         printArea: parsePrintAreaJson(printAreaJson),
+        threeDConfig: mapBaseProduct3DConfig(p.threeDConfig ?? p.ThreeDConfig),
     };
 };
 

@@ -18,7 +18,10 @@ namespace TheALMAProject.Infrastructure.Repositories
 
         public async Task<PagedResult<BaseProduct>> GetBaseProducts(BaseProductQuery query)
         {
-            var baseProducts = _context.BaseProducts.AsNoTracking().AsQueryable();
+            var baseProducts = _context.BaseProducts
+                .Include(x => x.ThreeDConfig)
+                .AsNoTracking()
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(query.Name))
             {
@@ -58,7 +61,9 @@ namespace TheALMAProject.Infrastructure.Repositories
 
         public async Task<BaseProduct?> GetById(int id)
         {
-            return await _context.BaseProducts.FindAsync(id);
+            return await _context.BaseProducts
+                .Include(x => x.ThreeDConfig)
+                .FirstOrDefaultAsync(x => x.BaseProductId == id);
         }
 
         public async Task<BaseProduct?> GetBaseProductByName(string name)

@@ -11,8 +11,17 @@ export interface AdminBaseProductListDto {
   isActive: boolean;
 }
 
+export interface AdminBaseProduct3DConfigDto {
+  baseProduct3DConfigId?: number;
+  modelUrl: string;
+  centerOffsetJson: string;
+  frontPrintPlaneJson: string | null;
+  backPrintPlaneJson: string | null;
+}
+
 export interface AdminBaseProductDto extends AdminBaseProductListDto {
   printAreaJson: string | null;
+  threeDConfig?: AdminBaseProduct3DConfigDto | null;
 }
 
 export interface AdminBaseProductMutationDto {
@@ -26,6 +35,7 @@ export interface AdminBaseProductMutationDto {
   availableColors: string | null;
   availableSizes: string | null;
   isActive: boolean;
+  threeDConfig: AdminBaseProduct3DConfigDto | null;
 }
 
 export interface AdminBaseProductQuery {

@@ -19,6 +19,18 @@ type PrintAreaRect = {
 
 type ProductPrintArea = Partial<Record<ImageSide, PrintAreaRect>>;
 
+type PrintPlane3DTuning = {
+  authoredTextureOffset: [number, number];
+  authoredTextureRepeat: [number, number];
+};
+
+type PrintPlane3DField = keyof PrintPlane3DTuning;
+
+type JsonFieldName =
+  | "centerOffsetJson"
+  | "frontPrintPlaneJson"
+  | "backPrintPlaneJson";
+
 type PrintAreaDrag = {
   side: ImageSide;
   mode: "move" | "resize";
@@ -32,6 +44,64 @@ type PrintAreaDrag = {
 const defaultPrintArea: Record<ImageSide, PrintAreaRect> = {
   front: { x: 0.25, y: 0.22, width: 0.5, height: 0.48 },
   back: { x: 0.25, y: 0.22, width: 0.5, height: 0.48 },
+};
+
+const default3DPrintTuning: Record<ImageSide, PrintPlane3DTuning> = {
+  front: {
+    authoredTextureOffset: [0.28, 0.11],
+    authoredTextureRepeat: [1.3, 1.1],
+  },
+  back: {
+    authoredTextureOffset: [-0.32, 0.1],
+    authoredTextureRepeat: [1.3, 1.1],
+  },
+};
+
+const shirt3DConfigPreset = {
+  modelUrl: "/models/base-products/tshirt_operational_v1.1.glb",
+  centerOffsetJson: JSON.stringify(
+    [-9.443575220313505, 620.7378559796042, 30.46297532832287],
+    null,
+    2,
+  ),
+  frontPrintPlaneJson: JSON.stringify(
+    {
+      position: [0, -620, 119],
+      rotation: [0, 0, 0],
+      size: [1150, 1438],
+      renderMode: "sampledDepth",
+      segments: [24, 32],
+      projectionDirection: [0, 0, -1],
+      maxProjectionDistance: 320,
+      surfaceOffset: 1.8,
+      projectionStrength: 0.68,
+      fallbackBend: 0.08,
+      smoothIterations: 1,
+      authoredTextureOffset: [0.28, 0.11],
+      authoredTextureRepeat: [1.3, 1.1],
+    },
+    null,
+    2,
+  ),
+  backPrintPlaneJson: JSON.stringify(
+    {
+      position: [0, -620, -179],
+      rotation: [0, Math.PI, 0],
+      size: [1150, 1438],
+      renderMode: "sampledDepth",
+      segments: [24, 32],
+      projectionDirection: [0, 0, 1],
+      maxProjectionDistance: 320,
+      surfaceOffset: 1.2,
+      projectionStrength: 0.68,
+      fallbackBend: 0.08,
+      smoothIterations: 1,
+      authoredTextureOffset: [-0.32, 0.1],
+      authoredTextureRepeat: [1.3, 1.1],
+    },
+    null,
+    2,
+  ),
 };
 
 const clampNumber = (value: number, min: number, max: number) =>
@@ -78,6 +148,77 @@ function parsePrintAreaJson(value: string | null): ProductPrintArea | null {
   }
 }
 
+function isValidJson(value: string | null | undefined) {
+  if (!value?.trim()) return true;
+
+  try {
+    JSON.parse(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function parseJsonObject(value: string | null | undefined) {
+  if (!value?.trim()) return null;
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return parsed && typeof parsed === "object"
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function isNumberPair(value: unknown): value is [number, number] {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    value.every((item) => typeof item === "number" && Number.isFinite(item))
+  );
+}
+
+function read3DPrintTuning(
+  value: string | null | undefined,
+  side: ImageSide,
+): PrintPlane3DTuning {
+  const source = parseJsonObject(value);
+  const fallback = default3DPrintTuning[side];
+
+  return {
+    authoredTextureOffset: isNumberPair(source?.authoredTextureOffset)
+      ? [...source.authoredTextureOffset]
+      : [...fallback.authoredTextureOffset],
+    authoredTextureRepeat: isNumberPair(source?.authoredTextureRepeat)
+      ? [...source.authoredTextureRepeat]
+      : [...fallback.authoredTextureRepeat],
+  };
+}
+
+function update3DPrintTuningJson(
+  value: string | null | undefined,
+  side: ImageSide,
+  field: PrintPlane3DField,
+  index: 0 | 1,
+  nextValue: number,
+) {
+  const source = parseJsonObject(value) ?? {};
+  const current = read3DPrintTuning(value, side)[field];
+  const nextTuple: [number, number] = [...current];
+  nextTuple[index] = Math.round(nextValue * 1000) / 1000;
+
+  return JSON.stringify(
+    {
+      ...source,
+      [field]: nextTuple,
+    },
+    null,
+    2,
+  );
+}
+
 function printAreaToJson(area: ProductPrintArea) {
   return JSON.stringify(area, null, 2);
 }
@@ -99,6 +240,7 @@ const emptyBaseProductForm: AdminBaseProductMutationDto = {
   material: "Cotton",
   name: "",
   printAreaJson: null,
+  threeDConfig: null,
 };
 
 function compactOptional(value: string) {
@@ -122,12 +264,26 @@ function toBaseProductForm(
     material: product.material,
     name: product.name,
     printAreaJson: product.printAreaJson,
+    threeDConfig: product.threeDConfig
+      ? {
+          baseProduct3DConfigId: product.threeDConfig.baseProduct3DConfigId,
+          modelUrl: product.threeDConfig.modelUrl ?? "",
+          centerOffsetJson: product.threeDConfig.centerOffsetJson ?? "",
+          frontPrintPlaneJson: product.threeDConfig.frontPrintPlaneJson ?? "",
+          backPrintPlaneJson: product.threeDConfig.backPrintPlaneJson ?? "",
+        }
+      : null,
   };
 }
 
 function normalizeBaseProductForm(
   form: AdminBaseProductMutationDto,
 ): AdminBaseProductMutationDto {
+  const modelUrl = compactOptional(form.threeDConfig?.modelUrl ?? "");
+  const centerOffsetJson = compactOptional(
+    form.threeDConfig?.centerOffsetJson ?? "",
+  );
+
   return {
     ...form,
     availableColors: compactOptional(form.availableColors ?? ""),
@@ -138,6 +294,20 @@ function normalizeBaseProductForm(
     material: form.material.trim(),
     name: form.name.trim(),
     printAreaJson: compactOptional(form.printAreaJson ?? ""),
+    threeDConfig:
+      modelUrl && centerOffsetJson
+        ? {
+            baseProduct3DConfigId: form.threeDConfig?.baseProduct3DConfigId,
+            modelUrl,
+            centerOffsetJson,
+            frontPrintPlaneJson: compactOptional(
+              form.threeDConfig?.frontPrintPlaneJson ?? "",
+            ),
+            backPrintPlaneJson: compactOptional(
+              form.threeDConfig?.backPrintPlaneJson ?? "",
+            ),
+          }
+        : null,
   };
 }
 
@@ -346,6 +516,33 @@ export function AdminBaseProductsPage() {
   const printAreaInvalid = Boolean(
     form.printAreaJson?.trim() && !parsePrintAreaJson(form.printAreaJson),
   );
+  const threeDConfigEnabled = Boolean(
+    form.threeDConfig?.modelUrl.trim() ||
+      form.threeDConfig?.centerOffsetJson.trim() ||
+      form.threeDConfig?.frontPrintPlaneJson?.trim() ||
+      form.threeDConfig?.backPrintPlaneJson?.trim(),
+  );
+  const threeDConfigMissingRequired = Boolean(
+    threeDConfigEnabled &&
+      (!form.threeDConfig?.modelUrl.trim() ||
+        !form.threeDConfig?.centerOffsetJson.trim()),
+  );
+  const threeDConfigJsonInvalid = Boolean(
+    form.threeDConfig &&
+      (!isValidJson(form.threeDConfig.centerOffsetJson) ||
+        !isValidJson(form.threeDConfig.frontPrintPlaneJson) ||
+        !isValidJson(form.threeDConfig.backPrintPlaneJson)),
+  );
+  const threeDConfigInvalid =
+    threeDConfigMissingRequired || threeDConfigJsonInvalid;
+  const front3DPrintTuning = read3DPrintTuning(
+    form.threeDConfig?.frontPrintPlaneJson,
+    "front",
+  );
+  const back3DPrintTuning = read3DPrintTuning(
+    form.threeDConfig?.backPrintPlaneJson,
+    "back",
+  );
 
   const loadProducts = useCallback(async () => {
     try {
@@ -394,6 +591,60 @@ export function AdminBaseProductsPage() {
     setError(null);
   };
 
+  const update3DConfig = (field: JsonFieldName | "modelUrl", value: string) => {
+    setForm((current) => ({
+      ...current,
+      threeDConfig: {
+        baseProduct3DConfigId: current.threeDConfig?.baseProduct3DConfigId,
+        modelUrl: current.threeDConfig?.modelUrl ?? "",
+        centerOffsetJson: current.threeDConfig?.centerOffsetJson ?? "",
+        frontPrintPlaneJson: current.threeDConfig?.frontPrintPlaneJson ?? "",
+        backPrintPlaneJson: current.threeDConfig?.backPrintPlaneJson ?? "",
+        [field]: value,
+      },
+    }));
+  };
+
+  const update3DPrintTuning = (
+    side: ImageSide,
+    field: PrintPlane3DField,
+    index: 0 | 1,
+    value: number,
+  ) => {
+    if (!Number.isFinite(value)) return;
+
+    const jsonField =
+      side === "front" ? "frontPrintPlaneJson" : "backPrintPlaneJson";
+
+    setForm((current) => ({
+      ...current,
+      threeDConfig: {
+        baseProduct3DConfigId: current.threeDConfig?.baseProduct3DConfigId,
+        modelUrl: current.threeDConfig?.modelUrl ?? "",
+        centerOffsetJson: current.threeDConfig?.centerOffsetJson ?? "",
+        frontPrintPlaneJson: current.threeDConfig?.frontPrintPlaneJson ?? "",
+        backPrintPlaneJson: current.threeDConfig?.backPrintPlaneJson ?? "",
+        [jsonField]: update3DPrintTuningJson(
+          current.threeDConfig?.[jsonField],
+          side,
+          field,
+          index,
+          value,
+        ),
+      },
+    }));
+  };
+
+  const applyShirt3DPreset = () => {
+    setForm((current) => ({
+      ...current,
+      threeDConfig: {
+        baseProduct3DConfigId: current.threeDConfig?.baseProduct3DConfigId,
+        ...shirt3DConfigPreset,
+      },
+    }));
+  };
+
   const uploadBaseImage = async (side: ImageSide, file: File | undefined) => {
     if (!file) return;
 
@@ -424,6 +675,16 @@ export function AdminBaseProductsPage() {
   const submitForm = async () => {
     if (printAreaInvalid) {
       setError("PrintAreaJson không hợp lệ. Hãy kéo lại vùng in hoặc sửa JSON.");
+      return;
+    }
+
+    if (threeDConfigMissingRequired) {
+      setError("3D config cần Model URL và CenterOffsetJson, hoặc để trống toàn bộ.");
+      return;
+    }
+
+    if (threeDConfigJsonInvalid) {
+      setError("3D config JSON không hợp lệ. Hãy kiểm tra center/front/back JSON.");
       return;
     }
 
@@ -488,6 +749,82 @@ export function AdminBaseProductsPage() {
       <span className="admin-form-hint">Chưa tải ảnh.</span>
     );
   };
+
+  const render3DPrintTuningInputs = (
+    side: ImageSide,
+    label: string,
+    tuning: PrintPlane3DTuning,
+  ) => (
+    <div className="admin-product-form__wide admin-3d-print-tuning-row">
+      <strong>{label}</strong>
+      <label>
+        X
+        <input
+          type="number"
+          step="0.01"
+          value={tuning.authoredTextureOffset[0]}
+          onChange={(event) =>
+            update3DPrintTuning(
+              side,
+              "authoredTextureOffset",
+              0,
+              Number(event.target.value),
+            )
+          }
+        />
+      </label>
+      <label>
+        Y
+        <input
+          type="number"
+          step="0.01"
+          value={tuning.authoredTextureOffset[1]}
+          onChange={(event) =>
+            update3DPrintTuning(
+              side,
+              "authoredTextureOffset",
+              1,
+              Number(event.target.value),
+            )
+          }
+        />
+      </label>
+      <label>
+        Scale
+        <input
+          type="number"
+          min="0.1"
+          step="0.01"
+          value={tuning.authoredTextureRepeat[0]}
+          onChange={(event) =>
+            update3DPrintTuning(
+              side,
+              "authoredTextureRepeat",
+              0,
+              Number(event.target.value),
+            )
+          }
+        />
+      </label>
+      <label>
+        Height
+        <input
+          type="number"
+          min="0.1"
+          step="0.01"
+          value={tuning.authoredTextureRepeat[1]}
+          onChange={(event) =>
+            update3DPrintTuning(
+              side,
+              "authoredTextureRepeat",
+              1,
+              Number(event.target.value),
+            )
+          }
+        />
+      </label>
+    </div>
+  );
 
   return (
     <section className="admin-orders-page admin-products-page">
@@ -575,7 +912,7 @@ export function AdminBaseProductsPage() {
                   setPageNumber(1);
                   setNameFilter(event.target.value);
                 }}
-                placeholder="Áo thun, hoodie..."
+                placeholder="Áo thun, polo..."
               />
             </label>
             <label>
@@ -854,6 +1191,124 @@ export function AdminBaseProductsPage() {
                   </span>
                 )}
               </label>
+              <div className="admin-product-form__wide admin-print-area-editor">
+                <div className="admin-print-area-editor__header">
+                  <div>
+                    <strong>3D preview config</strong>
+                    <span>
+                      Cấu hình model GLB và mặt phẳng in dùng trong customizer 3D.
+                    </span>
+                  </div>
+                  <div className="admin-print-area-editor__tabs">
+                    <button type="button" onClick={applyShirt3DPreset}>
+                      Áp preset áo thun
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setForm((current) => ({
+                          ...current,
+                          threeDConfig: null,
+                        }))
+                      }
+                    >
+                      Tắt 3D
+                    </button>
+                  </div>
+                </div>
+                <div className="admin-product-form__wide">
+                  <span className="admin-form-hint">
+                    Chỉnh vị trí in 3D cho model có mesh Print_Front/Print_Back.
+                    X/Y di chuyển hình in; Scale/Height chỉnh độ phủ ngang/dọc.
+                  </span>
+                  <span className="admin-form-hint">
+                    X: tăng để hình in dịch sang phải. Y: tăng để hình in dịch lên.
+                    Scale: tăng để vùng in rộng hơn theo chiều ngang. Height: tăng để
+                    vùng in cao hơn theo chiều dọc. Nên chỉnh từng bước 0.01 rồi lưu
+                    và kiểm tra lại trong customizer.
+                  </span>
+                </div>
+                {render3DPrintTuningInputs(
+                  "front",
+                  "Mặt trước 3D",
+                  front3DPrintTuning,
+                )}
+                {render3DPrintTuningInputs(
+                  "back",
+                  "Mặt sau 3D",
+                  back3DPrintTuning,
+                )}
+                <label>
+                  Model URL
+                  <input
+                    value={form.threeDConfig?.modelUrl ?? ""}
+                    onChange={(event) =>
+                      update3DConfig("modelUrl", event.target.value)
+                    }
+                    placeholder="/models/base-products/tshirt_operational_v1.1.glb"
+                  />
+                  <span className="admin-form-hint">
+                    Có thể dùng đường dẫn trong FE public hoặc URL asset từ API.
+                  </span>
+                </label>
+                <label>
+                  CenterOffsetJson
+                  <textarea
+                    value={form.threeDConfig?.centerOffsetJson ?? ""}
+                    onChange={(event) =>
+                      update3DConfig("centerOffsetJson", event.target.value)
+                    }
+                    spellCheck={false}
+                    placeholder="[0, 0, 0]"
+                  />
+                  {!isValidJson(form.threeDConfig?.centerOffsetJson) ? (
+                    <span className="admin-form-hint admin-form-hint--danger">
+                      CenterOffsetJson phải là JSON hợp lệ.
+                    </span>
+                  ) : null}
+                </label>
+                <label>
+                  FrontPrintPlaneJson
+                  <textarea
+                    value={form.threeDConfig?.frontPrintPlaneJson ?? ""}
+                    onChange={(event) =>
+                      update3DConfig("frontPrintPlaneJson", event.target.value)
+                    }
+                    spellCheck={false}
+                    placeholder={'{\n  "position": [0, -620, 119],\n  "size": [1150, 1438]\n}'}
+                  />
+                  {!isValidJson(form.threeDConfig?.frontPrintPlaneJson) ? (
+                    <span className="admin-form-hint admin-form-hint--danger">
+                      FrontPrintPlaneJson phải là JSON hợp lệ.
+                    </span>
+                  ) : null}
+                </label>
+                <label>
+                  BackPrintPlaneJson
+                  <textarea
+                    value={form.threeDConfig?.backPrintPlaneJson ?? ""}
+                    onChange={(event) =>
+                      update3DConfig("backPrintPlaneJson", event.target.value)
+                    }
+                    spellCheck={false}
+                    placeholder={'{\n  "position": [0, -620, -179],\n  "rotation": [0, 3.141592653589793, 0]\n}'}
+                  />
+                  {!isValidJson(form.threeDConfig?.backPrintPlaneJson) ? (
+                    <span className="admin-form-hint admin-form-hint--danger">
+                      BackPrintPlaneJson phải là JSON hợp lệ.
+                    </span>
+                  ) : null}
+                </label>
+                {threeDConfigMissingRequired ? (
+                  <span className="admin-form-hint admin-form-hint--danger">
+                    Nếu bật 3D, cần nhập cả Model URL và CenterOffsetJson.
+                  </span>
+                ) : (
+                  <span className="admin-form-hint">
+                    Để trống toàn bộ để không dùng 3D config cho phôi này.
+                  </span>
+                )}
+              </div>
               <label className="admin-product-checkbox">
                 <input
                   type="checkbox"
@@ -872,7 +1327,11 @@ export function AdminBaseProductsPage() {
                   type="button"
                   onClick={() => void submitForm()}
                   disabled={
-                    saving || uploadingImage !== null || !form.name.trim() || printAreaInvalid
+                    saving ||
+                    uploadingImage !== null ||
+                    !form.name.trim() ||
+                    printAreaInvalid ||
+                    threeDConfigInvalid
                   }
                 >
                   {saving
