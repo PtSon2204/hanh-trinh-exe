@@ -6,8 +6,6 @@ using TheALMAProject.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace TheALMAProject.API
 {
@@ -72,64 +70,10 @@ namespace TheALMAProject.API
             builder.Services.AddMemoryCache();
 
             // =====================================================
-            // CẤU HÌNH RATE LIMITING — Chống brute-force và spam
+            // CẤU HÌNH CHỐNG DDOS — Rate Limiting + IP Blacklist + Body Size Limit
             // =====================================================
-            // Dùng .NET 8 built-in rate limiting (không cần package ngoài)
-            // Giới hạn theo IP address để ngăn tấn công tự động.
-            builder.Services.AddRateLimiter(options =>
-            {
-                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            builder.Services.AddDDoSProtection(builder.Configuration);
 
-                // Giới hạn đăng ký: 5 lần / 15 phút / IP
-                // Ngăn kẻ tấn công tạo hàng loạt tài khoản giả
-                options.AddPolicy("register-limit", httpContext =>
-                    RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                        factory: _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 5,
-                            Window = TimeSpan.FromMinutes(15),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        }));
-
-                // Giới hạn đăng nhập: 10 lần / 15 phút / IP
-                // Ngăn brute-force password
-                options.AddPolicy("login-limit", httpContext =>
-                    RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                        factory: _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 10,
-                            Window = TimeSpan.FromMinutes(15),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        }));
-
-                // Giới hạn gửi lại OTP: 3 lần / 15 phút / IP
-                // Ngăn brute-force OTP qua nhiều lần gửi lại
-                options.AddPolicy("otp-limit", httpContext =>
-                    RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                        factory: _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 3,
-                            Window = TimeSpan.FromMinutes(15),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                            QueueLimit = 0
-                        }));
-            });
-
-            // =====================================================
-            // CẤU HÌNH JWT AUTHENTICATION
-            // =====================================================
-            // Giải thích:
-            // 1. AddAuthentication: Khai báo scheme mặc định là JwtBearer
-            // 2. AddJwtBearer: Cấu hình cách server verify JWT token
-            //    - ValidateIssuerSigningKey: Kiểm tra chữ ký token bằng SecretKey
-            //    - ValidateIssuer: Kiểm tra token được phát hành bởi "TheALMAProject"
-            //    - ValidateAudience: Kiểm tra token dành cho "TheALMAProject"
-            //    - ValidateLifetime: Kiểm tra token chưa hết hạn
             var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"]
                 ?? throw new InvalidOperationException("JwtSettings:SecretKey chưa được cấu hình trong appsettings.json!");
 
@@ -155,9 +99,6 @@ namespace TheALMAProject.API
 
             builder.Services.AddEndpointsApiExplorer();
 
-            // =====================================================
-            // CẤU HÌNH SWAGGER CÓ JWT
-            // =====================================================
             // Thêm nút "Authorize" trên Swagger UI để test API có JWT
             builder.Services.AddSwaggerGen(options =>
             {
@@ -217,7 +158,13 @@ namespace TheALMAProject.API
             //Đăng kí middleware exception
             app.UseMiddleware<ExceptionMiddleware>();
 
-            // Kích hoạt Rate Limiting (phải đặt trước UseAuthentication)
+            // Tầng 4 - Security headers — ẩn thông tin server, chống XSS/Clickjacking
+            app.UseMiddleware<SecurityHeadersMiddleware>();
+
+            // Tầng 3 - IP Blacklist — chặn IP thủ công + auto-block IP tấn công
+            app.UseMiddleware<IpBlacklistMiddleware>();
+
+            // Tầng 2 - Kích hoạt Rate Limiting — giới hạn request/phút/IP (phải đặt trước UseAuthentication)
             app.UseRateLimiter();
 
             app.UseHttpsRedirection();
@@ -234,12 +181,6 @@ namespace TheALMAProject.API
                 }
             });
 
-            // =====================================================
-            // QUAN TRỌNG: Thứ tự middleware
-            // UseAuthentication PHẢI trước UseAuthorization
-            // 1. Authentication: "Bạn là ai?" (verify JWT → lấy UserId, Role)
-            // 2. Authorization:  "Bạn có quyền không?" (check [Authorize] attribute)
-            // =====================================================
             app.UseAuthentication();
             app.UseAuthorization();
 
