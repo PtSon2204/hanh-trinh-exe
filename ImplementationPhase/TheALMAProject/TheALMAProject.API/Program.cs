@@ -53,8 +53,9 @@ namespace TheALMAProject.API
                     {
                         sqlOptions.EnableRetryOnFailure(
                             maxRetryCount: 5,
-                            maxRetryDelay: TimeSpan.FromSeconds(30),
-                            errorNumbersToAdd: null);
+                            maxRetryDelay: TimeSpan.FromSeconds(60),
+                            // 42119 = Azure SQL Serverless đang paused, cần thời gian để resume
+                            errorNumbersToAdd: [42119]);
                     });
             });
 
