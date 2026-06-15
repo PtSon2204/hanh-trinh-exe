@@ -119,9 +119,9 @@ namespace TheALMAProject.Infrastructure.Data
 
         public static async Task InitializeAsync(ApplicationDbContext context)
         {
-            await context.Database.MigrateAsync();
+            //await context.Database.MigrateAsync();
 
-            string defaultPassword = "@123456";
+            string defaultPassword = "";
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(defaultPassword);
 
             if (!await context.Users.AnyAsync())
