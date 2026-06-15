@@ -258,6 +258,7 @@ export default function CustomizerPage() {
     const [viewMode, setViewMode] = useState<'front' | 'back'>('front');
     const [layersVisible, setLayersVisible] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);
+    const [guideOpen, setGuideOpen] = useState(false);
 
 
     // --- Danh sách Phôi Áo (load từ DB) ---
@@ -1484,6 +1485,10 @@ QUAN TRỌNG về svgCode:
                             </span>
                         )}
                     </Link>
+                    <button onClick={() => setGuideOpen(true)} className="text-amber-600 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-2 rounded-lg text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
+                        <i className="fa-solid fa-circle-question"></i>
+                        <span className="hidden sm:inline">Hướng Dẫn</span>
+                    </button>
                     <button onClick={() => setHistoryOpen(true)} className="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg text-sm font-semibold shadow-sm transition flex items-center gap-1.5">
                         <i className="fa-solid fa-clock-rotate-left"></i>
                         <span className="hidden sm:inline">Lịch Sử</span>
@@ -2973,6 +2978,64 @@ Vui lòng thử lại sau..</p>
                     >
                         <i className="fa-solid fa-xmark text-sm"></i>
                     </button>
+                </div>
+            </div>
+        )}
+
+        {/* --- GUIDE MODAL --- */}
+        {guideOpen && (
+            <div className="fixed inset-0 z-[400] flex items-center justify-center p-4">
+                <div onClick={() => setGuideOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md z-10 overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <i className="fa-solid fa-circle-question text-white text-xl"></i>
+                            <h2 className="text-lg font-bold text-white">Hướng Dẫn Thiết Kế Áo</h2>
+                        </div>
+                        <button onClick={() => setGuideOpen(false)} className="text-white/80 hover:text-white transition text-xl">
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-6 space-y-4">
+                        <div className="flex gap-3">
+                            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">1</span>
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                                Khi thiết kế áo, bạn phải <span className="font-semibold text-gray-900">chọn ít nhất 1 icon / hình ảnh</span> để có thể chốt vào giỏ hàng.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">2</span>
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                                Khi dùng chức năng <span className="font-semibold text-gray-900">AI Thiết Kế</span>, hãy mô tả theo dạng <span className="italic text-amber-700">"tạo logo..."</span> để nhận được hình ảnh phù hợp nhất với việc in áo.
+                            </p>
+                        </div>
+                        <div className="flex gap-3">
+                            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center font-bold text-sm">3</span>
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                                Muốn xóa icon, bạn có thể nhấn phím <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Backspace</kbd> hoặc <kbd className="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-xs font-mono">Delete</kbd> trên bàn phím, hoặc bấm vào <span className="font-semibold text-gray-900">icon thùng rác</span> ở thanh công cụ bên phải.
+                            </p>
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+                            <p className="text-sm text-gray-500 italic">
+                                Nếu có thắc mắc, xin vui lòng{' '}
+                                <Link to="/contact" onClick={() => setGuideOpen(false)} className="text-amber-600 hover:text-amber-700 font-semibold underline underline-offset-2">
+                                    liên hệ
+                                </Link>
+                                {' '}với chúng tôi.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 pb-5">
+                        <button onClick={() => setGuideOpen(false)} className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-2.5 rounded-xl transition">
+                            Đã hiểu, bắt đầu thiết kế!
+                        </button>
+                    </div>
                 </div>
             </div>
         )}
