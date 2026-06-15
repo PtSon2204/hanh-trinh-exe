@@ -258,7 +258,7 @@ export default function CustomizerPage() {
     const [viewMode, setViewMode] = useState<'front' | 'back'>('front');
     const [layersVisible, setLayersVisible] = useState(false);
     const [historyOpen, setHistoryOpen] = useState(false);
-    const [selectedQty, setSelectedQty] = useState(1);
+
 
     // --- Danh sách Phôi Áo (load từ DB) ---
     const [baseProducts, setBaseProducts] = useState<BaseProductDto[]>([]);
