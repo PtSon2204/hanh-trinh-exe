@@ -869,6 +869,31 @@ export default function CustomizerPage() {
         ac.renderAll();
     };
 
+    // 4b. Keyboard shortcut: Delete / Backspace → xóa object đang chọn trên canvas
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Bỏ qua nếu người dùng đang gõ trong ô input, textarea, hoặc contenteditable
+            const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+            const isEditing = tag === 'input' || tag === 'textarea' || (e.target as HTMLElement)?.isContentEditable;
+            if (isEditing) return;
+
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                const ac = getActiveCanvas();
+                if (!ac) return;
+                const obj = ac.getActiveObject();
+                if (!obj) return;
+                // Không xóa nếu đang edit text trực tiếp trên canvas
+                if ((obj as fabric.IText).isEditing) return;
+                ac.remove(obj);
+                setSelectedObj(null);
+                ac.renderAll();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [viewMode]);
+
     // 5. Call Gemini AI để gợi ý thiết kế
     const handleGenerateAI = async () => {
         if (!requireLogin()) return;
