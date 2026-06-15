@@ -2507,25 +2507,7 @@ Vui lòng thử lại sau..</p>
                     </div>
 
                     <div className="bg-gradient-to-b from-white to-gray-50 flex flex-col pt-0 border-t">
-                        <div className="p-4 pb-2">
-                            <div className="flex justify-between items-center">
-                                <span className="text-xs text-gray-500">Giá / áo:</span>
-                                <span className="font-bold text-gray-800">{unitPrice.toLocaleString('vi-VN')}đ</span>
-                            </div>
-                            <div className="flex justify-between items-center mt-1">
-                                <span className="text-xs text-gray-500">Số lượng:</span>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={() => setSelectedQty(q => Math.max(1, q - 1))} className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-600 transition">-</button>
-                                    <span className="font-bold w-5 text-center">{selectedQty}</span>
-                                    <button onClick={() => setSelectedQty(q => q + 1)} className="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-600 transition">+</button>
-                                </div>
-                            </div>
-                            <div className="flex justify-between items-center mt-2 pt-2 border-t">
-                                <span className="text-sm font-semibold text-gray-700">Tạm tính:</span>
-                                <span className="text-xl font-black text-blue-600">{totalPrice.toLocaleString('vi-VN')}đ</span>
-                            </div>
-                        </div>
-                        <div className="p-4 pt-1">
+                        <div className="p-4">
                             <button onClick={handleOpenCartModal} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] flex justify-center items-center gap-2 transition-all hover:-translate-y-0.5">
                                 <i className="fa-regular fa-square-check text-lg"></i> Chốt &amp; Cho Vào Giỏ
                             </button>
