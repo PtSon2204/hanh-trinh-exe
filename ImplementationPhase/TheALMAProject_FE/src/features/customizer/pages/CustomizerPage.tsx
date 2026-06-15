@@ -2507,7 +2507,13 @@ Vui lòng thử lại sau..</p>
                     </div>
 
                     <div className="bg-gradient-to-b from-white to-gray-50 flex flex-col pt-0 border-t">
-                        <div className="p-4">
+                        <div className="px-4 pt-3 pb-1">
+                            <div className="flex justify-between items-center">
+                                <span className="text-xs text-gray-500">Giá / áo:</span>
+                                <span className="font-bold text-gray-800">{unitPrice.toLocaleString('vi-VN')}đ</span>
+                            </div>
+                        </div>
+                        <div className="p-4 pt-2">
                             <button onClick={handleOpenCartModal} className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] flex justify-center items-center gap-2 transition-all hover:-translate-y-0.5">
                                 <i className="fa-regular fa-square-check text-lg"></i> Chốt &amp; Cho Vào Giỏ
                             </button>
