@@ -44,6 +44,9 @@ export default function ProductListPage() {
 			universityId: searchParams.get("universityId")
 				? Number(searchParams.get("universityId"))
 				: undefined,
+			hasBaseProduct: searchParams.get("hasBaseProduct")
+				? searchParams.get("hasBaseProduct") === "true"
+				: undefined,
 			isCustomizable: searchParams.get("isCustomizable")
 				? searchParams.get("isCustomizable") === "true"
 				: undefined,
@@ -128,6 +131,8 @@ export default function ProductListPage() {
 		if (newQuery.university) params.set("university", newQuery.university);
 		if (newQuery.universityId)
 			params.set("universityId", String(newQuery.universityId));
+		if (newQuery.hasBaseProduct != null)
+			params.set("hasBaseProduct", String(newQuery.hasBaseProduct));
 		if (newQuery.isCustomizable != null)
 			params.set("isCustomizable", String(newQuery.isCustomizable));
 		if (newQuery.minPrice != null)

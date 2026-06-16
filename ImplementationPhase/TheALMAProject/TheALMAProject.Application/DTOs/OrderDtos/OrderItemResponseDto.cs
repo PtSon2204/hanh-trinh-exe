@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TheALMAProject.Application.DTOs.OrderDtos
+﻿namespace TheALMAProject.Application.DTOs.OrderDtos
 {
     public class OrderItemResponseDto
     {
@@ -15,6 +9,7 @@ namespace TheALMAProject.Application.DTOs.OrderDtos
         public string? ImageUrl { get; set; }
 
         public string Size { get; set; } = null!;
+        public bool RequiresSize { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
 

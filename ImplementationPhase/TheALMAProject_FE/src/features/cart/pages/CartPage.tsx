@@ -245,10 +245,10 @@ export default function CartPage() {
                                             onChange={handleSelectAll}
                                             className="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 cursor-pointer"
                                         />
-                                        <span>Chọn tất cả ({cart.items.length} thiết kế)</span>
+                                        <span>Chọn tất cả ({cart.items.length} sản phẩm)</span>
                                     </label>
                                     <span className="text-xs text-gray-400 font-medium">
-                                        Đã chọn {selectedItemIds.length} / {cart.items.length} thiết kế
+                                        Đã chọn {selectedItemIds.length} / {cart.items.length} sản phẩm
                                     </span>
                                 </div>
 
@@ -299,17 +299,21 @@ export default function CartPage() {
                                                     {/* Chỗ này vì giao diện của bạn chỉ hỗ trợ hiển thị 1 size mỗi dòng, 
                                                         mà cấu trúc giỏ hàng hiện tại (mỗi item là 1 size) phù hợp với HTML này */}
                                                     <div className="w-20 font-bold text-gray-800">
-                                                        <select
-                                                            value={item.size}
-                                                            onChange={(e) => handleSizeChange(item, e.target.value)}
-                                                            className="bg-transparent font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 -ml-1 cursor-pointer hover:bg-gray-200 transition-colors"
-                                                        >
-                                                            <option value="S">S</option>
-                                                            <option value="M">M</option>
-                                                            <option value="L">L</option>
-                                                            <option value="XL">XL</option>
-                                                            <option value="XXL">XXL</option>
-                                                        </select>
+                                                        {item.requiresSize ? (
+                                                            <select
+                                                                value={item.size}
+                                                                onChange={(e) => handleSizeChange(item, e.target.value)}
+                                                                className="bg-transparent font-bold focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 -ml-1 cursor-pointer hover:bg-gray-200 transition-colors"
+                                                            >
+                                                                <option value="S">S</option>
+                                                                <option value="M">M</option>
+                                                                <option value="L">L</option>
+                                                                <option value="XL">XL</option>
+                                                                <option value="XXL">XXL</option>
+                                                            </select>
+                                                        ) : (
+                                                            <span className="text-xs font-semibold text-gray-500 normal-case">Không áp dụng</span>
+                                                        )}
                                                     </div>
 
                                                     <div className="w-28 flex justify-center">
@@ -346,8 +350,8 @@ export default function CartPage() {
                             </div>
 
                             <div className="mt-6">
-                                <Link to="/customizer" className="text-blue-600 font-medium hover:text-blue-700 inline-flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-xl transition-colors">
-                                    <i className="fa-solid fa-arrow-left-long"></i> Tiếp tục thiết kế áo khác
+                                <Link to="/category" className="text-blue-600 font-medium hover:text-blue-700 inline-flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-xl transition-colors">
+                                    <i className="fa-solid fa-arrow-left-long"></i> Tiếp tục mua sắm
                                 </Link>
                             </div>
                         </div>
@@ -363,15 +367,15 @@ export default function CartPage() {
                                 <div className="p-6">
                                     <div className="space-y-4 mb-6">
                                         <div className="flex justify-between text-gray-600 font-medium text-sm">
-                                            <span>Tổng số áo:</span>
-                                            <span className="text-gray-900 font-semibold">{totalItemsCount} áo</span>
+                                            <span>Tổng số lượng:</span>
+                                            <span className="text-gray-900 font-semibold">{totalItemsCount} sản phẩm</span>
                                         </div>
                                         <div className="flex justify-between text-gray-600 text-sm">
                                             <span>Phí in:</span>
                                             <span className="text-green-600 font-semibold">Miễn phí</span>
                                         </div>
                                         <div className="flex justify-between text-gray-600 text-sm">
-                                            <span>Tạm tính phí áo:</span>
+                                            <span>Tạm tính sản phẩm:</span>
                                             <span className="font-semibold text-gray-900">{selectedSubTotal.toLocaleString('vi-VN')}đ</span>
                                         </div>
 

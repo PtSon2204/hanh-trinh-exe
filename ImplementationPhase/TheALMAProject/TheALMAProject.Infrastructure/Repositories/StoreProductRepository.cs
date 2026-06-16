@@ -46,6 +46,13 @@ namespace TheALMAProject.Infrastructure.Repositories
                 products = products.Where(x => x.BaseProductId == query.BaseProductId.Value);
             }
 
+            if (query.HasBaseProduct.HasValue)
+            {
+                products = query.HasBaseProduct.Value
+                    ? products.Where(x => x.BaseProductId != null)
+                    : products.Where(x => x.BaseProductId == null);
+            }
+
             if (query.UniversityId.HasValue)
             {
                 products = products.Where(x => x.UniversityId == query.UniversityId.Value);

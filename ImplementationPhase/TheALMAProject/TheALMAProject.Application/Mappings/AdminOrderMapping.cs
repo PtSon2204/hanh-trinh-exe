@@ -31,7 +31,9 @@ namespace TheALMAProject.Application.Mappings
                 .ForMember(dest => dest.BackCanvasJson, opt => opt.MapFrom(src => src.Design != null ? src.Design.BackCanvasJson : null))
                 .ForMember(dest => dest.PrintAreaJson, opt => opt.MapFrom(src => src.Design != null ? src.Design.BaseProduct.PrintAreaJson : null))
                 .ForMember(dest => dest.ProductFrontImageUrl, opt => opt.MapFrom(src => src.Design != null ? src.Design.BaseProduct.FrontImageUrl : null))
-                .ForMember(dest => dest.ProductBackImageUrl, opt => opt.MapFrom(src => src.Design != null ? src.Design.BaseProduct.BackImageUrl : null));
+                .ForMember(dest => dest.ProductBackImageUrl, opt => opt.MapFrom(src => src.Design != null ? src.Design.BaseProduct.BackImageUrl : null))
+                .ForMember(dest => dest.RequiresSize, opt => opt.MapFrom(src =>
+                    src.DesignId.HasValue || (src.Product != null && src.Product.BaseProductId != null)));
         }
     }
 }

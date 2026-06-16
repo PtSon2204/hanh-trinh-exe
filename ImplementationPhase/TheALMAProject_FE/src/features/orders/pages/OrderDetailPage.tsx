@@ -808,7 +808,9 @@ export default function OrderDetailPage() {
                             <div className="flex-1 min-w-0">
                                 <h4 className="font-bold text-gray-900 text-sm leading-snug mb-1 truncate">{item.itemName}</h4>
                                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 font-medium">
-                                    <span>Size: <strong className="text-gray-700">{item.size}</strong></span>
+                                                {item.requiresSize && (
+                                                    <span>Size: <strong className="text-gray-700">{item.size}</strong></span>
+                                                )}
                                     <span>Số lượng: <strong className="text-gray-700">{item.quantity}</strong></span>
                                     {item.isCustomDesign && (
                                         <span className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded text-[10px] font-bold">✨ Tự thiết kế</span>

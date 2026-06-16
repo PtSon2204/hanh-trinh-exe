@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TheALMAProject.Application.DTOs.StoreProductDtos
+﻿namespace TheALMAProject.Application.DTOs.StoreProductDtos
 {
     public class UpdateStoreProductDto
     {
+        public int? BaseProductId { get; set; }
+        public int? UniversityId { get; set; }
         public string Name { get; set; } = null!;
         public string? Description { get; set; } = null!;
         public decimal Price { get; set; }

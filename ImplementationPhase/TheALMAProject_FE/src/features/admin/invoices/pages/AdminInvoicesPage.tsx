@@ -232,7 +232,7 @@ export function AdminInvoicesPage() {
         </article>
       </section>
 
-      <div className="admin-orders-grid admin-products-grid admin-users-grid">
+      <div className="admin-orders-grid admin-products-grid admin-users-grid admin-invoices-grid">
         <section className="admin-panel admin-orders-carousel">
           <div className="admin-panel__header admin-orders-toolbar">
             <div>
@@ -437,11 +437,11 @@ export function AdminInvoicesPage() {
         </section>
 
         <aside className="admin-orders-side">
-          <section className="admin-panel">
+          <section className="admin-panel admin-invoice-detail-panel">
             <h2>Chi tiết hóa đơn</h2>
             {detailLoading ? <div className="admin-empty-state">Đang tải chi tiết...</div> : null}
             {!detailLoading && selectedInvoice ? (
-              <div className="admin-user-detail">
+              <div className="admin-user-detail admin-invoice-detail">
                 <dl>
                   <div>
                     <dt>Mã hóa đơn</dt>
@@ -513,7 +513,7 @@ export function AdminInvoicesPage() {
                         <tr key={item.orderItemId}>
                           <td>
                             <strong>{item.itemName}</strong>
-                            <span>{item.size} · {item.designId ? `Design #${item.designId}` : `Product #${item.productId ?? "N/A"}`}</span>
+                            <span>{item.requiresSize ? `${item.size} · ` : ""}{item.designId ? `Design #${item.designId}` : `Product #${item.productId ?? "N/A"}`}</span>
                           </td>
                           <td>{item.quantity}</td>
                           <td>{formatCurrency(item.lineTotal)}</td>

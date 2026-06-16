@@ -35,6 +35,7 @@ namespace TheALMAProject.Application.Services
             var items = result.Data.Select(p => new ProductListItemDto
             {
                 ProductId = p.ProductId,
+                BaseProductId = p.BaseProductId,
                 Name = p.Name,
                 Description = p.Description,
                 Price = p.Price,
@@ -106,6 +107,7 @@ namespace TheALMAProject.Application.Services
             return new ProductDetailDto
             {
                 ProductId = product.ProductId,
+                BaseProductId = product.BaseProductId,
                 Name = product.Name,
                 Description = product.Description,
                 Price = product.Price,
@@ -161,6 +163,7 @@ namespace TheALMAProject.Application.Services
             return relatedProducts.Select(p => new ProductListItemDto
             {
                 ProductId = p.ProductId,
+                BaseProductId = p.BaseProductId,
                 Name = p.Name,
                 Description = p.Description,
                 Price = p.Price,
@@ -199,6 +202,7 @@ namespace TheALMAProject.Application.Services
             return products.Select(p => new SearchProductDto
             {
                 ProductId = p.ProductId,
+                BaseProductId = p.BaseProductId,
                 Name = p.Name,
                 ImageUrl = p.ImageUrl,
                 Price = p.Price,

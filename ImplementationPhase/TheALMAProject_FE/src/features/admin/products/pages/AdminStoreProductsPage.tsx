@@ -246,18 +246,21 @@ export function AdminStoreProductsPage() {
         baseProductId: form.baseProductId,
         description: compactOptional(form.description ?? ""),
         imageUrl: compactOptional(form.imageUrl ?? ""),
+        isActive: form.isActive,
         isCustomizable: form.isCustomizable,
         name: form.name.trim(),
         price: form.price,
         universityId: form.universityId,
       };
       const updatePayload: AdminUpdateStoreProductDto = {
+        baseProductId: form.baseProductId,
         description: createPayload.description,
         imageUrl: createPayload.imageUrl,
         isActive: form.isActive,
         isCustomizable: form.isCustomizable,
         name: createPayload.name,
         price: createPayload.price,
+        universityId: form.universityId,
       };
       const result = selectedProduct
         ? await adminProductApi.updateStoreProduct(
@@ -597,7 +600,6 @@ export function AdminStoreProductsPage() {
                       baseProductId: optionalNumber(event.target.value),
                     }))
                   }
-                  disabled={!!selectedProduct}
                 >
                   <option value="">Chưa gắn phôi</option>
                   {baseProducts.map((item) => (
@@ -617,7 +619,6 @@ export function AdminStoreProductsPage() {
                       universityId: optionalNumber(event.target.value),
                     }))
                   }
-                  disabled={!!selectedProduct}
                 >
                   <option value="">Chọn trường</option>
                   {universities.map((item) => (
@@ -709,7 +710,6 @@ export function AdminStoreProductsPage() {
                       isActive: event.target.checked,
                     }))
                   }
-                  disabled={!selectedProduct}
                 />{" "}
                 Đang bán
               </label>

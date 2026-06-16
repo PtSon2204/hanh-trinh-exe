@@ -8,6 +8,7 @@ namespace TheALMAProject.Application.DTOs.AdminInvoiceDtos
         public string ItemName { get; set; } = null!;
         public string? ImageUrl { get; set; }
         public string Size { get; set; } = null!;
+        public bool RequiresSize { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
         public decimal LineTotal { get; set; }

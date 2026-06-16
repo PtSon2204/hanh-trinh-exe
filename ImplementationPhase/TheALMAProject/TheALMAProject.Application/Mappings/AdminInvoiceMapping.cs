@@ -29,7 +29,9 @@ namespace TheALMAProject.Application.Mappings
                     src.ProductId.HasValue ? src.Product!.Name : src.Design!.DesignName))
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
                     src.ProductId.HasValue ? src.Product!.ImageUrl : src.Design!.PreviewImageUrl))
-                .ForMember(dest => dest.LineTotal, opt => opt.MapFrom(src => src.UnitPrice * src.Quantity));
+                .ForMember(dest => dest.LineTotal, opt => opt.MapFrom(src => src.UnitPrice * src.Quantity))
+                .ForMember(dest => dest.RequiresSize, opt => opt.MapFrom(src =>
+                    src.DesignId.HasValue || (src.Product != null && src.Product.BaseProductId != null)));
         }
     }
 }

@@ -63,6 +63,8 @@ namespace TheALMAProject.Application.Services
                 throw new Exception("Store Product not found");
             }
 
+            product.BaseProductId = dto.BaseProductId;
+            product.UniversityId = dto.UniversityId;
             product.Name = dto.Name;
             product.Description = dto.Description;
             product.Price = dto.Price;

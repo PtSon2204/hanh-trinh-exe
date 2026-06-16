@@ -383,7 +383,6 @@ export default function AdminUserDesignsPage() {
     }
   };
 
-  const previewUrl = resolveApiAssetUrl(selectedDesign?.previewImageUrl ?? null);
   const frontPreviewUrl = resolveApiAssetUrl(selectedDesign?.frontPreviewImageUrl ?? selectedDesign?.previewImageUrl ?? null);
   const backPreviewUrl = resolveApiAssetUrl(selectedDesign?.backPreviewImageUrl ?? null);
   const productFrontImageUrl = resolveApiAssetUrl(selectedBaseProduct?.frontImageUrl ?? null);
@@ -594,8 +593,8 @@ export default function AdminUserDesignsPage() {
                     </div>
                   </dl>
                   <div className="admin-design-links">
-                    {previewUrl ? <a href={previewUrl} target="_blank" rel="noreferrer">Mở preview</a> : null}
                     <button
+                      className="admin-design-export-button"
                       type="button"
                       onClick={() => {
                         const opened = openDesignPreviewExport(

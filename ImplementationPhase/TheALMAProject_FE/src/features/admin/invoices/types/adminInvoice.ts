@@ -15,6 +15,7 @@ export interface AdminInvoiceOrderItemDto {
 	itemName: string;
 	imageUrl: string | null;
 	size: string;
+	requiresSize: boolean;
 	quantity: number;
 	unitPrice: Decimal;
 	lineTotal: Decimal;

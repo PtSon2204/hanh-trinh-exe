@@ -1249,7 +1249,9 @@ const CheckoutPage = () => {
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="font-bold text-gray-900 text-sm mb-0.5 truncate">{item.productName}</h4>
+                                            {item.requiresSize && (
                                                 <p className="text-xs text-gray-500">Size: {item.size}</p>
+                                            )}
                                             </div>
                                             <span className="font-semibold text-gray-900 text-sm whitespace-nowrap">
                                                 {(item.unitPrice * item.quantity).toLocaleString('vi-VN')}đ

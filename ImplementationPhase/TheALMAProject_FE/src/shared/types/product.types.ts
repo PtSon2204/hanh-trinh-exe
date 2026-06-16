@@ -3,6 +3,7 @@
 /** UC-08: Danh sách sản phẩm (ProductListItemDto) */
 export interface ProductListItem {
   productId: number;
+  baseProductId?: number | null;
   name: string;
   description?: string;
   price: number;
@@ -18,6 +19,7 @@ export interface ProductListItem {
 /** UC-09: Chi tiết sản phẩm (ProductDetailDto) */
 export interface ProductDetail {
   productId: number;
+  baseProductId?: number | null;
   name: string;
   description?: string;
   price: number;
@@ -51,6 +53,7 @@ export interface ProductReview {
 /** UC-10: Kết quả search nhanh (SearchProductDto) */
 export interface SearchProduct {
   productId: number;
+  baseProductId?: number | null;
   name: string;
   imageUrl?: string;
   price: number;
@@ -73,6 +76,7 @@ export interface ProductQuery {
   pageSize?: number;
   universityId?: number;
   baseProductId?: number;
+  hasBaseProduct?: boolean;
   isActive?: boolean;
   isCustomizable?: boolean;
 }

@@ -69,10 +69,13 @@ export interface AdminCreateStoreProductDto {
   description: string | null;
   price: number;
   imageUrl: string | null;
+  isActive: boolean;
   isCustomizable: boolean;
 }
 
 export interface AdminUpdateStoreProductDto {
+  baseProductId: number | null;
+  universityId: number | null;
   name: string;
   description: string | null;
   price: number;

@@ -15,6 +15,8 @@ const PRICE_RANGES = [
   { key: 'over-400', label: 'Trên 400K', min: 400000, max: undefined },
 ];
 
+const MISC_CATEGORY_VALUE = '__miscellaneous__';
+
 export default function ProductFilters({ filterOptions, loading, query, onChange }: Props) {
   const setField = (fields: Partial<ProductQuery>) =>
     onChange({ ...query, ...fields, pageNumber: 1 });
@@ -32,7 +34,7 @@ export default function ProductFilters({ filterOptions, loading, query, onChange
       sortDescending: query.sortDescending,
     });
 
-  const hasFilters = query.category || query.material || query.universityId || query.isCustomizable != null || query.minPrice != null || query.maxPrice != null;
+  const hasFilters = query.category || query.hasBaseProduct != null || query.material || query.universityId || query.isCustomizable != null || query.minPrice != null || query.maxPrice != null;
   const categories = filterOptions?.categories ?? [];
   const materials = filterOptions?.materials ?? [];
   const universities = filterOptions?.universities ?? [];
@@ -53,8 +55,18 @@ export default function ProductFilters({ filterOptions, loading, query, onChange
         <h4 className="pf-group__title">Kiểu dáng</h4>
         <select
           className="pf-select"
-          value={query.category || ""}
-          onChange={(e) => setField({ category: e.target.value ? e.target.value : undefined })}
+          value={query.hasBaseProduct === false ? MISC_CATEGORY_VALUE : query.category || ""}
+          onChange={(e) => {
+            if (e.target.value === MISC_CATEGORY_VALUE) {
+              setField({ category: undefined, material: undefined, hasBaseProduct: false });
+              return;
+            }
+
+            setField({
+              category: e.target.value ? e.target.value : undefined,
+              hasBaseProduct: undefined,
+            });
+          }}
         >
           <option value="">Tất cả kiểu dáng</option>
           {categories.map((cat) => (
@@ -62,6 +74,7 @@ export default function ProductFilters({ filterOptions, loading, query, onChange
               {cat}
             </option>
           ))}
+          <option value={MISC_CATEGORY_VALUE}>Khác</option>
         </select>
       </div>
 
@@ -71,7 +84,10 @@ export default function ProductFilters({ filterOptions, loading, query, onChange
         <select
           className="pf-select"
           value={query.material || ""}
-          onChange={(e) => setField({ material: e.target.value ? e.target.value : undefined })}
+          onChange={(e) => setField({
+            material: e.target.value ? e.target.value : undefined,
+            hasBaseProduct: e.target.value ? undefined : query.hasBaseProduct,
+          })}
         >
           <option value="">Tất cả chất liệu</option>
           {materials.map((mat) => (
