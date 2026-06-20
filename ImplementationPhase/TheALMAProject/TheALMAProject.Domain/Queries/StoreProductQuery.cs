@@ -10,6 +10,8 @@ namespace TheALMAProject.Domain.Queries
 
         public int? BaseProductId { get; set; }
 
+        public bool? HasBaseProduct { get; set; }
+
         public int? UniversityId { get; set; }
 
         public bool? IsActive { get; set; }

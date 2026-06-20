@@ -7,6 +7,8 @@ namespace TheALMAProject.Application.DTOs.ProductDtos
     {
         public int ProductId { get; set; }
 
+        public int? BaseProductId { get; set; }
+
         public string Name { get; set; } = null!;
 
         public string? Description { get; set; }

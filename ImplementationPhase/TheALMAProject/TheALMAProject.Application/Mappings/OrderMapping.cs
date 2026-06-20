@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using TheALMAProject.Application.DTOs.OrderDtos;
 using TheALMAProject.Infrastructure.Models;
 
@@ -23,9 +18,11 @@ namespace TheALMAProject.Application.Mappings
             // 3. Map từng Item trong Order
             CreateMap<OrderItem, OrderItemResponseDto>()
                 .ForMember(dest => dest.ItemName, opt => opt.MapFrom(src =>
-                    src.ProductId.HasValue ? src.Product.Name : src.Design.DesignName)) 
+                    src.Product != null ? src.Product.Name : src.Design != null ? src.Design.DesignName : "Sản phẩm không xác định")) 
                 .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src =>
-                    src.ProductId.HasValue ? src.Product.ImageUrl : src.Design.PreviewImageUrl)); 
+                    src.Product != null ? src.Product.ImageUrl : src.Design != null ? src.Design.PreviewImageUrl : null))
+                .ForMember(dest => dest.RequiresSize, opt => opt.MapFrom(src =>
+                    src.DesignId.HasValue || (src.Product != null && src.Product.BaseProductId != null))); 
         }
     }
 }

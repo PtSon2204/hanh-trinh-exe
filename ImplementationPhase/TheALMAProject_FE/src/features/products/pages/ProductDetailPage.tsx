@@ -1,19 +1,23 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../auth/context/AuthContext';
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import productApi from '../api/productApi';
-import { cartApi } from '../../cart/api/cartApi';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
-import ImageGallery from '../components/ImageGallery';
-import SizeColorPicker from '../components/SizeColorPicker';
-import ReviewSection from '../components/ReviewSection';
-import ProductCard from '../components/ProductCard';
-import Navbar from '../../../shared/components/Navbar';
 import Footer from '../../../shared/components/Footer';
-import type { ProductDetail } from '../../../shared/types/product.types';
-import type { ProductListItem } from '../../../shared/types/product.types';
+import Navbar from '../../../shared/components/Navbar';
+import type { ProductDetail, ProductListItem } from '../../../shared/types/product.types';
+import { useAuth } from '../../auth/context/AuthContext';
+import { cartApi } from '../../cart/api/cartApi';
+import productApi from '../api/productApi';
+import ImageGallery from '../components/ImageGallery';
+import ProductCard from '../components/ProductCard';
+import ReviewSection from '../components/ReviewSection';
+import SizeColorPicker from '../components/SizeColorPicker';
 import '../styles/products.css';
+
+const DESCRIPTION_PREVIEW_LENGTH = 250;
+const MISC_PRODUCT_SIZE = 'N/A';
+const RATING_STAR_KEYS = ['rating-star-1', 'rating-star-2', 'rating-star-3', 'rating-star-4', 'rating-star-5'];
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +29,7 @@ export default function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState<string>();
   const [quantity, setQuantity] = useState(1);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const [userHeight, setUserHeight] = useState<string>('');
   const [userWeight, setUserWeight] = useState<string>('');
   const navigate = useNavigate();
@@ -37,7 +42,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!id) return;
     const productId = Number(id);
-    if (isNaN(productId)) {
+    if (Number.isNaN(productId)) {
       setError('ID sản phẩm không hợp lệ');
       setLoading(false);
       return;
@@ -47,6 +52,7 @@ export default function ProductDetailPage() {
     setLoading(true);
     setError(null);
     setSelectedSize(undefined);
+    setDescriptionExpanded(false);
 
     Promise.all([
       productApi.getProductDetail(productId),
@@ -76,31 +82,38 @@ export default function ProductDetailPage() {
 
 
   const handleAddToCart = async () => {
+    if (!product) return;
     if (!user) {
       toast.error('Vui lòng đăng nhập trước khi thêm vào giỏ hàng!');
       navigate('/login');
       return;
     }
-    if (!selectedSize) {
+    const requiresSize = product.baseProductId != null;
+    let cartSize = MISC_PRODUCT_SIZE;
+
+    if (requiresSize && !selectedSize) {
       toast.error('Vui lòng chọn kích cỡ trước khi thêm vào giỏ');
       return;
     }
-    if (!product) return;
+    if (requiresSize) cartSize = selectedSize;
     setAddingToCart(true);
     try {
       await cartApi.addToCart({
         productId: product.productId,
-        size: selectedSize,
+        size: cartSize,
         quantity,
       });
-      toast.success(`Đã thêm "${product.name}" (Size ${selectedSize}) x${quantity} vào giỏ hàng!`);
+      const sizeText = requiresSize ? ` (Size ${selectedSize})` : '';
+      toast.success(`Đã thêm "${product.name}"${sizeText} x${quantity} vào giỏ hàng!`);
       window.dispatchEvent(new Event("cart-updated"));
-    } catch (err: any) {
-      if (err.response?.status === 401) {
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response?.status === 401) {
         toast.error('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.');
         navigate('/login');
       } else {
-        const msg = err.response?.data?.message ?? 'Lỗi khi thêm vào giỏ hàng.';
+        const msg = axios.isAxiosError(err) && typeof err.response?.data?.message === 'string'
+          ? err.response.data.message
+          : 'Lỗi khi thêm vào giỏ hàng.';
         toast.error(msg);
       }
     } finally {
@@ -111,7 +124,7 @@ export default function ProductDetailPage() {
   const getRecommendedSize = () => {
     const h = parseFloat(userHeight);
     const w = parseFloat(userWeight);
-    if (isNaN(h) || isNaN(w) || h <= 0 || w <= 0) return '';
+    if (Number.isNaN(h) || Number.isNaN(w) || h <= 0 || w <= 0) return '';
     
     let weightSize = 'S';
     if (w >= 78) weightSize = 'XXL';
@@ -131,6 +144,13 @@ export default function ProductDetailPage() {
     return sizes[Math.max(sizes.indexOf(weightSize), sizes.indexOf(heightSize))];
   };
   const recSize = getRecommendedSize();
+  const requiresSize = product?.baseProductId != null;
+  const canAddToCart = !!product && (!requiresSize || !!selectedSize);
+  const description = product?.description ?? '';
+  const hasLongDescription = description.length > DESCRIPTION_PREVIEW_LENGTH;
+  const visibleDescription = hasLongDescription && !descriptionExpanded
+    ? `${description.slice(0, DESCRIPTION_PREVIEW_LENGTH)}...`
+    : description;
 
   // Build gallery images from product data (multi-image support)
   // If admin uploaded images (pipe-separated imageUrl), show ONLY those.
@@ -221,8 +241,8 @@ export default function ProductDetailPage() {
                 {/* Rating summary */}
                 <div className="pdp-info__rating">
                   <span className="pdp-info__stars">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <span key={i} className={i < Math.round(product.averageRating) ? 'star--filled' : 'star--empty'}>★</span>
+                    {RATING_STAR_KEYS.map((starKey, i) => (
+                      <span key={starKey} className={i < Math.round(product.averageRating) ? 'star--filled' : 'star--empty'}>★</span>
                     ))}
                   </span>
                   <span className="pdp-info__rating-text">
@@ -232,8 +252,19 @@ export default function ProductDetailPage() {
 
                 <p className="pdp-info__price">{formatter.format(product.price)}</p>
 
-                {product.description && (
-                  <p className="pdp-info__desc">{product.description}</p>
+                {description && (
+                  <div className="pdp-info__desc-wrap">
+                    <p className="pdp-info__desc">{visibleDescription}</p>
+                    {hasLongDescription && (
+                      <button
+                        className="pdp-info__desc-toggle"
+                        type="button"
+                        onClick={() => setDescriptionExpanded((current) => !current)}
+                      >
+                        {descriptionExpanded ? 'Thu gọn' : 'Xem thêm'}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* Specs */}
@@ -259,22 +290,25 @@ export default function ProductDetailPage() {
                 </div>
 
                 {/* Size & Color */}
-                <SizeColorPicker
-                  sizes={product.availableSizes}
-                  colors={product.availableColors}
-                  selectedSize={selectedSize}
-                  onSizeChange={setSelectedSize}
-                />
+                {requiresSize ? (
+                  <SizeColorPicker
+                    sizes={product.availableSizes}
+                    colors={product.availableColors}
+                    selectedSize={selectedSize}
+                    onSizeChange={setSelectedSize}
+                  />
+                ) : null}
 
                 {/* Size Recommender */}
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 my-4" style={{ maxWidth: '380px' }}>
+                {requiresSize ? <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 my-4" style={{ maxWidth: '380px' }}>
                   <p className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-1">
                     <i className="fa-solid fa-calculator text-blue-500"></i> Gợi ý chọn Size
                   </p>
                   <div className="grid grid-cols-2 gap-3 mb-3">
                     <div>
-                      <label className="text-[10px] text-gray-500 font-medium block mb-1">Chiều cao (cm)</label>
+                      <label htmlFor="size-height-input" className="text-[10px] text-gray-500 font-medium block mb-1">Chiều cao (cm)</label>
                       <input
+                        id="size-height-input"
                         type="number"
                         value={userHeight}
                         onChange={e => setUserHeight(e.target.value)}
@@ -283,8 +317,9 @@ export default function ProductDetailPage() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-gray-500 font-medium block mb-1">Cân nặng (kg)</label>
+                      <label htmlFor="size-weight-input" className="text-[10px] text-gray-500 font-medium block mb-1">Cân nặng (kg)</label>
                       <input
+                        id="size-weight-input"
                         type="number"
                         value={userWeight}
                         onChange={e => setUserWeight(e.target.value)}
@@ -299,6 +334,7 @@ export default function ProductDetailPage() {
                         Size gợi ý: <span className="font-bold text-sm bg-blue-600 text-white px-2 py-0.5 rounded ml-1">{recSize}</span>
                       </span>
                       <button
+                        type="button"
                         onClick={() => setSelectedSize(recSize)}
                         className="bg-white hover:bg-blue-100 text-blue-600 border border-blue-200 text-[10px] font-bold px-2 py-1.5 rounded transition shadow-sm"
                       >
@@ -306,19 +342,21 @@ export default function ProductDetailPage() {
                       </button>
                     </div>
                   )}
-                </div>
+                </div> : null}
 
                 {/* Quantity selector */}
                 <div className="pdp-quantity">
                   <span className="pdp-quantity__label">Số lượng:</span>
                   <div className="pdp-quantity__controls">
                     <button
+                      type="button"
                       className="pdp-quantity__btn"
                       onClick={() => setQuantity(q => Math.max(1, q - 1))}
                       disabled={quantity <= 1}
                     >−</button>
                     <span className="pdp-quantity__value">{quantity}</span>
                     <button
+                      type="button"
                       className="pdp-quantity__btn"
                       onClick={() => setQuantity(q => q + 1)}
                     >+</button>
@@ -328,9 +366,10 @@ export default function ProductDetailPage() {
                 {/* CTA */}
                 <div className="pdp-actions">
                   <button
+                    type="button"
                     className="pdp-actions__add-cart"
                     onClick={handleAddToCart}
-                    disabled={!selectedSize || addingToCart}
+                    disabled={!canAddToCart || addingToCart}
                     id="add-to-cart-btn"
                   >
                     {addingToCart ? '⏳ Đang thêm...' : '🛒 Thêm vào giỏ hàng'}

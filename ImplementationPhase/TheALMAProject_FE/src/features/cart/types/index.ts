@@ -5,6 +5,7 @@ export interface CartItemDto {
   productName: string; // Tên áo (Áo mẫu sẵn hoặc Áo tự thiết kế)
   imageUrl: string;
   size: string;
+  requiresSize: boolean;
   quantity: number;
   unitPrice: number;
 }

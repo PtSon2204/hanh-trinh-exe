@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TheALMAProject.Application.DTOs.CartDtos;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Interfaces;
@@ -62,6 +57,7 @@ namespace TheALMAProject.Application.Services
                         ProductName = productName,
                         ImageUrl = imageUrl,
                         Size = item.Size,
+                        RequiresSize = item.DesignId.HasValue || item.Product?.BaseProductId != null,
                         Quantity = item.Quantity,
                         UnitPrice = item.UnitPrice
                     };

@@ -22,6 +22,7 @@ export interface OrderItemResponseDto {
   itemName: string;
   imageUrl: string | null;
   size: string;
+  requiresSize: boolean;
   quantity: number;
   unitPrice: Decimal;
   isCustomDesign: boolean;

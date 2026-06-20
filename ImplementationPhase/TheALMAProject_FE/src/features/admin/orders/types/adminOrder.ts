@@ -23,6 +23,7 @@ export interface AdminOrderItemDto {
 	productFrontImageUrl: string | null;
 	productBackImageUrl: string | null;
 	size: string;
+	requiresSize: boolean;
 	quantity: number;
 	unitPrice: Decimal;
 }

@@ -226,7 +226,10 @@
 .pdp-info__rating-text{font-size:.85rem;color:#64748b;}
 
 .pdp-info__price{font-size:1.75rem;font-weight:800;color:#2563eb;margin-bottom:1rem;}
-.pdp-info__desc{font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:1.5rem;}
+.pdp-info__desc-wrap{margin-bottom:1.5rem;}
+.pdp-info__desc{font-size:.9rem;color:#475569;line-height:1.7;margin-bottom:.5rem;overflow-wrap:anywhere;word-break:break-word;}
+.pdp-info__desc-toggle{border:none;background:none;color:#2563eb;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;padding:0;}
+.pdp-info__desc-toggle:hover{text-decoration:underline;}
 
 /* Specs */
 .pdp-specs{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.5rem;padding:1rem;background:#f8fafc;border-radius:.75rem;border:1px solid #f1f5f9;}

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TheALMAProject.Application.DTOs.StoreProductDtos
+﻿namespace TheALMAProject.Application.DTOs.StoreProductDtos
 {
     public class CreateStoreProductDto
     {
@@ -14,6 +8,7 @@ namespace TheALMAProject.Application.DTOs.StoreProductDtos
         public string? Description { get; set; }
         public decimal Price { get; set; }
         public string? ImageUrl { get; set; }
+        public bool IsActive { get; set; } = true;
         public bool IsCustomizable { get; set; } = false;
     }
 }

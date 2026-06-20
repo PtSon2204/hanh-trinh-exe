@@ -73,7 +73,10 @@ namespace TheALMAProject.API
             // =====================================================
             // CẤU HÌNH CHỐNG DDOS — Rate Limiting + IP Blacklist + Body Size Limit
             // =====================================================
-            builder.Services.AddDDoSProtection(builder.Configuration);
+            if (!builder.Environment.IsDevelopment())
+            {
+                builder.Services.AddDDoSProtection(builder.Configuration);
+            }
 
             var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"]
                 ?? throw new InvalidOperationException("JwtSettings:SecretKey chưa được cấu hình trong appsettings.json!");
@@ -162,11 +165,14 @@ namespace TheALMAProject.API
             // Tầng 4 - Security headers — ẩn thông tin server, chống XSS/Clickjacking
             app.UseMiddleware<SecurityHeadersMiddleware>();
 
-            // Tầng 3 - IP Blacklist — chặn IP thủ công + auto-block IP tấn công
-            app.UseMiddleware<IpBlacklistMiddleware>();
+            if (!app.Environment.IsDevelopment())
+            {
+                // Tầng 3 - IP Blacklist — chặn IP thủ công + auto-block IP tấn công
+                app.UseMiddleware<IpBlacklistMiddleware>();
 
-            // Tầng 2 - Kích hoạt Rate Limiting — giới hạn request/phút/IP (phải đặt trước UseAuthentication)
-            app.UseRateLimiter();
+                // Tầng 2 - Kích hoạt Rate Limiting — giới hạn request/phút/IP (phải đặt trước UseAuthentication)
+                app.UseRateLimiter();
+            }
 
             app.UseHttpsRedirection();
 

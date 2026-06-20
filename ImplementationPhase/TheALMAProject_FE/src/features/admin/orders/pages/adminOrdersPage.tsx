@@ -478,7 +478,6 @@ export function AdminOrdersPage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [exportingOrderId, setExportingOrderId] = useState<number | null>(null);
   const [exportingFabricOrderId, setExportingFabricOrderId] = useState<
     number | null
   >(null);
@@ -580,23 +579,6 @@ export function AdminOrdersPage() {
       setActionError("Không thể cập nhật trạng thái đơn hàng.");
     } finally {
       setUpdatingStatus(false);
-    }
-  };
-
-  const exportSelectedOrderPrintFiles = async (orderId: number) => {
-    try {
-      setExportingOrderId(orderId);
-      setActionError(null);
-      setActionMessage(null);
-      const files = await adminOrderApi.exportPrintFiles(orderId);
-      setPrintFiles(files);
-      setActivePanel("printFiles");
-      setActionMessage("Đã xuất artwork thiết kế in cho đơn hàng.");
-    } catch (err) {
-      console.error("Failed to export admin order print files", err);
-      setActionError("Không thể xuất artwork thiết kế in cho đơn hàng.");
-    } finally {
-      setExportingOrderId(null);
     }
   };
 
@@ -850,19 +832,7 @@ export function AdminOrdersPage() {
                                 Chi tiết
                               </button>
                               <button
-                                type="button"
-                                onClick={() =>
-                                  void exportSelectedOrderPrintFiles(
-                                    order.orderId,
-                                  )
-                                }
-                                disabled={exportingOrderId === order.orderId}
-                              >
-                                {exportingOrderId === order.orderId
-                                  ? "Đang xuất..."
-                                  : "Xuất artwork PNG"}
-                              </button>
-                              <button
+                                className="admin-artwork-action"
                                 type="button"
                                 onClick={() =>
                                   void exportSelectedOrderFabricPrintFiles(
@@ -1172,17 +1142,7 @@ export function AdminOrdersPage() {
                       : "Cập nhật trạng thái"}
                   </button>
                   <button
-                    type="button"
-                    onClick={() =>
-                      void exportSelectedOrderPrintFiles(selectedOrder.orderId)
-                    }
-                    disabled={exportingOrderId === selectedOrder.orderId}
-                  >
-                    {exportingOrderId === selectedOrder.orderId
-                      ? "Đang xuất..."
-                      : "Xuất artwork PNG"}
-                  </button>
-                  <button
+                    className="admin-artwork-action"
                     type="button"
                     onClick={() =>
                       void exportSelectedOrderFabricPrintFiles(
@@ -1208,10 +1168,11 @@ export function AdminOrdersPage() {
                         {item.quantity} × {formatCurrency(item.unitPrice)}
                       </strong>
                       <small>
-                        Size {item.size} · Item #{item.orderItemId}
+                        {item.requiresSize ? `Size ${item.size} · ` : ""}Item #{item.orderItemId}
                         {item.designId ? ` · Design #${item.designId}` : ""}
                       </small>
                       <button
+                        className="admin-artwork-item-button"
                         type="button"
                         onClick={() =>
                           void exportOrderItemFabricPrintFile(selectedOrder, item)
