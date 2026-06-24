@@ -29,6 +29,17 @@ type FabricTransformEvent = fabric.IEvent & {
 /** Fabric Image object extended with a price addon field */
 type FabricImageWithPrice = fabric.Image & { _priceAddon?: number };
 
+type UploadedImage = {
+    id: string;
+    file: File;
+    previewUrl: string;
+};
+
+type TempUploadedFabricImage = fabric.Image & {
+    customImageId?: string;
+    isTemporaryUpload?: boolean;
+};
+
 /** Options returned by fabric's loadSVGFromString */
 type SVGOptions = { width?: number; height?: number; [key: string]: unknown };
 
@@ -160,6 +171,18 @@ const PRODUCT_PREVIEW_HEIGHT = 1500;
 const SHIRT_3D_MODEL_URL = '/models/base-products/tshirt_operational_v1.1.glb';
 const CALIBRATION_ROLES = ['Admin', 'Product Manager'];
 
+const createTempImageId = () => `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const dataUrlToFile = async (dataUrl: string, fallbackName: string) => {
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    const extension = blob.type === 'image/jpeg' ? 'jpg' : (blob.type.split('/')[1] || 'png');
+    return new File([blob], `${fallbackName}.${extension}`, { type: blob.type || 'image/png' });
+};
+
+const CANVAS_JSON_PROPS = ['id', 'selectable', 'customImageId', 'isTemporaryUpload'];
+const MAX_CUSTOMIZER_IMAGE_BYTES = 5 * 1024 * 1024;
+
 const loadPreviewImage = (url: string) => new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
@@ -253,7 +276,8 @@ export default function CustomizerPage() {
     const [selectedObj, setSelectedObj] = useState<fabric.Object | null>(null);
     const [inputText, setInputText] = useState('ALMA Threads');
     const [selectedFont, setSelectedFont] = useState('Impact');
-    const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+    const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+    const uploadedImagesRef = useRef<UploadedImage[]>([]);
     const [isDraggingOver, setIsDraggingOver] = useState(false);
     const [viewMode, setViewMode] = useState<'front' | 'back'>('front');
     const [layersVisible, setLayersVisible] = useState(false);
@@ -326,6 +350,94 @@ export default function CustomizerPage() {
     // Helper: trả về canvas đang active (dùng sau khi states đã khởi tạo)
     const getActiveCanvas = () =>
         viewMode === 'front' ? fabricCanvas.current : backFabricCanvas.current;
+
+    const addUploadedFiles = (files: File[]) => {
+        const imageFiles = files.filter(file => file.type.startsWith('image/'));
+        imageFiles.forEach(file => {
+            if (file.size > MAX_CUSTOMIZER_IMAGE_BYTES) {
+                toast.error(`Ảnh "${file.name}" quá lớn (tối đa 5MB)`);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = event => {
+                const previewUrl = event.target?.result;
+                if (typeof previewUrl !== 'string') return;
+                setUploadedImages(prev => [{ id: createTempImageId(), file, previewUrl }, ...prev]);
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const removeUploadedImage = (id: string) => {
+        setUploadedImages(prev => {
+            return prev.filter(item => item.id !== id);
+        });
+    };
+
+    const clearUploadedImages = () => {
+        setUploadedImages([]);
+    };
+
+    useEffect(() => {
+        uploadedImagesRef.current = uploadedImages;
+    }, [uploadedImages]);
+
+    useEffect(() => () => {
+        uploadedImagesRef.current = [];
+    }, []);
+
+    const replaceTemporaryImageSource = (image: TempUploadedFabricImage, hostedUrl: string) => new Promise<void>((resolve, reject) => {
+        image.setSrc(hostedUrl, () => {
+            image.set({
+                customImageId: undefined,
+                isTemporaryUpload: false,
+            });
+            resolve();
+        }, { crossOrigin: 'anonymous' });
+
+        const element = image.getElement() as HTMLImageElement | undefined;
+        if (element) {
+            element.onerror = () => reject(new Error('Không thể tải ảnh đã upload'));
+        }
+    });
+
+    const uploadTemporaryCanvasImages = async () => {
+        const fileById = new Map(uploadedImages.map(image => [image.id, image.file]));
+        const uploadedUrlById = new Map<string, string>();
+
+        for (const canvas of [fabricCanvas.current, backFabricCanvas.current]) {
+            if (!canvas) continue;
+
+            for (const obj of canvas.getObjects()) {
+                if (obj.type !== 'image') continue;
+                const image = obj as TempUploadedFabricImage;
+                const source = image.getSrc();
+                const hasEmbeddedImage = source.startsWith('data:image/');
+                const hasTemporaryFile = image.isTemporaryUpload && !!image.customImageId;
+                if (!hasEmbeddedImage && !hasTemporaryFile) continue;
+
+                const cacheKey = image.customImageId ?? source;
+                const file = image.customImageId
+                    ? fileById.get(image.customImageId) ?? (hasEmbeddedImage ? await dataUrlToFile(source, 'customizer-image') : undefined)
+                    : hasEmbeddedImage
+                        ? await dataUrlToFile(source, 'customizer-image')
+                        : undefined;
+                if (!file) {
+                    throw new Error('Không tìm thấy file ảnh gốc. Vui lòng tải ảnh lên lại.');
+                }
+
+                let hostedUrl = uploadedUrlById.get(cacheKey);
+                if (!hostedUrl) {
+                    hostedUrl = await customizerApi.uploadCustomizerImage(file);
+                    uploadedUrlById.set(cacheKey, hostedUrl);
+                }
+
+                await replaceTemporaryImageSource(image, hostedUrl);
+                canvas.requestRenderAll();
+            }
+        }
+    };
 
     const handleSetViewMode = (mode: CanvasSide) => {
         const currentCanvas = getActiveCanvas();
@@ -1104,8 +1216,8 @@ QUAN TRỌNG về svgCode:
                 canvasDataURL = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.9, multiplier: 1.5 });
             }
 
-            const frontJSON = fabricCanvas.current.toJSON(['id', 'selectable']);
-            const backJSON = backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] };
+            const frontJSON = fabricCanvas.current.toJSON(CANVAS_JSON_PROPS);
+            const backJSON = backFabricCanvas.current?.toJSON(CANVAS_JSON_PROPS) ?? { objects: [] };
             const newEntry = {
                 id: Date.now(),
                 name: 'Thiết kế ' + new Date().toLocaleDateString('vi-VN'),
@@ -1282,8 +1394,10 @@ QUAN TRỌNG về svgCode:
                 previewDataUrl = frontPreviewImageUrl;
             }
 
-            const frontCanvasJson = JSON.stringify(fabricCanvas.current.toJSON(['id', 'selectable']));
-            const backCanvasJson = JSON.stringify(backFabricCanvas.current?.toJSON(['id', 'selectable']) ?? { objects: [] });
+            await uploadTemporaryCanvasImages();
+
+            const frontCanvasJson = JSON.stringify(fabricCanvas.current.toJSON(CANVAS_JSON_PROPS));
+            const backCanvasJson = JSON.stringify(backFabricCanvas.current?.toJSON(CANVAS_JSON_PROPS) ?? { objects: [] });
             await customizerApi.saveAndAddMultiSize(
                 {
                     baseProductId: selectedProduct?.baseProductId ?? 1,
@@ -1962,15 +2076,7 @@ Vui lòng thử lại sau..</p>
                                     onDrop={e => {
                                         e.preventDefault();
                                         setIsDraggingOver(false);
-                                        const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-                                        files.forEach(file => {
-                                            const reader = new FileReader();
-                                            reader.onload = ev => {
-                                                const dataUrl = ev.target?.result as string;
-                                                if (dataUrl) setUploadedImages(prev => [dataUrl, ...prev]);
-                                            };
-                                            reader.readAsDataURL(file);
-                                        });
+                                        addUploadedFiles(Array.from(e.dataTransfer.files));
                                     }}
                                 >
                                     <i className={`fa-solid fa-cloud-arrow-up text-3xl mb-2 transition-colors ${
@@ -1979,7 +2085,7 @@ Vui lòng thử lại sau..</p>
                                     <span className="text-xs font-semibold text-gray-500">
                                         {isDraggingOver ? 'Thả ảnh vào đây!' : 'Kéo thả hoặc click để chọn ảnh'}
                                     </span>
-                                    <span className="text-[10px] text-gray-400 mt-1">PNG, JPG, WebP, GIF • Tối đa 10MB</span>
+                                    <span className="text-[10px] text-gray-400 mt-1">PNG, JPG, WebP, GIF • Tối đa 5MB</span>
                                 </label>
                                 <input
                                     id="image-upload-input"
@@ -1988,19 +2094,7 @@ Vui lòng thử lại sau..</p>
                                     multiple
                                     className="hidden"
                                     onChange={e => {
-                                        const files = Array.from(e.target.files || []).filter(f => f.type.startsWith('image/'));
-                                        files.forEach(file => {
-                                            if (file.size > 10 * 1024 * 1024) {
-                                                toast.error(`Ảnh "${file.name}" quá lớn (tối đa 10MB)`);
-                                                return;
-                                            }
-                                            const reader = new FileReader();
-                                            reader.onload = ev => {
-                                                const dataUrl = ev.target?.result as string;
-                                                if (dataUrl) setUploadedImages(prev => [dataUrl, ...prev]);
-                                            };
-                                            reader.readAsDataURL(file);
-                                        });
+                                        addUploadedFiles(Array.from(e.target.files || []));
                                         e.target.value = '';
                                     }}
                                 />
@@ -2013,30 +2107,33 @@ Vui lòng thử lại sau..</p>
                                                 <i className="fa-solid fa-images"></i> Ảnh đã tải ({uploadedImages.length})
                                             </p>
                                             <button
-                                                onClick={() => setUploadedImages([])}
+                                                type="button"
+                                                onClick={clearUploadedImages}
                                                 className="text-[10px] text-red-400 hover:text-red-600 transition flex items-center gap-1"
                                             >
                                                 <i className="fa-solid fa-trash-can"></i> Xóa tất cả
                                             </button>
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
-                                            {uploadedImages.map((imgUrl, idx) => (
-                                                <div key={idx} className="group relative rounded-xl overflow-hidden border-2 border-gray-200 hover:border-orange-400 transition-all hover:shadow-md bg-white">
+                                            {uploadedImages.map((uploadedImage, idx) => (
+                                                <div key={uploadedImage.id} className="group relative rounded-xl overflow-hidden border-2 border-gray-200 hover:border-orange-400 transition-all hover:shadow-md bg-white">
                                                     <img
-                                                        src={imgUrl}
+                                                        src={uploadedImage.previewUrl}
                                                         alt={`Ảnh ${idx + 1}`}
                                                         className="w-full aspect-square object-contain p-1"
                                                     />
                                                     {/* Overlay */}
                                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1.5">
                                                         <button
+                                                            type="button"
                                                             onClick={() => {
                                                                 const ac = getActiveCanvas();
                                                                 if (!ac) return;
-                                                                fabric.Image.fromURL(imgUrl, (img: fabric.Image) => {
+                                                                fabric.Image.fromURL(uploadedImage.previewUrl, (img: fabric.Image) => {
+                                                                    const customImage = img as TempUploadedFabricImage;
                                                                     const maxDim = Math.min(ac.getWidth(), ac.getHeight()) * 0.45;
                                                                     const scale = Math.min(maxDim / (img.width || 1), maxDim / (img.height || 1));
-                                                                    img.set({
+                                                                    customImage.set({
                                                                         left: ac.getWidth() / 2,
                                                                         top: ac.getHeight() / 2,
                                                                         originX: 'center',
@@ -2050,9 +2147,11 @@ Vui lòng thử lại sau..</p>
                                                                         borderColor: '#f97316',
                                                                         borderScaleFactor: 2,
                                                                     });
-                                                                    ac.add(img);
-                                                                    ac.setActiveObject(img);
-                                                                    constrainObject(viewMode, img, ac, true);
+                                                                    customImage.customImageId = uploadedImage.id;
+                                                                    customImage.isTemporaryUpload = true;
+                                                                    ac.add(customImage);
+                                                                    ac.setActiveObject(customImage);
+                                                                    constrainObject(viewMode, customImage, ac, true);
                                                                     ac.renderAll();
                                                                     toast.success('Đã thêm ảnh vào áo!');
                                                                 }, { crossOrigin: 'anonymous' });
@@ -2062,7 +2161,8 @@ Vui lòng thử lại sau..</p>
                                                             <i className="fa-solid fa-plus text-[9px]"></i> Thêm vào áo
                                                         </button>
                                                         <button
-                                                            onClick={() => setUploadedImages(prev => prev.filter((_, i) => i !== idx))}
+                                                            type="button"
+                                                            onClick={() => removeUploadedImage(uploadedImage.id)}
                                                             className="bg-white/20 hover:bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-lg flex items-center gap-1 transition"
                                                         >
                                                             <i className="fa-solid fa-trash-can text-[9px]"></i> Xóa

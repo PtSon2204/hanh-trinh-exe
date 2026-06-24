@@ -1,5 +1,5 @@
 import axiosClient, { resolveApiAssetUrl } from '../../../shared/api/axiosClient';
-import type { BaseProduct3DConfigDto, BaseProductDto, CreateDesignRequest, IconDto, PrintAreaRect, PrintPlane3DConfig, ProductPrintArea } from '../types';
+import type { BaseProduct3DConfigDto, BaseProductDto, CreateDesignRequest, CustomizerImageUploadResponse, IconDto, PrintAreaRect, PrintPlane3DConfig, ProductPrintArea } from '../types';
 
 type PagedResponse<T> = {
     data?: T[];
@@ -303,6 +303,15 @@ export const customizerApi = {
             console.error('Không thể tải icons từ server:', err);
             return [];
         }
+    },
+
+    // ─── Upload ảnh customizer khi người dùng thật sự lưu thiết kế ─────────────
+    uploadCustomizerImage: async (file: File): Promise<string> => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await axiosClient.post<CustomizerImageUploadResponse>('/UserDesign/upload-image', formData);
+        return resolveApiAssetUrl(res.data.imageUrl) ?? res.data.imageUrl;
     },
 
     // ─── Lưu thiết kế lên server ─────────────────────────────────────────────

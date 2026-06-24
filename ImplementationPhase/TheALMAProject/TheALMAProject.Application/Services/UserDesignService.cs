@@ -15,6 +15,7 @@ namespace TheALMAProject.Application.Services
     {
         private const string PreviewFolder = "uploads/design-previews";
         private const int MaxPreviewImageBytes = 5 * 1024 * 1024;
+        private const string EmbeddedImageMarker = "data:image/";
 
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -78,6 +79,8 @@ namespace TheALMAProject.Application.Services
         {
             var design = await _unitOfWork.UserDesignRepo.GetByIdForUpdateAsync(designId, userId);
             if (design == null || design.IsOrdered) return false; 
+
+            EnsureCanvasJsonDoesNotEmbedImages(dto.CanvasJson, dto.FrontCanvasJson, dto.BackCanvasJson);
 
             var previousPreviewUrls = Array.Empty<string?>();
             var newStoredPreviewUrls = new List<string?>();
@@ -175,6 +178,8 @@ namespace TheALMAProject.Application.Services
             var baseProduct = await _unitOfWork.BaseProductRepo.GetById(dto.BaseProductId);
             if (baseProduct == null) return null;
 
+            EnsureCanvasJsonDoesNotEmbedImages(dto.CanvasJson, dto.FrontCanvasJson, dto.BackCanvasJson);
+
             var frontCanvasJson = dto.FrontCanvasJson ?? dto.CanvasJson;
 
             var frontPreviewImageUrl = await SavePreviewImageIfNeededAsync(dto.FrontPreviewImageUrl ?? dto.PreviewImageUrl);
@@ -193,7 +198,7 @@ namespace TheALMAProject.Application.Services
                 PrintFileUrl = dto.PrintFileUrl,
                 DesignName = string.IsNullOrWhiteSpace(dto.DesignName) ? "Bản thiết kế mới" : dto.DesignName,
                 IsOrdered = false, 
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
 
@@ -315,6 +320,16 @@ namespace TheALMAProject.Application.Services
             };
 
             return await _fileStorageService.SaveFileAsync(file, PreviewFolder);
+        }
+
+        private static void EnsureCanvasJsonDoesNotEmbedImages(params string?[] canvasJsonValues)
+        {
+            if (canvasJsonValues.Any(value => value?.Contains(EmbeddedImageMarker, StringComparison.OrdinalIgnoreCase) == true))
+            {
+                throw new AppHttpException(
+                    StatusCodes.Status400BadRequest,
+                    "Canvas JSON must store uploaded images as hosted URLs, not embedded base64 data");
+            }
         }
 
         private static bool IsStoredPreviewUrl(string? previewImageUrl)

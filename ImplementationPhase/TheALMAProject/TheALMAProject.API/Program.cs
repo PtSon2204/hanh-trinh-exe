@@ -47,15 +47,14 @@ namespace TheALMAProject.API
             //Đki db
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(
+                options.UseNpgsql(
                     builder.Configuration.GetConnectionString("DefaultConnection"),
-                    sqlOptions =>
+                    npgsqlOptions =>
                     {
-                        sqlOptions.EnableRetryOnFailure(
+                        npgsqlOptions.EnableRetryOnFailure(
                             maxRetryCount: 5,
                             maxRetryDelay: TimeSpan.FromSeconds(60),
-                            // 42119 = Azure SQL Serverless đang paused, cần thời gian để resume
-                            errorNumbersToAdd: [42119]);
+                            errorCodesToAdd: null);
                     });
             });
 

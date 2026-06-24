@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using TheALMAProject.Application.DTOs.OrderDtos;
@@ -78,7 +73,7 @@ namespace TheALMAProject.Application.Services
             {
                 appliedVoucher = await _unitOfWork.VoucherRepo.GetByCode(request.VoucherCode);
 
-                if (appliedVoucher == null || !appliedVoucher.IsActive || appliedVoucher.StartDate > DateTime.UtcNow || appliedVoucher.EndDate < DateTime.UtcNow)
+                if (appliedVoucher == null || !appliedVoucher.IsActive || appliedVoucher.StartDate > DateTime.Now || appliedVoucher.EndDate < DateTime.Now)
                     return new CheckoutResponseDto { IsSuccess = false, Message = "Mã giảm giá không tồn tại hoặc đã hết hạn." };
 
                 if (subTotal < appliedVoucher.MinOrderAmount)
@@ -118,7 +113,7 @@ namespace TheALMAProject.Application.Services
                 PaymentMethod = request.PaymentMethod,
                 PaymentStatus = "Unpaid", // Chưa thanh toán
                 OrderStatus = "Pending",  // Chờ xác nhận
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             // 6. Chuyển CartItem sang OrderItem
@@ -167,6 +162,12 @@ namespace TheALMAProject.Application.Services
             // 10. Xử lý sau khi lưu (Chuyển hướng thanh toán)
             if (request.PaymentMethod == "VNPAY")
             {
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext == null)
+                {
+                    return new CheckoutResponseDto { IsSuccess = false, Message = "Không thể tạo thanh toán VNPay." };
+                }
+
                 // Cần inject HttpContextAccessor vào OrderService để lấy HttpContext truyền cho VNPay lấy IP
                 var paymentUrl = _vnPayService.CreatePaymentUrl(new PaymentInformationModel
                 {
@@ -174,7 +175,7 @@ namespace TheALMAProject.Application.Services
                     Amount = (double)newOrder.TotalAmount,
                     OrderDescription = $"Thanh toan don hang {newOrder.OrderCode}",
                     Name = newOrder.ShipName
-                }, _httpContextAccessor.HttpContext);
+                }, httpContext);
 
                 return new CheckoutResponseDto
                 {
@@ -234,7 +235,7 @@ namespace TheALMAProject.Application.Services
             decimal shippingFee = 30000;
 
             var voucher = await _unitOfWork.VoucherRepo.GetByCode(voucherCode);
-            if (voucher == null || !voucher.IsActive || voucher.StartDate > DateTime.UtcNow || voucher.EndDate < DateTime.UtcNow)
+            if (voucher == null || !voucher.IsActive || voucher.StartDate > DateTime.Now || voucher.EndDate < DateTime.Now)
             {
                 return new VoucherCheckResponseDto { IsValid = false, Message = "Mã giảm giá không tồn tại hoặc đã hết hạn." };
             }
