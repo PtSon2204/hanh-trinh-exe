@@ -70,3 +70,123 @@ Dự án này ra đời nhằm giải quyết mâu thuẫn giữa **tính đồn
 Chúng tôi bắt đầu từ một vấn đề rất thực tế: **Nhà trường cần tính đồng nhất, sinh viên cần thể hiện cá tính.** Hai yếu tố này hoàn toàn có thể dung hòa.
 
 Ước mơ và động lực lớn nhất của nhóm là nhìn thấy sinh viên chủ động chọn mặc áo trường, dùng đồ trường đi học, đi chơi, đi cafe vì họ **thực sự thích thiết kế đó**, chứ không phải vì nội quy bắt buộc. Giải pháp "Hệ sinh thái đồng phục mở" chính là cầu nối để niềm tự hào về trường học được thể hiện một cách trọn vẹn và phong cách nhất.
+
+Về Techlonogy:
+ALMA - 3D Custom Product E-commerce Platform
+React.NETThree.jsLicense
+
+ALMA is a full-stack e-commerce platform built with .NET 8 and React, designed to revolutionize the online shopping experience. It delivers an end-to-end platform where customers can interactively design products in 3D, utilize AI design assistants, and securely place orders, while administrators manage operations and sales.
+
+🌐 Live Demo: https://thealmastore.vercel.app
+
+🌟 Why this project stands out
+Interactive 3D Editor: Real-time product customization directly in the browser using React Three Fiber without external plugins.
+AI-Powered Assistance: Integrated AI design assistant to help users generate and refine custom graphics.
+End-to-End E-commerce Flow: From custom 3D design generation to cart management, checkout, and order tracking.
+Enterprise-Level Security: Robust API protection with custom Rate Limiting, IP Blacklisting, and Security Headers middleware.
+Modern Cloud Architecture: Deployed across Vercel and Render, utilizing Azure SQL Serverless and Cloudinary.
+🚀 Core Features
+Feature	Details
+🎨 3D Customization	Interactive 2D/3D editor using Fabric.js & Three.js to apply texts, icons, and designs to 3D models.
+🤖 AI Design Assistant	Dynamically generate and refine custom graphics/ideas via AI integration.
+🛒 Shopping & Orders	Cart management, dynamic pricing based on customizations, and secure checkout flow.
+👤 User Dashboard	Manage custom design portfolios, track order history, and view real-time order statuses.
+💬 Engagement	Product rating/commenting system and Zalo quick-chat integration for customer support.
+🔐 Security & Auth	Google OAuth2, JWT, Role-based access control, DDoS protection (Rate limiting & IP Block).
+💻 Tech Stack
+Layer	Technology
+Frontend	React 19, TypeScript, Vite, Three.js, React Three Fiber, Fabric.js
+Backend	C#, .NET 8, ASP.NET Core Web API, Entity Framework Core
+Database	Microsoft SQL Server (Azure SQL Database)
+Storage	Cloudinary
+Auth	JWT, Google OAuth2 Client
+Email	SendGrid
+DevOps	Docker, Vercel (FE), Render (BE)
+📂 Project Structure
+text
+
+ALMA_Project/
+├── TheALMAProject_FE/            # React + Vite Frontend
+│   ├── src/
+│   │   ├── components/           # Reusable UI & 3D Editor components
+│   │   ├── pages/                # Page layouts
+│   │   └── services/             # API integration
+│   └── package.json
+│
+└── TheALMAProject/               # .NET 8 Backend Solution
+    ├── TheALMAProject.API/       # Controllers, Middleware (Rate Limit, IP Block)
+    ├── TheALMAProject.Domain/    # Entities (UserDesign, Order, Cart)
+    ├── TheALMAProject.Application/ # Business Logic & Interfaces
+    └── TheALMAProject.Infrastructure/ # DbContext, Repositories, Cloudinary/SendGrid Services
+🛠️ Run Locally
+Prerequisites: Node.js 22+, .NET 8 SDK, SQL Server (Local or Azure)
+
+1. Clone the repository
+bash
+
+git clone https://github.com/PtSon2204/hanh-trinh-exe.git
+cd hanh-trinh-exe
+2. Setup Backend (.NET API)
+Navigate to the API folder and configure environment variables:
+
+bash
+
+cd TheALMAProject/TheALMAProject.API
+Create a .env file in this directory and fill in your values:
+
+env
+
+ConnectionStrings__DefaultConnection=Server=localhost;Database=AlmaDB;Trusted_Connection=True;TrustServerCertificate=True;
+JwtSettings__SecretKey=your_super_secret_jwt_key
+JwtSettings__Issuer=AlmaProject
+JwtSettings__Audience=AlmaProject
+Cloudinary__CloudName=your_cloud_name
+Cloudinary__ApiKey=your_api_key
+Cloudinary__ApiSecret=your_api_secret
+SendGrid__ApiKey=your_sendgrid_key
+Run the backend:
+
+bash
+
+dotnet run
+# The API will be available at http://localhost:5000 or https://localhost:7000
+3. Setup Frontend (React/Vite)
+Open a new terminal and navigate to the frontend folder:
+
+bash
+
+cd TheALMAProject_FE
+npm install
+Create a .env file for the frontend:
+
+env
+
+VITE_API_BASE_URL=https://localhost:7000/api
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+Run the frontend:
+
+bash
+
+npm run dev
+# Open: http://localhost:5173
+🌍 Deployment
+The application is deployed using modern cloud providers:
+
+Frontend Hosting: Vercel
+Backend Hosting: Render (with custom Keep-Alive service)
+Database: Azure SQL Database (Serverless)
+Storage: Cloudinary
+Live URL: https://thealmastore.vercel.app
+👥 Team
+This project was built by a dedicated team of 3 developers:
+
+Role	Name	GitHub
+Fullstack Developer	[Tên của bạn]	@PtSon2204
+[Vai trò thành viên 2]	[Tên thành viên 2]	
+@github_thanhvien2
+[Vai trò thành viên 3]	[Tên thành viên 3]	
+@github_thanhvien3
+📬 Contact
+🌐 Demo: https://thealmastore.vercel.app
+📧 Email: [Email của bạn]
+🐙 GitHub: https://github.com/PtSon2204/hanh-trinh-exe
