@@ -67,3 +67,7 @@ export interface CreateDesignRequest {
     iconIds: number[];
     fontIds: number[];
 }
+
+export interface CustomizerImageUploadResponse {
+    imageUrl: string;
+}

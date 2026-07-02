@@ -1,10 +1,10 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TheALMAProject.Application.DTOs.UserDesignDtos;
 using TheALMAProject.Application.Interfaces;
 using TheALMAProject.Domain.Queries;
+using TheALMAProject.Infrastructure.Services;
 
 namespace TheALMAProject.API.Controllers
 {
@@ -12,11 +12,17 @@ namespace TheALMAProject.API.Controllers
     [ApiController]
     public class UserDesignController : ControllerBase
     {
-        private readonly IUserDesignService _designService;
+        private const string CustomizerUploadFolder = "uploads/customizer-images";
 
-        public UserDesignController(IUserDesignService designService)
+        private readonly IUserDesignService _designService;
+        private readonly IFileStorageService _fileStorageService;
+
+        public UserDesignController(
+            IUserDesignService designService,
+            IFileStorageService fileStorageService)
         {
             _designService = designService;
+            _fileStorageService = fileStorageService;
         }
 
         [Authorize]
@@ -75,6 +81,21 @@ namespace TheALMAProject.API.Controllers
             if (result == null) return NotFound("Bản thiết kế không tồn tại hoặc đã bị xóa.");
 
             return Ok(result);
+        }
+
+        [Authorize]
+        [HttpPost("upload-image")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadCustomizerImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest(new { message = "Image file is required" });
+            }
+
+            var imageUrl = await _fileStorageService.SaveFileAsync(file, CustomizerUploadFolder);
+
+            return Ok(new { imageUrl });
         }
 
         [Authorize]

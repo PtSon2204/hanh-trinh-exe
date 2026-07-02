@@ -68,7 +68,7 @@ public class ApplicationDbContext : DbContext
 
             entity.Property(e => e.AvailableSizes).HasMaxLength(255);
             entity.Property(e => e.BackImageUrl).HasMaxLength(500);
-            entity.Property(e => e.BasePrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.BasePrice).HasColumnType("numeric(18, 2)");
             entity.Property(e => e.Category).HasMaxLength(50);
             entity.Property(e => e.FrontImageUrl).HasMaxLength(500);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
@@ -85,9 +85,9 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.BaseProductId, "UQ__BaseProduct3DConfigs__BaseProductId").IsUnique();
 
             entity.Property(e => e.ModelUrl).HasMaxLength(500);
-            entity.Property(e => e.CenterOffsetJson).HasColumnType("nvarchar(max)");
-            entity.Property(e => e.FrontPrintPlaneJson).HasColumnType("nvarchar(max)");
-            entity.Property(e => e.BackPrintPlaneJson).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.CenterOffsetJson).HasColumnType("text");
+            entity.Property(e => e.FrontPrintPlaneJson).HasColumnType("text");
+            entity.Property(e => e.BackPrintPlaneJson).HasColumnType("text");
 
             entity.HasOne(d => d.BaseProduct).WithOne(p => p.ThreeDConfig)
                 .HasForeignKey<BaseProduct3DConfig>(d => d.BaseProductId)
@@ -111,7 +111,7 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.CartItemId).HasName("PK__CartItem__488B0B0AE6E6914D");
 
             entity.Property(e => e.Size).HasMaxLength(50);
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.UnitPrice).HasColumnType("numeric(18, 2)");
 
             entity.HasOne(d => d.Cart).WithMany(p => p.CartItems)
                 .HasForeignKey(d => d.CartId)
@@ -133,7 +133,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.FontFileUrl).HasMaxLength(500);
             entity.Property(e => e.FontName).HasMaxLength(255);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.PriceAddon).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PriceAddon).HasColumnType("numeric(18, 2)");
         });
 
         modelBuilder.Entity<Icon>(entity =>
@@ -144,7 +144,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.ImageUrl).HasMaxLength(500);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Name).HasMaxLength(255);
-            entity.Property(e => e.PriceAddon).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.PriceAddon).HasColumnType("numeric(18, 2)");
         });
 
         modelBuilder.Entity<Notification>(entity =>
@@ -152,8 +152,8 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E122FE1A626");
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
             entity.Property(e => e.Title).HasMaxLength(255);
             entity.Property(e => e.Type).HasMaxLength(50);
 
@@ -169,9 +169,9 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.OrderCode, "UQ__Orders__999B522995FB84E2").IsUnique();
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.DiscountAmount).HasColumnType("decimal(18, 2)");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
+            entity.Property(e => e.DiscountAmount).HasColumnType("numeric(18, 2)");
             entity.Property(e => e.OrderCode).HasMaxLength(50);
             entity.Property(e => e.OrderStatus).HasMaxLength(50);
             entity.Property(e => e.PaymentMethod).HasMaxLength(50);
@@ -180,8 +180,8 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.ShipName).HasMaxLength(255);
             entity.Property(e => e.ShipPhone).HasMaxLength(20);
             entity.Property(e => e.ShipProvince).HasMaxLength(100);
-            entity.Property(e => e.ShippingFee).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ShippingFee).HasColumnType("numeric(18, 2)");
+            entity.Property(e => e.TotalAmount).HasColumnType("numeric(18, 2)");
             entity.Property(e => e.RefundBankName).HasMaxLength(100);
             entity.Property(e => e.RefundAccountNumber).HasMaxLength(50);
             entity.Property(e => e.RefundAccountName).HasMaxLength(100);
@@ -202,7 +202,7 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.OrderItemId).HasName("PK__OrderIte__57ED0681914D53F7");
 
             entity.Property(e => e.Size).HasMaxLength(50);
-            entity.Property(e => e.UnitPrice).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.UnitPrice).HasColumnType("numeric(18, 2)");
 
             entity.HasOne(d => d.Design).WithMany(p => p.OrderItems)
                 .HasForeignKey(d => d.DesignId)
@@ -222,8 +222,8 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.ReviewId).HasName("PK__Reviews__74BC79CE49280B66");
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
 
             entity.HasOne(d => d.Order).WithMany(p => p.Reviews)
                 .HasForeignKey(d => d.OrderId)
@@ -246,7 +246,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.ImageUrl).HasMaxLength(500);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Name).HasMaxLength(255);
-            entity.Property(e => e.Price).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.Price).HasColumnType("numeric(18, 2)");
 
             entity.HasOne(d => d.BaseProduct).WithMany(p => p.StoreProducts)
                 .HasForeignKey(d => d.BaseProductId)
@@ -276,8 +276,8 @@ public class ApplicationDbContext : DbContext
 
             entity.Property(e => e.AvatarUrl).HasMaxLength(500);
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
             entity.Property(e => e.Email).HasMaxLength(255);
             entity.Property(e => e.FullName).HasMaxLength(255);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
@@ -289,7 +289,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.OAuthProvider).HasMaxLength(50);
             entity.Property(e => e.OAuthId).HasMaxLength(255);
             entity.Property(e => e.RefreshToken).HasMaxLength(500);
-            entity.Property(e => e.RefreshTokenExpiry).HasColumnType("datetime");
+            entity.Property(e => e.RefreshTokenExpiry).HasColumnType("timestamp without time zone");
         });
 
         modelBuilder.Entity<UserDesign>(entity =>
@@ -297,14 +297,14 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.DesignId).HasName("PK__UserDesi__32B8E15F1DE471B7");
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
             entity.Property(e => e.DesignName).HasMaxLength(255);
-            entity.Property(e => e.FrontCanvasJson).HasColumnType("nvarchar(max)");
-            entity.Property(e => e.BackCanvasJson).HasColumnType("nvarchar(max)");
-            entity.Property(e => e.PreviewImageUrl).HasColumnType("nvarchar(max)");
-            entity.Property(e => e.FrontPreviewImageUrl).HasColumnType("nvarchar(max)");
-            entity.Property(e => e.BackPreviewImageUrl).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.FrontCanvasJson).HasColumnType("text");
+            entity.Property(e => e.BackCanvasJson).HasColumnType("text");
+            entity.Property(e => e.PreviewImageUrl).HasColumnType("text");
+            entity.Property(e => e.FrontPreviewImageUrl).HasColumnType("text");
+            entity.Property(e => e.BackPreviewImageUrl).HasColumnType("text");
             entity.Property(e => e.PrintFileUrl).HasMaxLength(500);
             entity.Property(e => e.PlacementGuideUrl).HasMaxLength(500);
 
@@ -354,12 +354,12 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Code, "UQ__Vouchers__A25C5AA7335BAA10").IsUnique();
 
             entity.Property(e => e.Code).HasMaxLength(50);
-            entity.Property(e => e.DiscountPercent).HasColumnType("decimal(5, 2)");
-            entity.Property(e => e.EndDate).HasColumnType("datetime");
+            entity.Property(e => e.DiscountPercent).HasColumnType("numeric(5, 2)");
+            entity.Property(e => e.EndDate).HasColumnType("timestamp without time zone");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
-            entity.Property(e => e.MaxDiscount).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.MinOrderAmount).HasColumnType("decimal(18, 2)");
-            entity.Property(e => e.StartDate).HasColumnType("datetime");
+            entity.Property(e => e.MaxDiscount).HasColumnType("numeric(18, 2)");
+            entity.Property(e => e.MinOrderAmount).HasColumnType("numeric(18, 2)");
+            entity.Property(e => e.StartDate).HasColumnType("timestamp without time zone");
         });
 
         modelBuilder.Entity<Invoice>(entity =>
@@ -380,14 +380,14 @@ public class ApplicationDbContext : DbContext
                 .IsFixedLength() 
                 .HasDefaultValue("VND");
 
-            entity.Property(e => e.SubTotal).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.SubTotal).HasColumnType("numeric(18, 2)");
             entity.Property(e => e.VoucherDiscountAmount)
-                .HasColumnType("decimal(18, 2)")
+                .HasColumnType("numeric(18, 2)")
                 .HasDefaultValue(0m);
             entity.Property(e => e.ShippingFee)
-                .HasColumnType("decimal(18, 2)")
+                .HasColumnType("numeric(18, 2)")
                 .HasDefaultValue(0m);
-            entity.Property(e => e.TotalAmount).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.TotalAmount).HasColumnType("numeric(18, 2)");
 
             entity.Property(e => e.InvoiceStatus)
                 .HasMaxLength(50)
@@ -396,12 +396,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.PdfUrl).HasMaxLength(500);
 
             entity.Property(e => e.IssueDate)
-                .HasDefaultValueSql("SYSUTCDATETIME()")
-                .HasColumnType("datetime2");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
 
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("SYSUTCDATETIME()")
-                .HasColumnType("datetime2");
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone");
 
             // Relationship (1-1 với Order)
             entity.HasOne(d => d.Order).WithOne(p => p.Invoice)
@@ -413,16 +413,16 @@ public class ApplicationDbContext : DbContext
             entity.ToTable(t =>
             {
                 t.HasCheckConstraint("CK_Invoices_Amounts",
-                    "[SubTotal] >= 0 AND [VoucherDiscountAmount] >= 0 AND [ShippingFee] >= 0 AND [TotalAmount] >= 0 AND [VoucherDiscountAmount] <= [SubTotal]");
+                    "\"SubTotal\" >= 0 AND \"VoucherDiscountAmount\" >= 0 AND \"ShippingFee\" >= 0 AND \"TotalAmount\" >= 0 AND \"VoucherDiscountAmount\" <= \"SubTotal\"");
 
                 t.HasCheckConstraint("CK_Invoices_TotalAmount",
-                    "[TotalAmount] = [SubTotal] - [VoucherDiscountAmount] + [ShippingFee]");
+                    "\"TotalAmount\" = \"SubTotal\" - \"VoucherDiscountAmount\" + \"ShippingFee\"");
 
                 t.HasCheckConstraint("CK_Invoices_Status",
-                    "[InvoiceStatus] IN ('Draft', 'Issued', 'Cancelled')");
+                    "\"InvoiceStatus\" IN ('Draft', 'Issued', 'Cancelled')");
 
                 t.HasCheckConstraint("CK_Invoices_Currency",
-                    "[CurrencyCode] IN ('VND', 'USD')");
+                    "\"CurrencyCode\" IN ('VND', 'USD')");
             });
         });
     }

@@ -427,6 +427,14 @@ bruno-temp/
 .playwright-mcp/
 .omo/
 
+# Local migration/export artifacts with source snapshots or data dumps
+MigrationBackups/
+seed_postgres.sql
+current_data.txt
+*export*.sql
+*import*.sql
+*seed*.sql
+
 # Bỏ qua các file chứa mật khẩu/chuỗi kết nối thật
 appsettings.Development.json
 appsettings.Production.json
